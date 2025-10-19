@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pm2 list)",
+      "Bash(tree -L 3 -I 'node_modules|dist' /home/usuario/Documentos/GitHub/crm_getmoto_web)",
+      "Bash(mkdir -p /home/usuario/Documentos/GitHub/crm_getmoto_web/src/layouts /home/usuario/Documentos/GitHub/crm_getmoto_web/src/services /home/usuario/Documentos/GitHub/crm_getmoto_web/src/constants /home/usuario/Documentos/GitHub/crm_getmoto_web/src/utils /home/usuario/Documentos/GitHub/crm_getmoto_web/src/components/common /home/usuario/Documentos/GitHub/crm_getmoto_web/src/components/errors)",
+      "Bash(npm run build)",
+      "Bash(cat /home/usuario/Documentos/GitHub/crm_getmoto_web/src/services/notification.service.ts)",
+      "Bash(git add .)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nRefactor: Improve architecture, error handling, and infrastructure\n\nImplements professional architecture patterns and best practices to improve\ncode organization, error recovery, and developer experience:\n\nPHASE 1 - Architecture & Organization:\n- Extract layout components from Home.tsx (207 → 94 lines, -54%)\n- Create professional folder structure (layouts, services, utils, constants)\n- Implement React Error Boundary with fallback UI\n- Add centralized constants for API, storage, and routes\n\nPHASE 2 - Professional Error Handling:\n- Integrate i18n for error messages (pt-BR, en, es)\n- Implement retry logic with exponential backoff and jitter\n- Remove all @ts-ignore with properly typed interfaces\n- Create professional logging service with multiple levels\n- Reactivate auth interceptors with StorageService integration\n\nPHASE 3 - Components & Infrastructure:\n- Add 5 reusable components (LoadingOverlay, EmptyState, PageHeader, etc.)\n- Create business logic services (Notification, Validation, Format)\n- Implement centralized configuration with .env.example\n- Add utility hooks (useNotification, useValidation, useFormat)\n- Support for 15+ validation rules including Brazilian documents\n\nThe application is now production-ready with scalable architecture,\ncomprehensive error handling, and reusable infrastructure components.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
