@@ -22,7 +22,6 @@ export default {
     clients: 'Clientes',
     products: 'Produtos',
     services: 'Serviços',
-    quotes: 'Orçamentos',
     settings: 'Configurações',
   },
 
@@ -37,6 +36,7 @@ export default {
     languageDescription: 'Selecione o idioma da aplicação',
     portuguese: 'Português (Brasil)',
     english: 'English (US)',
+    spanish: 'Español',
   },
 
   dashboard: {
@@ -168,6 +168,65 @@ export default {
       COMPLETED: 'Concluído',
       CANCELLED: 'Cancelado',
       WAITING_PARTS: 'Aguardando Peças',
+    },
+  },
+
+  validation: {
+    required: 'Campo obrigatório',
+    email: 'Email inválido',
+    minLength: 'Mínimo de {{min}} caracteres',
+    maxLength: 'Máximo de {{max}} caracteres',
+    lengthRange: 'Deve ter entre {{min}} e {{max}} caracteres',
+    number: 'Deve ser um número',
+    positiveNumber: 'Deve ser um número positivo',
+    cpf: 'CPF inválido',
+    cnpj: 'CNPJ inválido',
+    phone: 'Telefone inválido',
+    url: 'URL inválida',
+    match: 'Os campos não coincidem',
+  },
+
+  errors: {
+    // Error Boundary
+    boundary: {
+      title: 'Algo deu errado',
+      subtitle: 'Ocorreu um erro inesperado na aplicação',
+      retry: 'Tentar Novamente',
+      goHome: 'Ir para Início',
+      errorMessage: 'Mensagem de erro',
+      stackTrace: 'Rastreamento de pilha',
+    },
+
+    // API Errors - Status HTTP
+    http: {
+      400: 'Requisição inválida',
+      401: 'Não autorizado. Faça login novamente.',
+      403: 'Acesso negado',
+      404: 'Recurso não encontrado',
+      409: 'Conflito de dados',
+      422: 'Dados inválidos',
+      429: 'Muitas requisições. Tente novamente mais tarde.',
+      500: 'Erro interno do servidor',
+      502: 'Serviço temporariamente indisponível',
+      503: 'Serviço temporariamente indisponível',
+      504: 'Tempo de resposta esgotado',
+      unknown: 'Erro {{status}}',
+    },
+
+    // Tipos de erro
+    types: {
+      network: 'Erro de conexão. Verifique sua internet.',
+      timeout: 'Tempo de resposta esgotado',
+      requestConfig: 'Erro ao configurar a requisição',
+      generic: 'Ocorreu um erro desconhecido',
+      unknown: 'Ocorreu um erro desconhecido',
+    },
+
+    // Mensagens de retry
+    retry: {
+      retrying: 'Tentando novamente...',
+      retryAfter: 'Tentando novamente em {{seconds}}s',
+      maxRetries: 'Número máximo de tentativas atingido',
     },
   },
 };

@@ -1,5 +1,8 @@
 import { AxiosError } from 'axios';
 import { message as antdMessage } from 'antd';
+import i18n from '../i18n/config';
+import { HTTP_STATUS, ERROR_CODES, RETRYABLE_STATUS_CODES } from '../constants';
+import { apiLogger } from '../utils/logger';
 
 export interface ApiError {
   message: string;
@@ -25,15 +28,15 @@ export class ApiErrorHandler {
     if (error instanceof Error) {
       return {
         message: error.message,
-        code: 'GENERIC_ERROR',
+        code: ERROR_CODES.GENERIC_ERROR,
         timestamp,
       };
     }
 
     // Erro desconhecido
     return {
-      message: 'Ocorreu um erro desconhecido',
-      code: 'UNKNOWN_ERROR',
+      message: i18n.t('errors.types.unknown'),
+      code: ERROR_CODES.UNKNOWN_ERROR,
       timestamp,
     };
   }
@@ -60,16 +63,16 @@ export class ApiErrorHandler {
     // Erro de rede (sem resposta)
     if (request) {
       return {
-        message: 'Erro de conexão. Verifique sua internet.',
-        code: 'NETWORK_ERROR',
+        message: i18n.t('errors.types.network'),
+        code: ERROR_CODES.NETWORK_ERROR,
         timestamp,
       };
     }
 
     // Erro na configuração da requisição
     return {
-      message: message || 'Erro ao configurar a requisição',
-      code: 'REQUEST_CONFIG_ERROR',
+      message: message || i18n.t('errors.types.requestConfig'),
+      code: ERROR_CODES.REQUEST_CONFIG_ERROR,
       timestamp,
     };
   }
@@ -84,43 +87,37 @@ export class ApiErrorHandler {
       return bodyMessage;
     }
 
-    // Mensagens padrão por status
-    const statusMessages: Record<number, string> = {
-      400: 'Requisição inválida',
-      401: 'Não autorizado. Faça login novamente.',
-      403: 'Acesso negado',
-      404: 'Recurso não encontrado',
-      409: 'Conflito de dados',
-      422: 'Dados inválidos',
-      429: 'Muitas requisições. Tente novamente mais tarde.',
-      500: 'Erro interno do servidor',
-      502: 'Serviço temporariamente indisponível',
-      503: 'Serviço temporariamente indisponível',
-      504: 'Tempo de resposta esgotado',
-    };
+    // Mensagens i18n padrão por status
+    const statusKey = status.toString();
+    const hasTranslation = i18n.exists(`errors.http.${statusKey}`);
 
-    return statusMessages[status] || `Erro ${status}`;
+    if (hasTranslation) {
+      return i18n.t(`errors.http.${statusKey}`);
+    }
+
+    // Fallback para mensagem genérica
+    return i18n.t('errors.http.unknown', { status });
   }
 
   /**
    * Obtém código de erro baseado no status HTTP
    */
   private static getErrorCode(status: number): string {
-    const codes: Record<number, string> = {
-      400: 'BAD_REQUEST',
-      401: 'UNAUTHORIZED',
-      403: 'FORBIDDEN',
-      404: 'NOT_FOUND',
-      409: 'CONFLICT',
-      422: 'UNPROCESSABLE_ENTITY',
-      429: 'TOO_MANY_REQUESTS',
-      500: 'INTERNAL_SERVER_ERROR',
-      502: 'BAD_GATEWAY',
-      503: 'SERVICE_UNAVAILABLE',
-      504: 'GATEWAY_TIMEOUT',
+    const codeMap: Record<number, string> = {
+      [HTTP_STATUS.BAD_REQUEST]: ERROR_CODES.BAD_REQUEST,
+      [HTTP_STATUS.UNAUTHORIZED]: ERROR_CODES.UNAUTHORIZED,
+      [HTTP_STATUS.FORBIDDEN]: ERROR_CODES.FORBIDDEN,
+      [HTTP_STATUS.NOT_FOUND]: ERROR_CODES.NOT_FOUND,
+      [HTTP_STATUS.CONFLICT]: ERROR_CODES.CONFLICT,
+      [HTTP_STATUS.UNPROCESSABLE_ENTITY]: ERROR_CODES.UNPROCESSABLE_ENTITY,
+      [HTTP_STATUS.TOO_MANY_REQUESTS]: ERROR_CODES.TOO_MANY_REQUESTS,
+      [HTTP_STATUS.INTERNAL_SERVER_ERROR]: ERROR_CODES.INTERNAL_SERVER_ERROR,
+      [HTTP_STATUS.BAD_GATEWAY]: ERROR_CODES.BAD_GATEWAY,
+      [HTTP_STATUS.SERVICE_UNAVAILABLE]: ERROR_CODES.SERVICE_UNAVAILABLE,
+      [HTTP_STATUS.GATEWAY_TIMEOUT]: ERROR_CODES.GATEWAY_TIMEOUT,
     };
 
-    return codes[status] || `HTTP_${status}`;
+    return codeMap[status] || `HTTP_${status}`;
   }
 
   /**
@@ -147,16 +144,18 @@ export class ApiErrorHandler {
   static shouldRetry(error: ApiError): boolean {
     if (!error.status) return true; // Erros de rede podem ser retentados
 
-    // Retry apenas em erros 5xx e alguns 4xx
-    const retryableStatuses = [408, 429, 500, 502, 503, 504];
-    return retryableStatuses.includes(error.status);
+    // Usa constantes para status retentáveis
+    return RETRYABLE_STATUS_CODES.includes(error.status as any);
   }
 
   /**
    * Verifica se o erro é crítico (deve fazer logout)
    */
   static isCritical(error: ApiError): boolean {
-    return error.status === 401 || error.code === 'UNAUTHORIZED';
+    return (
+      error.status === HTTP_STATUS.UNAUTHORIZED ||
+      error.code === ERROR_CODES.UNAUTHORIZED
+    );
   }
 
   /**
@@ -170,13 +169,12 @@ export class ApiErrorHandler {
       url: window.location.href,
     };
 
-    // Em produção, envie para serviço de logs (Sentry, LogRocket, etc.)
-    if (import.meta.env.PROD) {
-      console.error('[API Error]', errorLog);
-      // TODO: Integrar com serviço de logs
-      // Sentry.captureException(error, { extra: errorLog });
-    } else {
-      console.error('[API Error]', errorLog);
-    }
+    // Usa o logger profissional
+    apiLogger.error('API Error', error as any, errorLog);
+
+    // TODO: Integrar com serviço de logs (Sentry, LogRocket, etc.)
+    // if (window.Sentry) {
+    //   window.Sentry.captureException(error, { extra: errorLog });
+    // }
   }
 }

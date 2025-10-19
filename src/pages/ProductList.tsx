@@ -17,14 +17,14 @@ export function ProductList() {
 
   // Extrair categorias únicas
   const categories = useMemo(() => {
-    if (!products) return [];
+    if (!Array.isArray(products)) return [];
     const uniqueCategories = new Set(products.map(p => p.category).filter(Boolean));
     return Array.from(uniqueCategories) as string[];
   }, [products]);
 
   // Filtrar produtos
   const filteredProducts = useMemo(() => {
-    if (!products) return [];
+    if (!Array.isArray(products)) return [];
 
     return products.filter(product => {
       const matchesSearch = searchText === '' ||

@@ -66,7 +66,7 @@ export function CategorySummaryTable({
     <Card title={t('dashboard.categorySummary')}>
       <Table
         columns={columns}
-        dataSource={categories || []}
+        dataSource={Array.isArray(categories) ? categories : []}
         loading={loading}
         rowKey={(record) => `${record.category}-${record.type}`}
         pagination={false}

@@ -58,12 +58,18 @@ export function PeriodSelector({ onPeriodChange }: PeriodSelectorProps) {
         endDate = today.subtract(1, 'month').endOf('month');
         break;
       case 'thisQuarter':
-        startDate = today.startOf('quarter');
-        endDate = today.endOf('quarter');
+        {
+          const quarterStartMonth = Math.floor(today.month() / 3) * 3;
+          startDate = today.month(quarterStartMonth).startOf('month');
+          endDate = today.month(quarterStartMonth + 2).endOf('month');
+        }
         break;
       case 'lastQuarter':
-        startDate = today.subtract(1, 'quarter').startOf('quarter');
-        endDate = today.subtract(1, 'quarter').endOf('quarter');
+        {
+          const lastQuarterStartMonth = Math.floor((today.month() - 3) / 3) * 3;
+          startDate = today.month(lastQuarterStartMonth).startOf('month');
+          endDate = today.month(lastQuarterStartMonth + 2).endOf('month');
+        }
         break;
       case 'thisSemester':
         const currentMonth = today.month();

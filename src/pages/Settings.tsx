@@ -1,4 +1,4 @@
-import { Card, Switch, Typography, Space, Divider, Select } from 'antd';
+import { Card, Switch, Typography, Space, Select } from 'antd';
 import { BulbOutlined, MoonOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useThemeStore } from '../store/theme-store';
 import { useLanguageStore, type Language } from '../store/language-store';

@@ -22,7 +22,6 @@ export default {
     clients: 'Clients',
     products: 'Products',
     services: 'Services',
-    quotes: 'Quotes',
     settings: 'Settings',
   },
 
@@ -37,6 +36,7 @@ export default {
     languageDescription: 'Select application language',
     portuguese: 'Português (Brasil)',
     english: 'English (US)',
+    spanish: 'Español',
   },
 
   dashboard: {
@@ -168,6 +168,65 @@ export default {
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
       WAITING_PARTS: 'Waiting Parts',
+    },
+  },
+
+  validation: {
+    required: 'Required field',
+    email: 'Invalid email',
+    minLength: 'Minimum {{min}} characters',
+    maxLength: 'Maximum {{max}} characters',
+    lengthRange: 'Must be between {{min}} and {{max}} characters',
+    number: 'Must be a number',
+    positiveNumber: 'Must be a positive number',
+    cpf: 'Invalid CPF',
+    cnpj: 'Invalid CNPJ',
+    phone: 'Invalid phone',
+    url: 'Invalid URL',
+    match: 'Fields do not match',
+  },
+
+  errors: {
+    // Error Boundary
+    boundary: {
+      title: 'Something went wrong',
+      subtitle: 'An unexpected error occurred in the application',
+      retry: 'Try Again',
+      goHome: 'Go to Home',
+      errorMessage: 'Error message',
+      stackTrace: 'Stack trace',
+    },
+
+    // API Errors - HTTP Status
+    http: {
+      400: 'Invalid request',
+      401: 'Unauthorized. Please log in again.',
+      403: 'Access denied',
+      404: 'Resource not found',
+      409: 'Data conflict',
+      422: 'Invalid data',
+      429: 'Too many requests. Please try again later.',
+      500: 'Internal server error',
+      502: 'Service temporarily unavailable',
+      503: 'Service temporarily unavailable',
+      504: 'Response timeout',
+      unknown: 'Error {{status}}',
+    },
+
+    // Error types
+    types: {
+      network: 'Connection error. Check your internet.',
+      timeout: 'Response timeout',
+      requestConfig: 'Error configuring request',
+      generic: 'An unknown error occurred',
+      unknown: 'An unknown error occurred',
+    },
+
+    // Retry messages
+    retry: {
+      retrying: 'Retrying...',
+      retryAfter: 'Retrying in {{seconds}}s',
+      maxRetries: 'Maximum retry attempts reached',
     },
   },
 };

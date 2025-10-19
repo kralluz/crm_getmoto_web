@@ -13,7 +13,7 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
   const { t } = useTranslation();
 
   // Agrupar transações por data
-  const groupedData = transactions?.reduce(
+  const groupedData = Array.isArray(transactions) ? transactions.reduce(
     (acc, transaction) => {
       const date = dayjs(transaction.date).format('DD/MM');
       if (!acc[date]) {
@@ -27,7 +27,7 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
       return acc;
     },
     {} as Record<string, { date: string; income: number; expense: number }>
-  );
+  ) : {};
 
   // Converter para array e format para o gráfico
   const chartData =

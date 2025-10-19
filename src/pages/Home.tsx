@@ -1,79 +1,69 @@
 import { useState } from 'react';
-import { Layout, Menu, Typography, theme } from 'antd';
-import {
-  HomeOutlined,
-  UserOutlined,
-  ShoppingCartOutlined,
-  ToolOutlined,
-  FileTextOutlined,
-  SettingOutlined,
-  DashboardOutlined,
-  PlusCircleOutlined,
-} from '@ant-design/icons';
+import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { MainLayout } from '../layouts';
 import { Settings } from './Settings';
 import { DashboardFinanceiro } from './DashboardFinanceiro';
 import { TransactionForm } from './TransactionForm';
 import { ProductList } from './ProductList';
 import { ServiceList } from './ServiceList';
-import { useThemeStore } from '../store/theme-store';
+import { SearchResults } from './SearchResults';
+import { ProductDetail } from './ProductDetail';
+import { ClientDetail } from './ClientDetail';
+import { VehicleDetail } from './VehicleDetail';
+import { ServiceOrderDetail } from './ServiceOrderDetail';
 
-const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
 
 export function Home() {
-  const [collapsed, setCollapsed] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState('dashboard');
-  const { mode } = useThemeStore();
+  const [detailView, setDetailView] = useState<{
+    type: 'product' | 'client' | 'vehicle' | 'serviceOrder' | null;
+    id: string | null;
+  }>({ type: null, id: null });
   const { t } = useTranslation();
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
 
-  const menuItems = [
-    {
-      key: 'dashboard',
-      icon: <DashboardOutlined />,
-      label: t('menu.dashboard'),
-    },
-    {
-      key: 'transacao',
-      icon: <PlusCircleOutlined />,
-      label: t('menu.newTransaction'),
-    },
-    {
-      key: 'clientes',
-      icon: <UserOutlined />,
-      label: t('menu.clients'),
-    },
-    {
-      key: 'produtos',
-      icon: <ShoppingCartOutlined />,
-      label: t('menu.products'),
-    },
-    {
-      key: 'servicos',
-      icon: <ToolOutlined />,
-      label: t('menu.services'),
-    },
-    {
-      key: 'orcamentos',
-      icon: <FileTextOutlined />,
-      label: t('menu.quotes'),
-    },
-    {
-      key: 'configuracoes',
-      icon: <SettingOutlined />,
-      label: t('menu.settings'),
-    },
-  ];
+  const handleSearch = (_query: string) => {
+    setSelectedMenu('search');
+    setDetailView({ type: null, id: null });
+  };
+
+  const handleBackToSearch = () => {
+    setDetailView({ type: null, id: null });
+  };
+
+  const handleResultClick = (type: string, id: string) => {
+    setDetailView({
+      type: type as 'product' | 'client' | 'vehicle' | 'serviceOrder',
+      id,
+    });
+  };
 
   const renderContent = () => {
+    // Se estiver em uma página de detalhes
+    if (detailView.type && detailView.id) {
+      switch (detailView.type) {
+        case 'product':
+          return <ProductDetail productId={detailView.id} onBack={handleBackToSearch} />;
+        case 'client':
+          return <ClientDetail clientId={detailView.id} onBack={handleBackToSearch} />;
+        case 'vehicle':
+          return <VehicleDetail vehicleId={detailView.id} onBack={handleBackToSearch} />;
+        case 'serviceOrder':
+          return <ServiceOrderDetail orderId={detailView.id} onBack={handleBackToSearch} />;
+        default:
+          return null;
+      }
+    }
+
+    // Páginas normais
     switch (selectedMenu) {
       case 'dashboard':
         return <DashboardFinanceiro />;
       case 'transacao':
         return <TransactionForm />;
+      case 'search':
+        return <SearchResults onResultClick={handleResultClick} />;
       case 'clientes':
         return (
           <div>
@@ -85,13 +75,6 @@ export function Home() {
         return <ProductList />;
       case 'servicos':
         return <ServiceList />;
-      case 'orcamentos':
-        return (
-          <div>
-            <Title level={2}>{t('menu.quotes')}</Title>
-            <p>{t('menu.quotes')} - Em desenvolvimento</p>
-          </div>
-        );
       case 'configuracoes':
         return <Settings />;
       default:
@@ -100,64 +83,12 @@ export function Home() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        theme="light"
-        style={{
-          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
-        }}
-      >
-        <div
-          style={{
-            height: 64,
-            margin: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: collapsed ? 16 : 20,
-            fontWeight: 'bold',
-            color: '#1890ff',
-          }}
-        >
-          {collapsed ? <HomeOutlined /> : 'GetMoto'}
-        </div>
-        <Menu
-          theme="light"
-          mode="inline"
-          selectedKeys={[selectedMenu]}
-          items={menuItems}
-          onClick={({ key }) => setSelectedMenu(key)}
-        />
-      </Sider>
-      <Layout>
-        <Header
-          style={{
-            padding: '0 24px',
-            background: colorBgContainer,
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}
-        >
-          <Title level={3} style={{ margin: 0 }}>
-            CRM GetMoto
-          </Title>
-        </Header>
-        <Content
-          style={{
-            margin: '24px 16px',
-            padding: 24,
-            minHeight: 280,
-            background: colorBgContainer,
-            borderRadius: borderRadiusLG,
-          }}
-        >
-          {renderContent()}
-        </Content>
-      </Layout>
-    </Layout>
+    <MainLayout
+      selectedMenu={selectedMenu}
+      onMenuSelect={setSelectedMenu}
+      onSearch={handleSearch}
+    >
+      {renderContent()}
+    </MainLayout>
   );
 }

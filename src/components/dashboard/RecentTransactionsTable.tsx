@@ -76,7 +76,7 @@ export function RecentTransactionsTable({
     <Card title={t('dashboard.recentTransactions')}>
       <Table
         columns={columns}
-        dataSource={transactions?.slice(0, 10) || []}
+        dataSource={Array.isArray(transactions) ? transactions.slice(0, 10) : []}
         loading={loading}
         rowKey="id"
         pagination={false}

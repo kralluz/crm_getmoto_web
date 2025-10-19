@@ -1,14 +1,36 @@
-import axios, { type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { requestQueue } from './request-queue';
 import { ApiErrorHandler } from './error-handler';
+import { setupRetryInterceptor } from './retry-interceptor';
+import { API_CONFIG } from '../constants';
+import { StorageService } from '../services';
+import { apiLogger } from '../utils/logger';
+import type {
+  AxiosRequestConfigWithMetadata,
+  InternalAxiosRequestConfigWithMetadata,
+  AxiosResponseWithMetadata,
+  RequestOptions,
+} from './types';
 
 // Configuração customizada da instância do Axios
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  timeout: 30000, // 30 segundos
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// ============================================================================
+// RETRY INTERCEPTOR
+// ============================================================================
+
+/**
+ * Configura retry automático com exponential backoff
+ */
+setupRetryInterceptor(axiosInstance, {
+  maxRetries: API_CONFIG.RETRY_ATTEMPTS,
+  retryDelay: API_CONFIG.RETRY_DELAY,
 });
 
 // ============================================================================
@@ -17,28 +39,31 @@ const axiosInstance = axios.create({
 
 /**
  * Adiciona token de autenticação em todas as requisições
- * TEMPORARIAMENTE DESABILITADO PARA TESTES
  */
-// axiosInstance.interceptors.request.use(
-//   (config: InternalAxiosRequestConfig) => {
-//     const token = localStorage.getItem('auth_token');
-//     if (token && config.headers) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+axiosInstance.interceptors.request.use(
+  (config: InternalAxiosRequestConfigWithMetadata) => {
+    const token = StorageService.getAuthToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    apiLogger.error('Request interceptor error', error);
+    return Promise.reject(error);
+  }
+);
 
 /**
  * Adiciona timestamp para monitoramento de performance
  */
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // @ts-ignore - Adiciona metadata customizada
-    config.metadata = { startTime: new Date() };
+  (config: InternalAxiosRequestConfigWithMetadata) => {
+    // Adiciona metadata customizada com tipagem correta
+    config.metadata = {
+      startTime: new Date(),
+      retryCount: 0,
+    };
     return config;
   },
   (error) => {
@@ -54,12 +79,13 @@ axiosInstance.interceptors.request.use(
  * Calcula tempo de resposta para monitoramento
  */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => {
-    // @ts-ignore
+  (response: AxiosResponseWithMetadata) => {
     const startTime = response.config.metadata?.startTime;
     if (startTime) {
       const duration = new Date().getTime() - startTime.getTime();
-      console.log(`[API] ${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`);
+      apiLogger.debug(
+        `${response.config.method?.toUpperCase()} ${response.config.url} - ${duration}ms`
+      );
     }
     return response;
   },
@@ -88,24 +114,25 @@ axiosInstance.interceptors.response.use(
     }
 
     // Tratamento especial para 401 (não autorizado)
-    // TEMPORARIAMENTE DESABILITADO PARA TESTES
-    // if (ApiErrorHandler.isCritical(apiError)) {
-    //   localStorage.removeItem('auth_token');
+    if (ApiErrorHandler.isCritical(apiError)) {
+      apiLogger.warn('Unauthorized request - clearing auth data');
+      StorageService.clearAuthData();
 
-    //   // Limpa a fila de requisições
-    //   requestQueue.clear();
+      // Limpa a fila de requisições
+      requestQueue.clear();
 
-    //   // Redireciona para login (somente se não estiver já na página de login)
-    //   if (!window.location.pathname.includes('/login')) {
-    //     window.location.href = '/login';
-    //   }
-    // }
+      // Redireciona para login (somente se não estiver já na página de login)
+      if (!window.location.pathname.includes('/login')) {
+        apiLogger.info('Redirecting to login page');
+        window.location.href = '/login';
+      }
+    }
 
     // Tratamento para 429 (Too Many Requests) - Rate Limiting
     if (apiError.status === 429) {
       const retryAfter = error.response?.headers['retry-after'];
       if (retryAfter) {
-        console.warn(`[API] Rate limited. Retry after ${retryAfter}s`);
+        apiLogger.warn(`Rate limited. Retry after ${retryAfter}s`);
       }
     }
 
@@ -122,7 +149,7 @@ axiosInstance.interceptors.response.use(
  * Esta função é usada pelo Orval para todas as chamadas de API
  */
 export const customAxiosInstance = <T>(
-  config: AxiosRequestConfig
+  config: AxiosRequestConfigWithMetadata
 ): Promise<T> => {
   const source = axios.CancelToken.source();
 
@@ -137,13 +164,12 @@ export const customAxiosInstance = <T>(
     )
     .then(({ data }) => data);
 
-  // Adiciona método de cancelamento
-  // @ts-ignore
-  promise.cancel = () => {
-    source.cancel('Query was cancelled by user');
-  };
-
-  return promise as Promise<T>;
+  // Retorna promise com método de cancelamento
+  return Object.assign(promise, {
+    cancel: () => {
+      source.cancel('Query was cancelled by user');
+    },
+  });
 };
 
 // ============================================================================
@@ -151,18 +177,10 @@ export const customAxiosInstance = <T>(
 // ============================================================================
 
 /**
- * Configurações opcionais para requisições individuais
- */
-export interface RequestOptions {
-  skipErrorNotification?: boolean; // Não exibe notificação de erro
-  skipQueue?: boolean; // Bypassa a fila de requisições
-}
-
-/**
  * Wrapper para requisições que não devem entrar na fila
  */
 export const directAxiosRequest = <T>(
-  config: AxiosRequestConfig & RequestOptions
+  config: AxiosRequestConfigWithMetadata & RequestOptions
 ): Promise<T> => {
   return axiosInstance(config).then(({ data }) => data);
 };
