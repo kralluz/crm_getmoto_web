@@ -78,7 +78,7 @@ export function RecentTransactionsTable({
         columns={columns}
         dataSource={Array.isArray(transactions) ? transactions.slice(0, 10) : []}
         loading={loading}
-        rowKey="id"
+        rowKey={(record) => record.id || (record as any).cash_flow_id || Math.random().toString()}
         pagination={false}
         size="small"
       />

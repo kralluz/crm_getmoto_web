@@ -121,7 +121,7 @@ export function GlobalSearch({ onSearch, placeholder }: GlobalSearchProps) {
       onSelect={handleSelect}
       onChange={setQuery}
       open={open && searchHistory.length > 0}
-      onDropdownVisibleChange={setOpen}
+      onOpenChange={setOpen}
       style={{ width: 400, maxWidth: '100%' }}
       popupMatchSelectWidth={400}
     >
