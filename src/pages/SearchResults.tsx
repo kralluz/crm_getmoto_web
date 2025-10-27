@@ -17,18 +17,34 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { SearchResult, SearchResultType } from '../types/search';
 
 const { Title, Text } = Typography;
 
-interface SearchResultsProps {
-  onResultClick?: (type: string, id: string) => void;
-}
-
-export function SearchResults({ onResultClick }: SearchResultsProps) {
+export function SearchResults() {
   const { t } = useTranslation();
+  // const [searchParams] = useSearchParams();
+  // TODO: Usar searchQuery para filtrar resultados
+  // const searchQuery = searchParams.get('q') || '';
+  const navigate = useNavigate();
+
   const [selectedType, setSelectedType] = useState<SearchResultType | 'all'>('all');
   const [isLoading] = useState(false);
+
+  const handleResultClick = (type: string, id: string) => {
+    const routes: Record<string, string> = {
+      product: '/produtos',
+      service: '/servicos',
+      client: '/clientes',
+      vehicle: '/veiculos',
+    };
+
+    const basePath = routes[type];
+    if (basePath) {
+      navigate(`${basePath}/${id}`);
+    }
+  };
 
   // Mock data - substituir por chamada real à API
   const mockResults: SearchResult[] = [
@@ -136,11 +152,9 @@ export function SearchResults({ onResultClick }: SearchResultsProps) {
     }
   };
 
-  const handleResultClick = (result: SearchResult) => {
+  const handleItemClick = (result: SearchResult) => {
     // Navegar para a página de detalhes correspondente
-    if (onResultClick) {
-      onResultClick(result.type, result.id);
-    }
+    handleResultClick(result.type, result.id);
   };
 
   const typeFilters = [
@@ -211,7 +225,7 @@ export function SearchResults({ onResultClick }: SearchResultsProps) {
                     renderItem={(item) => (
                       <List.Item
                         style={{ cursor: 'pointer' }}
-                        onClick={() => handleResultClick(item)}
+                        onClick={() => handleItemClick(item)}
                       >
                         <Card
                           hoverable
@@ -269,7 +283,7 @@ export function SearchResults({ onResultClick }: SearchResultsProps) {
               <List.Item>
                 <Card
                   hoverable
-                  onClick={() => handleResultClick(item)}
+                  onClick={() => handleItemClick(item)}
                   style={{ height: '100%' }}
                 >
                   <Space direction="vertical" size="small" style={{ width: '100%' }}>

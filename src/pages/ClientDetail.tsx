@@ -1,17 +1,19 @@
 import { Card, Descriptions, Tag, Typography, Space, Button, Divider } from 'antd';
 import { ArrowLeftOutlined, UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
-interface ClientDetailProps {
-  clientId: string;
-  onBack: () => void;
-}
-
-export function ClientDetail({ clientId, onBack }: ClientDetailProps) {
+export function ClientDetail() {
+  const { id: clientId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const handleBack = () => {
+    navigate('/clientes');
+  };
 
   // Mock data - substituir por chamada real à API
   const client = {
@@ -29,7 +31,7 @@ export function ClientDetail({ clientId, onBack }: ClientDetailProps) {
     <div>
       <Button
         icon={<ArrowLeftOutlined />}
-        onClick={onBack}
+        onClick={handleBack}
         style={{ marginBottom: 16 }}
       >
         Voltar

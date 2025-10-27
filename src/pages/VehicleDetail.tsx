@@ -1,14 +1,16 @@
 import { Card, Descriptions, Tag, Typography, Space, Button, Divider } from 'antd';
 import { ArrowLeftOutlined, CarOutlined } from '@ant-design/icons';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
-interface VehicleDetailProps {
-  vehicleId: string;
-  onBack: () => void;
-}
+export function VehicleDetail() {
+  const { id: vehicleId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-export function VehicleDetail({ vehicleId, onBack }: VehicleDetailProps) {
+  const handleBack = () => {
+    navigate(-1); // Volta para página anterior
+  };
   // Mock data - substituir por chamada real à API
   const vehicle = {
     id: vehicleId,
@@ -26,7 +28,7 @@ export function VehicleDetail({ vehicleId, onBack }: VehicleDetailProps) {
     <div>
       <Button
         icon={<ArrowLeftOutlined />}
-        onClick={onBack}
+        onClick={handleBack}
         style={{ marginBottom: 16 }}
       >
         Voltar

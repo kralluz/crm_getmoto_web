@@ -14,14 +14,23 @@ export default {
     back: 'Back',
     dateStart: 'Start date',
     dateEnd: 'End date',
+    create: 'Create',
+    view: 'View',
+    actions: 'Actions',
+    add: 'Add',
+    remove: 'Remove',
+    yes: 'Yes',
+    no: 'No',
   },
 
   menu: {
     dashboard: 'Dashboard',
     newTransaction: 'New Transaction',
+    cashflow: 'Transactions',
     clients: 'Clients',
     products: 'Products',
     services: 'Services',
+    users: 'Users',
     settings: 'Settings',
   },
 
@@ -169,6 +178,46 @@ export default {
       CANCELLED: 'Cancelled',
       WAITING_PARTS: 'Waiting Parts',
     },
+  },
+
+  cashflow: {
+    title: 'Financial Transactions',
+    subtitle: 'List of income and expenses',
+    transactions: 'Transactions',
+    searchPlaceholder: 'Search by description or category...',
+    filterByType: 'Filter by type',
+    filterByCategory: 'Filter by category',
+    allCategories: 'All categories',
+    summary: 'Summary',
+    balance: 'Balance',
+  },
+
+  users: {
+    title: 'Users',
+    subtitle: 'System user management',
+    name: 'Name',
+    email: 'Email',
+    role: 'Role',
+    active: 'Active',
+    inactive: 'Inactive',
+    createdAt: 'Created at',
+    updatedAt: 'Updated at',
+    searchPlaceholder: 'Search by name or email...',
+    filterByRole: 'Filter by role',
+    allRoles: 'All roles',
+    roles: {
+      ADMIN: 'Administrator',
+      MANAGER: 'Manager',
+      MECHANIC: 'Mechanic',
+      ATTENDANT: 'Attendant',
+    },
+  },
+
+  confirm: {
+    delete: 'Confirm deletion',
+    deleteDescription: 'Are you sure you want to delete this item? This action cannot be undone.',
+    title: 'Confirm action',
+    description: 'Are you sure you want to perform this action?',
   },
 
   validation: {

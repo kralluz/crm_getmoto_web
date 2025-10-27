@@ -1,15 +1,17 @@
 import { Card, Descriptions, Tag, Typography, Space, Button, Divider } from 'antd';
 import { ArrowLeftOutlined, FileTextOutlined } from '@ant-design/icons';
+import { useParams, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
-interface ServiceOrderDetailProps {
-  orderId: string;
-  onBack: () => void;
-}
+export function ServiceOrderDetail() {
+  const { id: orderId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-export function ServiceOrderDetail({ orderId, onBack }: ServiceOrderDetailProps) {
+  const handleBack = () => {
+    navigate('/servicos');
+  };
   // Mock data - substituir por chamada real à API
   const order = {
     id: orderId,
@@ -63,7 +65,7 @@ export function ServiceOrderDetail({ orderId, onBack }: ServiceOrderDetailProps)
     <div>
       <Button
         icon={<ArrowLeftOutlined />}
-        onClick={onBack}
+        onClick={handleBack}
         style={{ marginBottom: 16 }}
       >
         Voltar

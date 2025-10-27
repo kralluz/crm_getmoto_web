@@ -7,3 +7,5 @@ export * from './EmptyState';
 export * from './PageHeader';
 export * from './StatusBadge';
 export * from './ConfirmDialog';
+export * from './DeleteConfirmButton';
+export * from './ActionButtons';

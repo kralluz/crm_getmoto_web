@@ -1,16 +1,18 @@
 import { Card, Descriptions, Tag, Typography, Space, Button, Divider } from 'antd';
 import { ArrowLeftOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
-interface ProductDetailProps {
-  productId: string;
-  onBack: () => void;
-}
-
-export function ProductDetail({ productId, onBack }: ProductDetailProps) {
+export function ProductDetail() {
+  const { id: productId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const handleBack = () => {
+    navigate('/produtos');
+  };
 
   // Mock data - substituir por chamada real à API
   const product = {
@@ -40,7 +42,7 @@ export function ProductDetail({ productId, onBack }: ProductDetailProps) {
     <div>
       <Button
         icon={<ArrowLeftOutlined />}
-        onClick={onBack}
+        onClick={handleBack}
         style={{ marginBottom: 16 }}
       >
         Voltar

@@ -39,6 +39,11 @@ export function AppSidebar({
       label: t('menu.newTransaction'),
     },
     {
+      key: 'usuarios',
+      icon: <UserOutlined />,
+      label: 'Usuários',
+    },
+    {
       key: 'clientes',
       icon: <UserOutlined />,
       label: t('menu.clients'),

@@ -14,14 +14,23 @@ export default {
     back: 'Volver',
     dateStart: 'Fecha inicial',
     dateEnd: 'Fecha final',
+    create: 'Crear',
+    view: 'Ver',
+    actions: 'Acciones',
+    add: 'Agregar',
+    remove: 'Eliminar',
+    yes: 'Sí',
+    no: 'No',
   },
 
   menu: {
     dashboard: 'Dashboard',
     newTransaction: 'Nueva Transacción',
+    cashflow: 'Transacciones',
     clients: 'Clientes',
     products: 'Productos',
     services: 'Servicios',
+    users: 'Usuarios',
     settings: 'Configuración',
   },
 
@@ -169,6 +178,46 @@ export default {
       CANCELLED: 'Cancelado',
       WAITING_PARTS: 'Esperando Repuestos',
     },
+  },
+
+  cashflow: {
+    title: 'Transacciones Financieras',
+    subtitle: 'Lista de ingresos y gastos',
+    transactions: 'Transacciones',
+    searchPlaceholder: 'Buscar por descripción o categoría...',
+    filterByType: 'Filtrar por tipo',
+    filterByCategory: 'Filtrar por categoría',
+    allCategories: 'Todas las categorías',
+    summary: 'Resumen',
+    balance: 'Balance',
+  },
+
+  users: {
+    title: 'Usuarios',
+    subtitle: 'Gestión de usuarios del sistema',
+    name: 'Nombre',
+    email: 'Email',
+    role: 'Rol',
+    active: 'Activo',
+    inactive: 'Inactivo',
+    createdAt: 'Creado en',
+    updatedAt: 'Actualizado en',
+    searchPlaceholder: 'Buscar por nombre o email...',
+    filterByRole: 'Filtrar por rol',
+    allRoles: 'Todos los roles',
+    roles: {
+      ADMIN: 'Administrador',
+      MANAGER: 'Gerente',
+      MECHANIC: 'Mecánico',
+      ATTENDANT: 'Asistente',
+    },
+  },
+
+  confirm: {
+    delete: 'Confirmar eliminación',
+    deleteDescription: '¿Está seguro de que desea eliminar este elemento? Esta acción no se puede deshacer.',
+    title: 'Confirmar acción',
+    description: '¿Está seguro de que desea realizar esta acción?',
   },
 
   validation: {
