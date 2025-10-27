@@ -11,6 +11,9 @@ import { VehicleDetail } from '../pages/VehicleDetail';
 import { SearchResults } from '../pages/SearchResults';
 import { Settings } from '../pages/Settings';
 import { UserList } from '../pages/UserList';
+import { UserForm } from '../pages/UserForm';
+import { UserDetail } from '../pages/UserDetail';
+import { UserChangePassword } from '../pages/UserChangePassword';
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +35,22 @@ export const router = createBrowserRouter([
       {
         path: 'usuarios',
         element: <UserList />,
+      },
+      {
+        path: 'usuarios/novo',
+        element: <UserForm />,
+      },
+      {
+        path: 'usuarios/:id',
+        element: <UserDetail />,
+      },
+      {
+        path: 'usuarios/:id/editar',
+        element: <UserForm />,
+      },
+      {
+        path: 'usuarios/:id/alterar-senha',
+        element: <UserChangePassword />,
       },
       {
         path: 'clientes',

@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Typography, Space, Select } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Tag, Typography, Space, Select, Button } from 'antd';
+import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useServices } from '../hooks/useServices';
+import { ActionButtons } from '../components/common/ActionButtons';
 import type { Service, ServiceStatus } from '../types/service';
 import dayjs from 'dayjs';
 
@@ -19,6 +21,7 @@ const STATUS_COLORS: Record<ServiceStatus, string> = {
 
 export function ServiceList() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<ServiceStatus | ''>('');
 
@@ -49,6 +52,23 @@ export function ServiceList() {
 
   const formatDate = (date: string | Date) => {
     return dayjs(date).format('DD/MM/YYYY');
+  };
+
+  const handleView = (id: string) => {
+    navigate(`/servicos/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/servicos/${id}/editar`);
+  };
+
+  const handleDelete = async (id: string) => {
+    // TODO: Implementar chamada à API
+    console.log('Delete service:', id);
+  };
+
+  const handleCreate = () => {
+    navigate('/servicos/novo');
   };
 
   const columns: ColumnsType<Service> = [
@@ -131,6 +151,23 @@ export function ServiceList() {
       align: 'right',
       render: (value: number) => formatCurrency(value),
     },
+    {
+      title: 'Ações',
+      key: 'actions',
+      width: 150,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => (
+        <ActionButtons
+          onView={() => handleView(record.id)}
+          onEdit={() => handleEdit(record.id)}
+          onDelete={() => handleDelete(record.id)}
+          showView
+          deleteTitle="Deletar Serviço"
+          deleteDescription={`Tem certeza que deseja deletar este serviço?`}
+        />
+      ),
+    },
   ];
 
   const statusOptions: { value: ServiceStatus | ''; label: string }[] = [
@@ -144,7 +181,17 @@ export function ServiceList() {
 
   return (
     <div>
-      <Title level={2}>{t('services.title')}</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={2} style={{ margin: 0 }}>{t('services.title')}</Title>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreate}
+          size="large"
+        >
+          Nova Ordem de Serviço
+        </Button>
+      </div>
 
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>

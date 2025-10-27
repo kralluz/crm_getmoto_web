@@ -1,15 +1,18 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Typography, Space, Select } from 'antd';
-import { SearchOutlined, WarningOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Tag, Typography, Space, Select, Button } from 'antd';
+import { SearchOutlined, WarningOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useProducts } from '../hooks/useProducts';
+import { ActionButtons } from '../components/common/ActionButtons';
 import type { Product } from '../types/product';
 
 const { Title } = Typography;
 
 export function ProductList() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
@@ -43,6 +46,23 @@ export function ProductList() {
       style: 'currency',
       currency: 'BRL',
     }).format(value);
+  };
+
+  const handleView = (id: string) => {
+    navigate(`/produtos/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    navigate(`/produtos/${id}/editar`);
+  };
+
+  const handleDelete = async (id: string) => {
+    // TODO: Implementar chamada à API
+    console.log('Delete product:', id);
+  };
+
+  const handleCreate = () => {
+    navigate('/produtos/novo');
   };
 
   const columns: ColumnsType<Product> = [
@@ -115,11 +135,38 @@ export function ProductList() {
         </Tag>
       ),
     },
+    {
+      title: 'Ações',
+      key: 'actions',
+      width: 150,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => (
+        <ActionButtons
+          onView={() => handleView(record.id)}
+          onEdit={() => handleEdit(record.id)}
+          onDelete={() => handleDelete(record.id)}
+          showView
+          deleteTitle="Deletar Produto"
+          deleteDescription={`Tem certeza que deseja deletar o produto "${record.name}"?`}
+        />
+      ),
+    },
   ];
 
   return (
     <div>
-      <Title level={2}>{t('products.title')}</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={2} style={{ margin: 0 }}>{t('products.title')}</Title>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreate}
+          size="large"
+        >
+          Novo Produto
+        </Button>
+      </div>
 
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
