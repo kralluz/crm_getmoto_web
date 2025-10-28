@@ -19,6 +19,8 @@
     "react-dom": "^19.1.1",
     "react-i18next": "^16.0.1",
     "react-router-dom": "^7.9.4",
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.24.6",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

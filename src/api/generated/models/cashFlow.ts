@@ -5,12 +5,16 @@
  * API para gestão de oficina de motos - Sistema de CRM completo
  * OpenAPI spec version: 1.0.0
  */
+import type { CashFlowType } from './cashFlowType';
 
 export interface CashFlow {
-  id?: string;
-  type?: string;
+  transaction_id?: number;
+  type?: CashFlowType;
   category?: string;
-  amount?: number;
-  description?: string;
+  amount_cents?: number;
+  /** @nullable */
+  description?: string | null;
   date?: string;
+  created_at?: string;
+  updated_at?: string;
 }

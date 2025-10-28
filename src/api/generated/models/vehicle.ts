@@ -6,21 +6,21 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface Service {
-  service_order_id?: number;
-  customer_name?: string;
+export interface Vehicle {
+  vehicle_id?: number;
   /** @nullable */
-  customer_phone?: string | null;
+  customer_id?: number | null;
   /** @nullable */
-  vehicle_id?: number | null;
+  brand?: string | null;
   /** @nullable */
-  professional_name?: string | null;
-  description?: string;
-  status?: string;
+  model?: string | null;
   /** @nullable */
-  estimated_labor_cost_cents?: number | null;
+  year?: number | null;
   /** @nullable */
-  category_id?: number | null;
+  license_plate?: string | null;
+  /** @nullable */
+  color?: string | null;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
 }

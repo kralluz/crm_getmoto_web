@@ -5,17 +5,12 @@
  * API para gestão de oficina de motos - Sistema de CRM completo
  * OpenAPI spec version: 1.0.0
  */
-import type { UserRole } from './userRole';
 
-export interface User {
-  user_id?: number;
+export interface ServiceCategory {
+  category_id?: number;
   name?: string;
   /** @nullable */
-  email?: string | null;
-  /** @nullable */
-  role?: UserRole;
-  /** @nullable */
-  position?: string | null;
+  description?: string | null;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;

@@ -7,12 +7,26 @@
  */
 
 export interface Product {
-  id?: string;
+  product_id?: number;
   name?: string;
-  code?: string;
-  barcode?: string;
-  costPrice?: number;
-  salePrice?: number;
-  stockQuantity?: number;
-  minStock?: number;
+  /** @nullable */
+  code?: string | null;
+  /** @nullable */
+  barcode?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  brand?: string | null;
+  cost_price_cents?: number;
+  sale_price_cents?: number;
+  stock_quantity?: number;
+  min_stock?: number;
+  /** @nullable */
+  max_stock?: number | null;
+  unit?: string;
+  /** @nullable */
+  category_id?: number | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
