@@ -15,11 +15,11 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
   // Agrupar transações por data
   const groupedData = Array.isArray(transactions) ? transactions.reduce(
     (acc, transaction) => {
-      const date = dayjs(transaction.date).format('DD/MM');
+      const date = dayjs(transaction.occurred_at).format('DD/MM');
       if (!acc[date]) {
         acc[date] = { date, income: 0, expense: 0 };
       }
-      if (transaction.type === 'INCOME') {
+      if (transaction.direction === 'entrada') {
         acc[date].income += Number(transaction.amount);
       } else {
         acc[date].expense += Number(transaction.amount);

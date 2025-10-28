@@ -1,19 +1,27 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts';
+
 import { DashboardFinanceiro } from '../pages/DashboardFinanceiro';
 import { TransactionForm } from '../pages/TransactionForm';
+import { MovimentacoesList } from '../pages/MovimentacoesList';
+import { MovimentacaoDetail } from '../pages/MovimentacaoDetail';
 import { ProductList } from '../pages/ProductList';
+import { ProductForm } from '../pages/ProductForm';
 import { ProductDetail } from '../pages/ProductDetail';
+import { StockReport } from '../pages/StockReport';
+import { ProductCategoryList } from '../pages/ProductCategoryList';
+import { ProductCategoryForm } from '../pages/ProductCategoryForm';
+import { ProductCategoryDetail } from '../pages/ProductCategoryDetail';
 import { ServiceList } from '../pages/ServiceList';
+import { ServiceForm } from '../pages/ServiceForm';
 import { ServiceOrderDetail } from '../pages/ServiceOrderDetail';
+import { ServiceCategoryList } from '../pages/ServiceCategoryList';
+import { ServiceCategoryForm } from '../pages/ServiceCategoryForm';
+import { ServiceCategoryDetail } from '../pages/ServiceCategoryDetail';
 import { ClientDetail } from '../pages/ClientDetail';
 import { VehicleDetail } from '../pages/VehicleDetail';
 import { SearchResults } from '../pages/SearchResults';
 import { Settings } from '../pages/Settings';
-import { UserList } from '../pages/UserList';
-import { UserForm } from '../pages/UserForm';
-import { UserDetail } from '../pages/UserDetail';
-import { UserChangePassword } from '../pages/UserChangePassword';
 
 export const router = createBrowserRouter([
   {
@@ -33,24 +41,12 @@ export const router = createBrowserRouter([
         element: <TransactionForm />,
       },
       {
-        path: 'usuarios',
-        element: <UserList />,
+        path: 'movimentacoes',
+        element: <MovimentacoesList />,
       },
       {
-        path: 'usuarios/novo',
-        element: <UserForm />,
-      },
-      {
-        path: 'usuarios/:id',
-        element: <UserDetail />,
-      },
-      {
-        path: 'usuarios/:id/editar',
-        element: <UserForm />,
-      },
-      {
-        path: 'usuarios/:id/alterar-senha',
-        element: <UserChangePassword />,
+        path: 'movimentacoes/:id',
+        element: <MovimentacaoDetail />,
       },
       {
         path: 'clientes',
@@ -70,16 +66,68 @@ export const router = createBrowserRouter([
         element: <ProductList />,
       },
       {
+        path: 'produtos/novo',
+        element: <ProductForm />,
+      },
+      {
         path: 'produtos/:id',
         element: <ProductDetail />,
+      },
+      {
+        path: 'produtos/:id/editar',
+        element: <ProductForm />,
+      },
+      {
+        path: 'categorias-produtos',
+        element: <ProductCategoryList />,
+      },
+      {
+        path: 'categorias-produtos/novo',
+        element: <ProductCategoryForm />,
+      },
+      {
+        path: 'categorias-produtos/:id',
+        element: <ProductCategoryDetail />,
+      },
+      {
+        path: 'categorias-produtos/:id/editar',
+        element: <ProductCategoryForm />,
+      },
+      {
+        path: 'estoque',
+        element: <StockReport />,
       },
       {
         path: 'servicos',
         element: <ServiceList />,
       },
       {
+        path: 'servicos/novo',
+        element: <ServiceForm />,
+      },
+      {
         path: 'servicos/:id',
         element: <ServiceOrderDetail />,
+      },
+      {
+        path: 'servicos/:id/editar',
+        element: <ServiceForm />,
+      },
+      {
+        path: 'categorias-servicos',
+        element: <ServiceCategoryList />,
+      },
+      {
+        path: 'categorias-servicos/novo',
+        element: <ServiceCategoryForm />,
+      },
+      {
+        path: 'categorias-servicos/:id',
+        element: <ServiceCategoryDetail />,
+      },
+      {
+        path: 'categorias-servicos/:id/editar',
+        element: <ServiceCategoryForm />,
       },
       {
         path: 'veiculos/:id',

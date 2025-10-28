@@ -4,7 +4,9 @@ import type {
   CategorySummary,
   CashFlowTransaction,
   CreateTransactionData,
+  CreateCashFlowData,
 } from '../types/cashflow';
+import { mapTypeToDirection } from '../types/cashflow';
 
 export const cashFlowApi = {
   // Obter resumo financeiro
@@ -45,12 +47,21 @@ export const cashFlowApi = {
     return response;
   },
 
-  // Criar transação
+  // Criar transação (converte do formato legado para o formato da API)
   createTransaction: async (data: CreateTransactionData) => {
+    // Mapeia os dados do formato legado para o formato da API
+    const apiData: CreateCashFlowData = {
+      amount: data.amount,
+      direction: mapTypeToDirection(data.type),
+      occurred_at: data.date,
+      note: data.description,
+      is_active: true,
+    };
+
     const response = await customAxiosInstance<CashFlowTransaction>({
       url: '/api/cashflow',
       method: 'POST',
-      data,
+      data: apiData,
     });
     return response;
   },
@@ -65,7 +76,7 @@ export const cashFlowApi = {
   },
 
   // Atualizar transação
-  updateTransaction: async (id: string, data: Partial<CreateTransactionData>) => {
+  updateTransaction: async (id: string, data: Partial<CreateCashFlowData>) => {
     const response = await customAxiosInstance<CashFlowTransaction>({
       url: `/api/cashflow/${id}`,
       method: 'PUT',

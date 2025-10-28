@@ -1,188 +1,257 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Typography, Space, Select, Button } from 'antd';
+import { Table, Card, Input, Tag, Typography, Space, Select, Button, Alert } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { useServices } from '../hooks/useServices';
+import { useServiceOrders, useDeleteServiceOrder } from '../hooks/useServices';
 import { ActionButtons } from '../components/common/ActionButtons';
-import type { Service, ServiceStatus } from '../types/service';
+import type { ServiceOrder, ServiceOrderStatus } from '../types/service-order';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
 
-const STATUS_COLORS: Record<ServiceStatus, string> = {
-  PENDING: 'gold',
-  IN_PROGRESS: 'blue',
-  COMPLETED: 'green',
-  CANCELLED: 'red',
-  WAITING_PARTS: 'orange',
+const STATUS_COLORS: Record<ServiceOrderStatus, string> = {
+  draft: 'default',
+  in_progress: 'blue',
+  completed: 'green',
+  cancelled: 'red',
+};
+
+const STATUS_LABELS: Record<ServiceOrderStatus, string> = {
+  draft: 'Rascunho',
+  in_progress: 'Em Progresso',
+  completed: 'Concluído',
+  cancelled: 'Cancelado',
 };
 
 export function ServiceList() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<ServiceStatus | ''>('');
+  const [selectedStatus, setSelectedStatus] = useState<ServiceOrderStatus | ''>('');
 
-  const { data: services, isLoading } = useServices();
+  const { data: serviceOrders, isLoading, error } = useServiceOrders({
+    status: selectedStatus || undefined,
+    customer_name: searchText || undefined,
+  });
+  const { mutate: deleteServiceOrder } = useDeleteServiceOrder();
 
-  // Filtrar serviços
-  const filteredServices = useMemo(() => {
-    if (!services) return [];
+  // Log para debug
+  if (error) {
+    console.error('Erro ao carregar ordens de serviço:', error);
+  }
 
-    return services.filter(service => {
+  // Filtrar ordens de serviço localmente (backup do filtro da API)
+  const filteredServiceOrders = useMemo(() => {
+    if (!serviceOrders) return [];
+
+    return serviceOrders.filter(order => {
       const matchesSearch = searchText === '' ||
-        service.customer?.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        service.motorcycle?.plate?.toLowerCase().includes(searchText.toLowerCase()) ||
-        service.description?.toLowerCase().includes(searchText.toLowerCase());
+        order.customer_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        order.vehicles?.plate?.toLowerCase().includes(searchText.toLowerCase()) ||
+        order.service_description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        order.professional_name?.toLowerCase().includes(searchText.toLowerCase());
 
-      const matchesStatus = selectedStatus === '' || service.status === selectedStatus;
+      const matchesStatus = selectedStatus === '' || order.status === selectedStatus;
 
       return matchesSearch && matchesStatus;
     });
-  }, [services, searchText, selectedStatus]);
+  }, [serviceOrders, searchText, selectedStatus]);
 
-  const formatCurrency = (value: number) => {
+  // Converter Decimal do Prisma para número
+  const parseDecimal = (value: any): number => {
+    if (typeof value === 'number') return value;
+    if (value && typeof value === 'object' && 'd' in value) {
+      // Prisma Decimal format: {s: sign, e: exponent, d: digits}
+      const sign = value.s || 1;
+      const exponent = value.e || 0;
+      const digits = value.d || [0];
+      const numStr = digits.join('');
+      const num = parseFloat(numStr) * Math.pow(10, exponent - digits.length + 1);
+      return sign * num;
+    }
+    return 0;
+  };
+
+  const formatCurrency = (value?: any) => {
+    const numValue = parseDecimal(value);
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(value);
+    }).format(numValue);
   };
 
-  const formatDate = (date: string | Date) => {
+  const formatDate = (date?: string) => {
+    if (!date) return '-';
     return dayjs(date).format('DD/MM/YYYY');
   };
 
-  const handleView = (id: string) => {
+  const formatDateTime = (date?: string) => {
+    if (!date) return '-';
+    return dayjs(date).format('DD/MM/YYYY HH:mm');
+  };
+
+  const handleView = (id: number) => {
     navigate(`/servicos/${id}`);
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: number) => {
     navigate(`/servicos/${id}/editar`);
   };
 
-  const handleDelete = async (id: string) => {
-    // TODO: Implementar chamada à API
-    console.log('Delete service:', id);
+  const handleDelete = async (id: number) => {
+    deleteServiceOrder(id);
   };
 
   const handleCreate = () => {
     navigate('/servicos/novo');
   };
 
-  const columns: ColumnsType<Service> = [
+  const calculateTotal = (order: ServiceOrder) => {
+    let total = parseDecimal(order.estimated_labor_cost);
+    
+    // Somar produtos
+    if (order.service_products) {
+      total += order.service_products.reduce((sum, product) => {
+        const qty = parseDecimal(product.product_qtd);
+        const price = parseDecimal(product.products.sell_price);
+        return sum + (qty * price);
+      }, 0);
+    }
+
+    // Somar serviços realizados
+    if (order.services_realized) {
+      total += order.services_realized.reduce((sum, service) => {
+        const qty = parseDecimal(service.service_qtd);
+        const cost = parseDecimal(service.service.service_cost);
+        return sum + (qty * cost);
+      }, 0);
+    }
+
+    return total;
+  };
+
+  const columns: ColumnsType<ServiceOrder> = [
     {
-      title: t('services.customer'),
-      key: 'customer',
-      width: 150,
-      render: (_, record) => record.customer?.name || '-',
+      title: 'Ações',
+      key: 'actions',
+      width: 120,
+      align: 'center',
+      fixed: 'left',
+      render: (_, record) => (
+        <ActionButtons
+          onView={() => handleView(record.service_order_id)}
+          onEdit={() => handleEdit(record.service_order_id)}
+          onDelete={() => handleDelete(record.service_order_id)}
+          showView
+          showEdit
+          showDelete
+          iconOnly
+          deleteTitle="Deletar Ordem de Serviço"
+          deleteDescription={`Tem certeza que deseja deletar a ordem de serviço #${record.service_order_id}?`}
+        />
+      ),
     },
     {
-      title: t('services.motorcycle'),
-      key: 'motorcycle',
+      title: '#',
+      dataIndex: 'service_order_id',
+      key: 'service_order_id',
+      width: 80,
+      render: (id: number) => `#${id}`,
+    },
+    {
+      title: 'Cliente',
+      dataIndex: 'customer_name',
+      key: 'customer_name',
+      width: 150,
+      render: (name: string) => name || '-',
+    },
+    {
+      title: 'Veículo',
+      key: 'vehicle',
       width: 200,
       render: (_, record) => {
-        if (!record.motorcycle) return '-';
+        if (!record.vehicles) return '-';
         return (
           <div>
-            <div>{record.motorcycle.brand} {record.motorcycle.model}</div>
+            <div>{record.vehicles.brand} {record.vehicles.model}</div>
             <div style={{ fontSize: '12px', color: '#888' }}>
-              {t('services.plate')}: {record.motorcycle.plate}
+              {record.vehicles.plate} - {record.vehicles.year}
             </div>
           </div>
         );
       },
     },
     {
-      title: t('table.description'),
-      dataIndex: 'description',
-      key: 'description',
+      title: 'Descrição',
+      dataIndex: 'service_description',
+      key: 'service_description',
       ellipsis: true,
       render: (text: string) => text || '-',
     },
     {
-      title: t('services.mechanic'),
-      key: 'mechanic',
+      title: 'Profissional',
+      dataIndex: 'professional_name',
+      key: 'professional_name',
       width: 130,
-      render: (_, record) => record.user?.name || '-',
+      render: (name: string) => name || '-',
     },
     {
-      title: t('table.status'),
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 130,
+      width: 120,
       align: 'center',
-      render: (status: ServiceStatus) => (
+      render: (status: ServiceOrderStatus) => (
         <Tag color={STATUS_COLORS[status]}>
-          {t(`services.status.${status}`)}
+          {STATUS_LABELS[status]}
         </Tag>
       ),
     },
     {
-      title: t('services.startDate'),
-      dataIndex: 'startDate',
-      key: 'startDate',
+      title: 'Criado em',
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: 110,
       align: 'center',
       render: (date: string) => formatDate(date),
     },
     {
-      title: t('services.estimatedEndDate'),
-      dataIndex: 'estimatedEndDate',
-      key: 'estimatedEndDate',
+      title: 'Finalizado em',
+      dataIndex: 'finalized_at',
+      key: 'finalized_at',
       width: 130,
       align: 'center',
-      render: (date: string | null) => date ? formatDate(date) : '-',
+      render: (date: string) => formatDateTime(date),
     },
     {
-      title: t('services.laborCost'),
-      dataIndex: 'laborCost',
-      key: 'laborCost',
+      title: 'Custo Estimado',
+      dataIndex: 'estimated_labor_cost',
+      key: 'estimated_labor_cost',
       width: 120,
       align: 'right',
-      render: (value: number) => formatCurrency(value),
+      render: (value: any) => formatCurrency(value),
     },
     {
-      title: t('services.totalCost'),
-      dataIndex: 'totalCost',
-      key: 'totalCost',
-      width: 120,
+      title: 'Total Estimado',
+      key: 'total_estimated',
+      width: 130,
       align: 'right',
-      render: (value: number) => formatCurrency(value),
-    },
-    {
-      title: 'Ações',
-      key: 'actions',
-      width: 150,
-      align: 'center',
-      fixed: 'right',
-      render: (_, record) => (
-        <ActionButtons
-          onView={() => handleView(record.id)}
-          onEdit={() => handleEdit(record.id)}
-          onDelete={() => handleDelete(record.id)}
-          showView
-          deleteTitle="Deletar Serviço"
-          deleteDescription={`Tem certeza que deseja deletar este serviço?`}
-        />
-      ),
+      render: (_, record) => formatCurrency(calculateTotal(record)),
     },
   ];
 
-  const statusOptions: { value: ServiceStatus | ''; label: string }[] = [
-    { value: '', label: t('services.allStatuses') },
-    { value: 'PENDING', label: t('services.status.PENDING') },
-    { value: 'IN_PROGRESS', label: t('services.status.IN_PROGRESS') },
-    { value: 'WAITING_PARTS', label: t('services.status.WAITING_PARTS') },
-    { value: 'COMPLETED', label: t('services.status.COMPLETED') },
-    { value: 'CANCELLED', label: t('services.status.CANCELLED') },
+  const statusOptions: { value: ServiceOrderStatus | ''; label: string }[] = [
+    { value: '', label: 'Todos os Status' },
+    { value: 'draft', label: 'Rascunho' },
+    { value: 'in_progress', label: 'Em Progresso' },
+    { value: 'completed', label: 'Concluído' },
+    { value: 'cancelled', label: 'Cancelado' },
   ];
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>{t('services.title')}</Title>
+        <Title level={2} style={{ margin: 0 }}>Ordens de Serviço</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -196,7 +265,7 @@ export function ServiceList() {
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Input
-            placeholder={t('services.searchPlaceholder')}
+            placeholder="Buscar por cliente, placa, descrição..."
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -204,7 +273,7 @@ export function ServiceList() {
             allowClear
           />
           <Select
-            placeholder={t('services.filterByStatus')}
+            placeholder="Filtrar por status"
             value={selectedStatus || undefined}
             onChange={(value) => setSelectedStatus(value || '')}
             style={{ width: 200 }}
@@ -214,19 +283,29 @@ export function ServiceList() {
         </Space>
       </Card>
 
+      {error && (
+        <Alert
+          message="Erro ao carregar ordens de serviço"
+          description="Não foi possível carregar as ordens de serviço. A API pode não estar disponível ou você pode não ter permissão."
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <Card>
         <Table
           columns={columns}
-          dataSource={filteredServices}
+          dataSource={filteredServiceOrders}
           loading={isLoading}
-          rowKey="id"
+          rowKey="service_order_id"
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} ${t('services.title').toLowerCase()}`,
+            showTotal: (total) => `Total: ${total} ordens de serviço`,
           }}
           size="small"
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1400 }}
         />
       </Card>
     </div>

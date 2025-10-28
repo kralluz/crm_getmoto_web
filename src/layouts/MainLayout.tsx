@@ -17,7 +17,31 @@ export function MainLayout() {
   // Mapear a rota atual para a key do menu
   const getSelectedMenuKey = () => {
     const path = location.pathname.split('/')[1];
-    return path || 'dashboard';
+
+    // Mapeia rotas específicas para suas keys de menu
+    const routeMap: Record<string, string> = {
+      'categorias-produtos': 'categorias-produtos',
+      'categorias-servicos': 'categorias-servicos',
+      'estoque': 'estoque',
+      'produtos': 'produtos',
+      'servicos': 'servicos',
+    };
+
+    return routeMap[path] || path || 'dashboard';
+  };
+
+  // Determinar quais submenus devem estar abertos
+  const getOpenKeys = () => {
+    const path = location.pathname.split('/')[1];
+
+    if (path === 'produtos' || path === 'categorias-produtos' || path === 'estoque') {
+      return ['produtos-submenu'];
+    }
+    if (path === 'servicos' || path === 'categorias-servicos') {
+      return ['servicos-submenu'];
+    }
+
+    return [];
   };
 
   const handleMenuSelect = (key: string) => {
@@ -36,6 +60,7 @@ export function MainLayout() {
         collapsed={collapsed}
         onCollapse={setCollapsed}
         selectedMenu={getSelectedMenuKey()}
+        openKeys={getOpenKeys()}
         onMenuSelect={handleMenuSelect}
       />
       <Layout

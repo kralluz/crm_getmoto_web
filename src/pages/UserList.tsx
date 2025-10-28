@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Typography, Space, Select, Button } from 'antd';
+import { Table, Card, Input, Tag, Typography, Space, Select, Button, Tooltip } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, KeyOutlined } from '@ant-design/icons';
 // import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -117,6 +117,50 @@ export function UserList() {
 
   const columns: ColumnsType<User> = [
     {
+      title: 'Ações',
+      key: 'actions',
+      width: 140,
+      align: 'center',
+      fixed: 'left',
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="Ver detalhes">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => handleView(record.id)}
+            />
+          </Tooltip>
+          <Tooltip title="Editar">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record.id)}
+            />
+          </Tooltip>
+          <Tooltip title="Alterar senha">
+            <Button
+              type="text"
+              size="small"
+              icon={<KeyOutlined />}
+              onClick={() => handleChangePassword(record.id)}
+            />
+          </Tooltip>
+          <Tooltip title="Deletar">
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record.id)}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
+    {
       title: 'Nome',
       dataIndex: 'name',
       key: 'name',
@@ -158,41 +202,6 @@ export function UserList() {
       align: 'center',
       render: (date: string) => formatDate(date),
       sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
-    },
-    {
-      title: 'Ações',
-      key: 'actions',
-      width: 180,
-      align: 'center',
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handleView(record.id)}
-            title="Ver detalhes"
-          />
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record.id)}
-            title="Editar"
-          />
-          <Button
-            type="link"
-            icon={<KeyOutlined />}
-            onClick={() => handleChangePassword(record.id)}
-            title="Alterar senha"
-          />
-          <Button
-            type="link"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-            title="Deletar"
-          />
-        </Space>
-      ),
     },
   ];
 

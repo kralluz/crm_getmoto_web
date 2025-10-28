@@ -53,11 +53,15 @@ export function useFormat() {
     // Datas
     date,
     dateRelative,
+    formatDateTime: date, // Alias para compatibilidade
+    formatDate: date,     // Alias para compatibilidade
 
     // Números e moeda
     currency,
     number,
     percent,
+    formatCurrency: currency, // Alias para compatibilidade
+    formatNumber: number,     // Alias para compatibilidade
 
     // Documentos brasileiros
     cpf: FormatService.cpf,

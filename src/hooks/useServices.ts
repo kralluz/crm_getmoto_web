@@ -1,65 +1,89 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { serviceApi } from '../api/service-api';
-import type { CreateServiceData, UpdateServiceData } from '../types/service';
+import { serviceOrderApi } from '../api/service-api';
+import type { 
+  CreateServiceOrderData, 
+  UpdateServiceOrderData,
+  ServiceOrderListParams 
+} from '../types/service-order';
 
-export function useServices(params?: {
-  status?: string;
-  customerId?: string;
-  startDate?: string;
-  endDate?: string;
-}) {
+export function useServiceOrders(params?: ServiceOrderListParams) {
   return useQuery({
-    queryKey: ['services', params],
-    queryFn: () => serviceApi.getAll(params),
+    queryKey: ['service-orders', params],
+    queryFn: () => serviceOrderApi.getAll(params),
+    retry: false, // Não tentar novamente em caso de erro
+    meta: {
+      skipErrorNotification: true, // Pula notificação automática de erro
+    },
   });
 }
 
-export function useService(id: string) {
+export function useServiceOrder(id: number) {
   return useQuery({
-    queryKey: ['service', id],
-    queryFn: () => serviceApi.getById(id),
+    queryKey: ['service-order', id],
+    queryFn: () => serviceOrderApi.getById(id),
     enabled: !!id,
-  });
-}
-
-export function useCreateService() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CreateServiceData) => serviceApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+    retry: false,
+    meta: {
+      skipErrorNotification: true,
     },
   });
 }
 
-export function useUpdateService() {
+export function useCreateServiceOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateServiceData }) =>
-      serviceApi.update(id, data),
+    mutationFn: (data: CreateServiceOrderData) => serviceOrderApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
     },
   });
 }
 
-export function useDeleteService() {
+export function useUpdateServiceOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => serviceApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+    mutationFn: ({ id, data }: { id: number; data: UpdateServiceOrderData }) =>
+      serviceOrderApi.update(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['service-order', id] });
     },
   });
 }
 
-export function useServicesByStatus(status: string) {
+export function useDeleteServiceOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => serviceOrderApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+    },
+  });
+}
+
+export function useServiceOrdersByStatus(status: string) {
   return useQuery({
-    queryKey: ['services', 'status', status],
-    queryFn: () => serviceApi.getByStatus(status),
+    queryKey: ['service-orders', 'status', status],
+    queryFn: () => serviceOrderApi.getByStatus(status),
     enabled: !!status,
   });
 }
+
+export function useServiceOrdersByCustomer(customer_name: string) {
+  return useQuery({
+    queryKey: ['service-orders', 'customer', customer_name],
+    queryFn: () => serviceOrderApi.getByCustomer(customer_name),
+    enabled: !!customer_name,
+  });
+}
+
+// Backward compatibility - mantém os hooks antigos apontando para os novos
+export const useServices = useServiceOrders;
+export const useService = useServiceOrder;
+export const useCreateService = useCreateServiceOrder;
+export const useUpdateService = useUpdateServiceOrder;
+export const useDeleteService = useDeleteServiceOrder;
+export const useServicesByStatus = useServiceOrdersByStatus;

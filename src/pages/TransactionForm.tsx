@@ -176,10 +176,10 @@ export function TransactionForm() {
             />
           </Form.Item>
 
-          <Form.Item label={t('transaction.description')} name="notes">
+          <Form.Item label="Observações (opcional)" name="notes">
             <TextArea
               rows={2}
-              placeholder={t('transaction.descriptionPlaceholder')}
+              placeholder="Informações adicionais sobre a transação..."
               maxLength={500}
               showCount
             />

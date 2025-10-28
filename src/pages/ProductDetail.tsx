@@ -1,42 +1,145 @@
-import { Card, Descriptions, Tag, Typography, Space, Button, Divider } from 'antd';
-import { ArrowLeftOutlined, ShoppingCartOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
+import { 
+  Card, 
+  Descriptions, 
+  Tag, 
+  Typography, 
+  Space, 
+  Button, 
+  Table, 
+  Alert,
+  Row,
+  Col,
+  Statistic
+} from 'antd';
+import { 
+  ArrowLeftOutlined, 
+  EditOutlined, 
+  SwapOutlined,
+  WarningOutlined 
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useProduct } from '../hooks/useProducts';
+import { useFormat } from '../hooks/useFormat';
+import { parseDecimal } from '../utils';
+import { LoadingOverlay } from '../components/common/LoadingOverlay';
+import { PageHeader } from '../components/common/PageHeader';
+import { StockMovementModal } from '../components/products/StockMovementModal';
+import type { StockMove } from '../types/product';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export function ProductDetail() {
-  const { id: productId } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { formatDateTime } = useFormat();
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  
+  const productId = id ? parseInt(id) : undefined;
+  const { data: product, isLoading } = useProduct(productId);
+
+  if (isLoading) {
+    return <LoadingOverlay />;
+  }
+
+  if (!product) {
+    return (
+      <div>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/produtos')}>
+          Voltar
+        </Button>
+        <Card style={{ marginTop: 16 }}>
+          <Alert message="Produto não encontrado" type="error" />
+        </Card>
+      </div>
+    );
+  }
 
   const handleBack = () => {
     navigate('/produtos');
   };
 
-  // Mock data - substituir por chamada real à API
-  const product = {
-    id: productId,
-    code: 'PROD-001',
-    name: 'Óleo Motul 5W30',
-    brand: 'Motul',
-    category: 'Lubrificantes',
-    description: 'Óleo sintético premium para motores de alta performance',
-    costPrice: 65.00,
-    salePrice: 89.90,
-    stockQuantity: 15,
-    minStock: 5,
-    active: true,
+  const handleEdit = () => {
+    navigate(`/produtos/${id}/editar`);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
+  const quantity = parseDecimal(product.quantity);
+  const quantityAlert = parseDecimal(product.quantity_alert);
+  const buyPrice = parseDecimal(product.buy_price);
+  const sellPrice = parseDecimal(product.sell_price);
+
+  const isLowStock = quantity <= quantityAlert;
+  const margin = buyPrice > 0 
+    ? ((sellPrice - buyPrice) / buyPrice) * 100 
+    : 0;
+
+  const moveTypeLabels: Record<string, { label: string; color: string }> = {
+    ENTRY: { label: 'Entrada', color: 'green' },
+    EXIT: { label: 'Saída', color: 'red' },
+    ADJUSTMENT: { label: 'Ajuste', color: 'orange' },
   };
 
-  const isLowStock = product.stockQuantity <= product.minStock;
+  const stockMoveColumns: ColumnsType<StockMove> = [
+    {
+      title: 'Data',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      width: 180,
+      render: (date: string) => formatDateTime(date),
+      sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      defaultSortOrder: 'descend',
+    },
+    {
+      title: 'Tipo',
+      dataIndex: 'move_type',
+      key: 'move_type',
+      width: 120,
+      render: (type: string) => {
+        const config = moveTypeLabels[type];
+        return <Tag color={config?.color}>{config?.label || type}</Tag>;
+      },
+      filters: [
+        { text: 'Entrada', value: 'ENTRY' },
+        { text: 'Saída', value: 'EXIT' },
+        { text: 'Ajuste', value: 'ADJUSTMENT' },
+      ],
+      onFilter: (value, record) => record.move_type === value,
+    },
+    {
+      title: 'Quantidade',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      width: 120,
+      align: 'right',
+      render: (qty: any, record) => {
+        const qtyNum = parseDecimal(qty);
+        const color = record.move_type === 'ENTRY' ? '#52c41a' : 
+                      record.move_type === 'EXIT' ? '#ff4d4f' : '#fa8c16';
+        const prefix = record.move_type === 'ENTRY' ? '+' : 
+                       record.move_type === 'EXIT' ? '-' : '';
+        return (
+          <Text strong style={{ color }}>
+            {prefix}{qtyNum.toFixed(1)}
+          </Text>
+        );
+      },
+    },
+    {
+      title: 'Responsável',
+      dataIndex: ['users', 'name'],
+      key: 'user',
+      width: 180,
+      render: (name: string) => name || '-',
+    },
+    {
+      title: 'Observações',
+      dataIndex: 'notes',
+      key: 'notes',
+      ellipsis: true,
+      render: (notes: string) => notes || '-',
+    },
+  ];
 
   return (
     <div>
@@ -48,59 +151,141 @@ export function ProductDetail() {
         Voltar
       </Button>
 
-      <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div>
-            <Space>
-              <ShoppingCartOutlined style={{ fontSize: 32, color: '#1890ff' }} />
-              <div>
-                <Title level={2} style={{ margin: 0 }}>
-                  {product.name}
-                </Title>
-                <Text type="secondary">{product.code}</Text>
-              </div>
-            </Space>
-          </div>
+      <PageHeader
+        title={product.product_name}
+        subtitle={product.product_category?.product_category_name}
+        extra={
+          <Space>
+            <Button
+              icon={<SwapOutlined />}
+              onClick={() => setIsStockModalOpen(true)}
+              size="large"
+            >
+              Movimentar Estoque
+            </Button>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={handleEdit}
+              size="large"
+            >
+              Editar
+            </Button>
+          </Space>
+        }
+      />
 
-          <Divider />
+      {isLowStock && (
+        <Alert
+          message="Estoque Baixo"
+          description={`O estoque está abaixo do nível mínimo (${quantityAlert.toFixed(1)} unidades). Considere fazer uma reposição.`}
+          type="warning"
+          icon={<WarningOutlined />}
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
-          <Descriptions bordered column={{ xs: 1, sm: 1, md: 2 }}>
-            <Descriptions.Item label={t('table.brand')}>
-              {product.brand}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('table.category')}>
-              <Tag>{product.category}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label={t('products.costPrice')}>
-              {formatCurrency(product.costPrice)}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('products.salePrice')}>
-              <Text strong style={{ fontSize: 16, color: '#52c41a' }}>
-                {formatCurrency(product.salePrice)}
-              </Text>
-            </Descriptions.Item>
-            <Descriptions.Item label={t('table.stock')}>
-              <Space>
-                <Text strong style={{ color: isLowStock ? '#ff4d4f' : undefined }}>
-                  {product.stockQuantity} unidades
-                </Text>
-                {isLowStock && <Tag color="red">Estoque baixo</Tag>}
-              </Space>
-            </Descriptions.Item>
-            <Descriptions.Item label="Estoque mínimo">
-              {product.minStock} unidades
-            </Descriptions.Item>
-            <Descriptions.Item label={t('table.status')}>
-              <Tag color={product.active ? 'green' : 'default'}>
-                {product.active ? t('products.active') : t('products.inactive')}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Descrição" span={2}>
-              {product.description}
-            </Descriptions.Item>
-          </Descriptions>
-        </Space>
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Estoque Atual"
+              value={quantity}
+              precision={1}
+              suffix="unidades"
+              valueStyle={{ color: isLowStock ? '#ff4d4f' : '#1890ff', fontWeight: 600 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Preço de Venda"
+              value={sellPrice}
+              precision={2}
+              prefix="R$"
+              valueStyle={{ color: '#52c41a', fontWeight: 600 }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Preço de Compra"
+              value={buyPrice}
+              precision={2}
+              prefix="R$"
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="Margem de Lucro"
+              value={margin}
+              precision={1}
+              suffix="%"
+              valueStyle={{ 
+                color: margin >= 30 ? '#52c41a' : margin >= 15 ? '#fa8c16' : '#ff4d4f',
+                fontWeight: 600 
+              }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card style={{ marginBottom: 16 }}>
+        <Descriptions bordered column={{ xs: 1, sm: 1, md: 2 }}>
+          <Descriptions.Item label="ID do Produto">
+            {product.product_id}
+          </Descriptions.Item>
+          <Descriptions.Item label="Categoria">
+            <Tag color="blue">{product.product_category?.product_category_name}</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Estoque Mínimo">
+            {quantityAlert.toFixed(1)} unidades
+          </Descriptions.Item>
+          <Descriptions.Item label="Status">
+            <Tag color={product.is_active ? 'green' : 'default'}>
+              {product.is_active ? 'Ativo' : 'Inativo'}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Data de Criação">
+            {formatDateTime(product.created_at)}
+          </Descriptions.Item>
+          <Descriptions.Item label="Última Atualização">
+            {formatDateTime(product.updated_at)}
+          </Descriptions.Item>
+        </Descriptions>
       </Card>
+
+      <Card title="Histórico de Movimentações">
+        <Table
+          columns={stockMoveColumns}
+          dataSource={product.stock_move || []}
+          rowKey="stock_move_id"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total: ${total} movimentações`,
+          }}
+          locale={{
+            emptyText: 'Nenhuma movimentação registrada',
+          }}
+          size="small"
+        />
+      </Card>
+
+      <StockMovementModal
+        product={product}
+        open={isStockModalOpen}
+        onCancel={() => setIsStockModalOpen(false)}
+        onSuccess={() => {
+          // O hook já invalida as queries automaticamente
+        }}
+      />
     </div>
   );
 }

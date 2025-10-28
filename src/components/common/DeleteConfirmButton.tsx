@@ -12,6 +12,7 @@ interface DeleteConfirmButtonProps {
   buttonSize?: 'small' | 'middle' | 'large';
   danger?: boolean;
   icon?: React.ReactNode;
+  iconOnly?: boolean;
 }
 
 export function DeleteConfirmButton({
@@ -23,6 +24,7 @@ export function DeleteConfirmButton({
   buttonSize = 'small',
   danger = true,
   icon = <DeleteOutlined />,
+  iconOnly = false,
 }: DeleteConfirmButtonProps) {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,7 +60,7 @@ export function DeleteConfirmButton({
         onClick={handleOpenModal}
         loading={loading}
       >
-        {t('common.delete')}
+        {!iconOnly && t('common.delete')}
       </Button>
 
       <Modal

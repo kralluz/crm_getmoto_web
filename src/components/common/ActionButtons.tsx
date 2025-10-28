@@ -14,6 +14,7 @@ interface ActionButtonsProps {
   deleteTitle?: string;
   deleteDescription?: string;
   size?: 'small' | 'middle' | 'large';
+  iconOnly?: boolean;
 }
 
 export function ActionButtons({
@@ -27,6 +28,7 @@ export function ActionButtons({
   deleteTitle,
   deleteDescription,
   size = 'small',
+  iconOnly = false,
 }: ActionButtonsProps) {
   const { t } = useTranslation();
 
@@ -41,7 +43,7 @@ export function ActionButtons({
             onClick={onView}
             loading={loading}
           >
-            {t('common.view')}
+            {!iconOnly && t('common.view')}
           </Button>
         </Tooltip>
       )}
@@ -55,7 +57,7 @@ export function ActionButtons({
             onClick={onEdit}
             loading={loading}
           >
-            {t('common.edit')}
+            {!iconOnly && t('common.edit')}
           </Button>
         </Tooltip>
       )}
@@ -67,6 +69,7 @@ export function ActionButtons({
           title={deleteTitle}
           description={deleteDescription}
           buttonSize={size}
+          iconOnly={iconOnly}
         />
       )}
     </Space>

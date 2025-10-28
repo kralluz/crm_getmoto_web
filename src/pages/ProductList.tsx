@@ -1,64 +1,62 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Typography, Space, Select, Button } from 'antd';
-import { SearchOutlined, WarningOutlined, PlusOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
+import { Table, Card, Input, Tag, Space, Select, Button, Tooltip } from 'antd';
+import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { useProducts } from '../hooks/useProducts';
+import { useProducts, useDeleteProduct } from '../hooks/useProducts';
 import { ActionButtons } from '../components/common/ActionButtons';
+import { PageHeader } from '../components/common/PageHeader';
 import type { Product } from '../types/product';
-
-const { Title } = Typography;
+import { useFormat } from '../hooks/useFormat';
+import { parseDecimal } from '../utils';
 
 export function ProductList() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { formatCurrency } = useFormat();
   const [searchText, setSearchText] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
+  const [lowStockFilter, setLowStockFilter] = useState(false);
 
-  const { data: products, isLoading } = useProducts();
+  const { data: products, isLoading } = useProducts({ 
+    active: activeFilter,
+    lowStock: lowStockFilter || undefined
+  });
+  const { mutate: deleteProduct } = useDeleteProduct();
 
   // Extrair categorias únicas
   const categories = useMemo(() => {
     if (!Array.isArray(products)) return [];
-    const uniqueCategories = new Set(products.map(p => p.category).filter(Boolean));
+    const uniqueCategories = new Set(
+      products
+        .map(p => p.product_category?.product_category_name)
+        .filter(Boolean)
+    );
     return Array.from(uniqueCategories) as string[];
   }, [products]);
 
-  // Filtrar produtos
+  // Filtrar produtos localmente (para busca por texto)
   const filteredProducts = useMemo(() => {
     if (!Array.isArray(products)) return [];
 
     return products.filter(product => {
       const matchesSearch = searchText === '' ||
-        product.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        product.code?.toLowerCase().includes(searchText.toLowerCase()) ||
-        product.brand?.toLowerCase().includes(searchText.toLowerCase());
+        product.product_name.toLowerCase().includes(searchText.toLowerCase()) ||
+        product.product_category?.product_category_name.toLowerCase().includes(searchText.toLowerCase());
 
-      const matchesCategory = selectedCategory === '' || product.category === selectedCategory;
-
-      return matchesSearch && matchesCategory;
+      return matchesSearch;
     });
-  }, [products, searchText, selectedCategory]);
+  }, [products, searchText]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
-
-  const handleView = (id: string) => {
+  const handleView = (id: number) => {
     navigate(`/produtos/${id}`);
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: number) => {
     navigate(`/produtos/${id}/editar`);
   };
 
-  const handleDelete = async (id: string) => {
-    // TODO: Implementar chamada à API
-    console.log('Delete product:', id);
+  const handleDelete = async (id: number) => {
+    deleteProduct(id);
   };
 
   const handleCreate = () => {
@@ -67,128 +65,197 @@ export function ProductList() {
 
   const columns: ColumnsType<Product> = [
     {
-      title: t('products.code'),
-      dataIndex: 'code',
-      key: 'code',
-      width: 120,
-    },
-    {
-      title: t('table.name'),
-      dataIndex: 'name',
-      key: 'name',
-      ellipsis: true,
-    },
-    {
-      title: t('table.brand'),
-      dataIndex: 'brand',
-      key: 'brand',
-      width: 150,
-    },
-    {
-      title: t('table.category'),
-      dataIndex: 'category',
-      key: 'category',
-      width: 150,
-      render: (category: string) => category && <Tag>{category}</Tag>,
-    },
-    {
-      title: t('products.costPrice'),
-      dataIndex: 'costPrice',
-      key: 'costPrice',
-      width: 120,
-      align: 'right',
-      render: (value: number) => formatCurrency(value),
-    },
-    {
-      title: t('products.salePrice'),
-      dataIndex: 'salePrice',
-      key: 'salePrice',
-      width: 120,
-      align: 'right',
-      render: (value: number) => formatCurrency(value),
-    },
-    {
-      title: t('table.stock'),
-      dataIndex: 'stockQuantity',
-      key: 'stockQuantity',
+      title: 'Ações',
+      key: 'actions',
       width: 100,
       align: 'center',
-      render: (value: number, record) => {
-        const isLowStock = value <= record.minStock;
+      fixed: 'left',
+      render: (_, record) => (
+        <ActionButtons
+          onView={() => handleView(record.product_id)}
+          onEdit={() => handleEdit(record.product_id)}
+          onDelete={() => handleDelete(record.product_id)}
+          showView
+          deleteTitle="Deletar Produto"
+          deleteDescription={`Tem certeza que deseja deletar o produto "${record.product_name}"?`}
+          iconOnly
+        />
+      ),
+    },
+    {
+      title: 'ID',
+      dataIndex: 'product_id',
+      key: 'product_id',
+      width: 80,
+      sorter: (a, b) => a.product_id - b.product_id,
+    },
+    {
+      title: 'Produto',
+      dataIndex: 'product_name',
+      key: 'product_name',
+      ellipsis: true,
+      sorter: (a, b) => a.product_name.localeCompare(b.product_name),
+    },
+    {
+      title: 'Categoria',
+      dataIndex: ['product_category', 'product_category_name'],
+      key: 'category',
+      width: 150,
+      render: (category: string) => category && <Tag color="blue">{category}</Tag>,
+      filters: categories.map(cat => ({ text: cat, value: cat })),
+      onFilter: (value, record) => 
+        record.product_category?.product_category_name === value,
+    },
+    {
+      title: 'Preço Compra',
+      dataIndex: 'buy_price',
+      key: 'buy_price',
+      width: 130,
+      align: 'right',
+      render: (value: any) => formatCurrency(parseDecimal(value)),
+      sorter: (a, b) => parseDecimal(a.buy_price) - parseDecimal(b.buy_price),
+    },
+    {
+      title: 'Preço Venda',
+      dataIndex: 'sell_price',
+      key: 'sell_price',
+      width: 130,
+      align: 'right',
+      render: (value: any) => (
+        <span style={{ fontWeight: 600, color: '#52c41a' }}>
+          {formatCurrency(parseDecimal(value))}
+        </span>
+      ),
+      sorter: (a, b) => parseDecimal(a.sell_price) - parseDecimal(b.sell_price),
+    },
+    {
+      title: 'Margem',
+      key: 'margin',
+      width: 100,
+      align: 'center',
+      render: (_, record) => {
+        const buyPrice = parseDecimal(record.buy_price);
+        const sellPrice = parseDecimal(record.sell_price);
+        const margin = buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
         return (
-          <span style={{ color: isLowStock ? '#ff4d4f' : undefined }}>
-            {isLowStock && <WarningOutlined style={{ marginRight: 4 }} />}
-            {value}
-          </span>
+          <Tag color={margin >= 30 ? 'green' : margin >= 15 ? 'orange' : 'red'}>
+            {margin.toFixed(1)}%
+          </Tag>
         );
+      },
+      sorter: (a, b) => {
+        const buyPriceA = parseDecimal(a.buy_price);
+        const sellPriceA = parseDecimal(a.sell_price);
+        const buyPriceB = parseDecimal(b.buy_price);
+        const sellPriceB = parseDecimal(b.sell_price);
+        const marginA = buyPriceA > 0 ? ((sellPriceA - buyPriceA) / buyPriceA) * 100 : 0;
+        const marginB = buyPriceB > 0 ? ((sellPriceB - buyPriceB) / buyPriceB) * 100 : 0;
+        return marginA - marginB;
       },
     },
     {
-      title: t('table.status'),
-      dataIndex: 'active',
-      key: 'active',
+      title: 'Estoque',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (value: any, record) => {
+        const qty = parseDecimal(value);
+        const alertQty = parseDecimal(record.quantity_alert);
+        const isLowStock = qty <= alertQty;
+        return (
+          <Tooltip title={isLowStock ? `Estoque mínimo: ${alertQty.toFixed(1)}` : ''}>
+            <span style={{ color: isLowStock ? '#ff4d4f' : undefined, fontWeight: isLowStock ? 600 : 400 }}>
+              {isLowStock && <WarningOutlined style={{ marginRight: 4 }} />}
+              {qty.toFixed(1)}
+            </span>
+          </Tooltip>
+        );
+      },
+      sorter: (a, b) => parseDecimal(a.quantity) - parseDecimal(b.quantity),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'is_active',
+      key: 'is_active',
       width: 100,
       align: 'center',
       render: (active: boolean) => (
         <Tag color={active ? 'green' : 'default'}>
-          {active ? t('products.active') : t('products.inactive')}
+          {active ? 'Ativo' : 'Inativo'}
         </Tag>
       ),
-    },
-    {
-      title: 'Ações',
-      key: 'actions',
-      width: 150,
-      align: 'center',
-      fixed: 'right',
-      render: (_, record) => (
-        <ActionButtons
-          onView={() => handleView(record.id)}
-          onEdit={() => handleEdit(record.id)}
-          onDelete={() => handleDelete(record.id)}
-          showView
-          deleteTitle="Deletar Produto"
-          deleteDescription={`Tem certeza que deseja deletar o produto "${record.name}"?`}
-        />
-      ),
+      filters: [
+        { text: 'Ativo', value: true },
+        { text: 'Inativo', value: false },
+      ],
+      onFilter: (value, record) => record.is_active === value,
     },
   ];
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>{t('products.title')}</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-          size="large"
-        >
-          Novo Produto
-        </Button>
-      </div>
+      <PageHeader
+        title="Produtos"
+        subtitle="Gerencie o catálogo de produtos e estoque"
+        extra={
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+            size="large"
+          >
+            Novo Produto
+          </Button>
+        }
+      />
 
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Input
-            placeholder={t('products.searchPlaceholder')}
+            placeholder="Buscar por produto ou categoria..."
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{ width: 300 }}
             allowClear
           />
+          
           <Select
-            placeholder={t('products.filterByCategory')}
-            value={selectedCategory || undefined}
-            onChange={(value) => setSelectedCategory(value || '')}
-            style={{ width: 200 }}
-            allowClear
+            placeholder="Status"
+            value={activeFilter}
+            onChange={setActiveFilter}
+            style={{ width: 150 }}
             options={[
-              { value: '', label: t('products.allCategories') },
-              ...categories.map(cat => ({ value: cat, label: cat }))
+              { value: undefined, label: 'Todos' },
+              { value: true, label: 'Ativos' },
+              { value: false, label: 'Inativos' },
             ]}
           />
+
+          <Select
+            placeholder="Estoque"
+            value={lowStockFilter}
+            onChange={setLowStockFilter}
+            style={{ width: 180 }}
+            options={[
+              { value: false, label: 'Todos' },
+              { value: true, label: 'Estoque Baixo' },
+            ]}
+          />
+
+          {(searchText || activeFilter !== true || lowStockFilter) && (
+            <Button
+              icon={<FilterOutlined />}
+              onClick={() => {
+                setSearchText('');
+                setActiveFilter(true);
+                setLowStockFilter(false);
+              }}
+            >
+              Limpar Filtros
+            </Button>
+          )}
         </Space>
       </Card>
 
@@ -197,14 +264,15 @@ export function ProductList() {
           columns={columns}
           dataSource={filteredProducts}
           loading={isLoading}
-          rowKey="id"
+          rowKey="product_id"
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} ${t('products.title').toLowerCase()}`,
+            showTotal: (total) => `Total: ${total} produtos`,
+            pageSizeOptions: ['10', '20', '50', '100'],
           }}
           size="small"
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1200 }}
         />
       </Card>
     </div>

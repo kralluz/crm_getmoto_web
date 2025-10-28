@@ -15,41 +15,57 @@ export function RecentTransactionsTable({
 }: RecentTransactionsTableProps) {
   const { t } = useTranslation();
 
-  const formatCurrency = (value: number) => {
+  const parseAmount = (value: unknown): number => {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      // Normaliza valores vindos em formatos brasileiros como "1.234,56"
+      const s = value.trim();
+      // Se houver vírgula, assumimos formato PT-BR: pontos como milhares e vírgula como decimal
+      let normalized = s;
+      if (normalized.indexOf(',') > -1) {
+        normalized = normalized.replace(/\./g, '').replace(/,/g, '.');
+      } else {
+        // Remove separadores de milhar (vírgulas ou espaços) se existirem
+        normalized = normalized.replace(/[,\s]/g, '');
+      }
+      const n = Number(normalized);
+      if (Number.isFinite(n)) return n;
+    }
+    return 0;
+  };
+
+  const formatCurrency = (value: unknown) => {
+    const num = parseAmount(value);
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(value);
+    }).format(num);
   };
 
   const columns: ColumnsType<CashFlowTransaction> = [
     {
       title: t('table.date'),
-      dataIndex: 'date',
-      key: 'date',
+      dataIndex: 'occurred_at',
+      key: 'occurred_at',
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
       width: 120,
     },
     {
       title: t('table.description'),
-      dataIndex: 'description',
-      key: 'description',
+      dataIndex: 'note',
+      key: 'note',
       ellipsis: true,
-    },
-    {
-      title: t('table.category'),
-      dataIndex: 'category',
-      key: 'category',
-      width: 150,
+      render: (note: string | null) => note || '-',
     },
     {
       title: t('table.type'),
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'direction',
+      key: 'direction',
       width: 100,
-      render: (type: string) => (
-        <Tag color={type === 'INCOME' ? 'green' : 'red'}>
-          {type === 'INCOME' ? t('dashboard.income') : t('dashboard.expense')}
+      render: (direction: string) => (
+        <Tag color={direction === 'entrada' ? 'green' : 'red'}>
+          {direction === 'entrada' ? t('dashboard.income') : t('dashboard.expense')}
         </Tag>
       ),
     },
@@ -62,11 +78,11 @@ export function RecentTransactionsTable({
       render: (value: number, record) => (
         <span
           style={{
-            color: record.type === 'INCOME' ? '#3f8600' : '#cf1322',
+            color: record.direction === 'entrada' ? '#3f8600' : '#cf1322',
             fontWeight: 'bold',
           }}
         >
-          {record.type === 'INCOME' ? '+' : '-'} {formatCurrency(value)}
+          {record.direction === 'entrada' ? '+' : '-'} {formatCurrency(value)}
         </span>
       ),
     },
@@ -78,7 +94,7 @@ export function RecentTransactionsTable({
         columns={columns}
         dataSource={Array.isArray(transactions) ? transactions.slice(0, 10) : []}
         loading={loading}
-        rowKey={(record) => record.id || (record as any).cash_flow_id || Math.random().toString()}
+        rowKey={(record) => String(record.cash_flow_id)}
         pagination={false}
         size="small"
       />

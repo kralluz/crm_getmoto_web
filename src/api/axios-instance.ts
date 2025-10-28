@@ -114,7 +114,8 @@ axiosInstance.interceptors.response.use(
     }
 
     // Tratamento especial para 401 (não autorizado)
-    if (ApiErrorHandler.isCritical(apiError)) {
+    // Não redireciona se skipErrorNotification estiver ativo
+    if (ApiErrorHandler.isCritical(apiError) && !error.config?.skipErrorNotification) {
       apiLogger.warn('Unauthorized request - clearing auth data');
       StorageService.clearAuthData();
 

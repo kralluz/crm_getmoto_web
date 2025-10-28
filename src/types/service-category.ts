@@ -1,0 +1,48 @@
+export interface ServiceCategory {
+  service_category_id: number;
+  service_category_name: string;
+  service_cost: any;
+  service_cost_cents: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceCategoryWithRelations extends ServiceCategory {
+  service_order?: Array<{
+    service_order_id: number;
+    customer_name: string;
+    status: string;
+    created_at: string;
+  }>;
+  services_realized?: Array<{
+    services_realized_id: number;
+    service_order_id: number;
+    service_qtd: any;
+    created_at: string;
+  }>;
+}
+
+export interface ServiceCategoryWithStats extends ServiceCategoryWithRelations {
+  stats?: {
+    total_orders: number;
+    total_services_realized: number;
+    estimated_revenue: any;
+  };
+}
+
+export interface CreateServiceCategoryData {
+  service_category_name: string;
+  service_cost: number;
+  is_active?: boolean;
+}
+
+export interface UpdateServiceCategoryData {
+  service_category_name?: string;
+  service_cost?: number;
+  is_active?: boolean;
+}
+
+export interface ServiceCategoryFilters {
+  is_active?: boolean;
+}
