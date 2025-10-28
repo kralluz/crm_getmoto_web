@@ -2,7 +2,8 @@ import axios, { type AxiosRequestConfig } from 'axios';
 
 // Configuração customizada da instância do Axios
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  // baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api-crm-getmoto-api.i5mfns.easypanel.host/',
   headers: {
     'Content-Type': 'application/json',
   },
