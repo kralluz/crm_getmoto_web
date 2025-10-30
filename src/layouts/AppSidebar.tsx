@@ -33,6 +33,8 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const { t } = useTranslation();
   const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'produtos-submenu', 'servicos-submenu']);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isManuallyCollapsed, setIsManuallyCollapsed] = useState(collapsed);
 
   // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, produtos e serviços sempre abertos
   useEffect(() => {
@@ -43,12 +45,26 @@ export function AppSidebar({
   }, [initialOpenKeys]);
 
   const handleOpenChange = (keys: string[]) => {
-    // Se a sidebar está colapsada e o usuário está tentando abrir um submenu,
-    // expande a sidebar automaticamente
-    if (collapsed && keys.length > openKeys.length) {
+    setOpenKeys(keys);
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    if (isManuallyCollapsed) {
       onCollapse(false);
     }
-    setOpenKeys(keys);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    if (isManuallyCollapsed) {
+      onCollapse(true);
+    }
+  };
+
+  const handleCollapseClick = (newCollapsed: boolean) => {
+    setIsManuallyCollapsed(newCollapsed);
+    onCollapse(newCollapsed);
   };
 
   const menuItems: MenuProps['items'] = [
@@ -119,8 +135,10 @@ export function AppSidebar({
     <Sider
       collapsible
       collapsed={collapsed}
-      onCollapse={onCollapse}
+      onCollapse={handleCollapseClick}
       theme="light"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{
         overflow: 'auto',
         height: '100vh',
