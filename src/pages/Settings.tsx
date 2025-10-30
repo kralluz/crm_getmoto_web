@@ -1,9 +1,10 @@
 import { Tabs } from 'antd';
-import { SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { SettingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/common/PageHeader';
 import { GeneralSettings } from '../components/settings/GeneralSettings';
-import { UsersSettings } from '../components/settings/UsersSettings';
+// import { UserOutlined } from '@ant-design/icons';
+// import { UsersSettings } from '../components/settings/UsersSettings';
 
 export function Settings() {
   const { t } = useTranslation();
