@@ -1,8 +1,8 @@
 export type ServiceOrderStatus = 'draft' | 'in_progress' | 'completed' | 'cancelled';
 
 export interface ServiceCategory {
-  service_category_id: number;
-  service_category_name: string;
+  service_id: number;
+  service_name: string;
   service_cost: number;
 }
 
@@ -25,7 +25,7 @@ export interface ServiceProduct {
 export interface ServiceRealized {
   services_realized_id: number;
   service_order_id: number;
-  service_category_id: number;
+  service_id: number;
   service_qtd: number;
   is_active: boolean;
   created_at: string;
@@ -52,9 +52,9 @@ export interface CashFlow {
 
 export interface ServiceOrder {
   service_order_id: number;
-  service_category_id?: number;
+  service_id?: number;
   professional_name?: string;
-  motorcycle_id?: number;
+  vehicle_id?: number;
   customer_name?: string;
   service_description?: string;
   diagnosis?: string;
@@ -73,9 +73,9 @@ export interface ServiceOrder {
 }
 
 export interface CreateServiceOrderData {
-  service_category_id?: number;
+  service_id?: number;
   professional_name?: string;
-  motorcycle_id?: number;
+  vehicle_id?: number;
   customer_name?: string;
   service_description?: string;
   diagnosis?: string;

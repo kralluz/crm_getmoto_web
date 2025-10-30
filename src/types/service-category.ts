@@ -1,6 +1,6 @@
 export interface ServiceCategory {
-  service_category_id: number;
-  service_category_name: string;
+  service_id: number;
+  service_name: string;
   service_cost: any;
   service_cost_cents: number;
   is_active: boolean;
@@ -32,13 +32,13 @@ export interface ServiceCategoryWithStats extends ServiceCategoryWithRelations {
 }
 
 export interface CreateServiceCategoryData {
-  service_category_name: string;
+  service_name: string;
   service_cost: number;
   is_active?: boolean;
 }
 
 export interface UpdateServiceCategoryData {
-  service_category_name?: string;
+  service_name?: string;
   service_cost?: number;
   is_active?: boolean;
 }

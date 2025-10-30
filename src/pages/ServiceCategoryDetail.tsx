@@ -21,7 +21,7 @@ export function ServiceCategoryDetail() {
   if (!category) {
     return (
       <Card>
-        <p>Categoria não encontrada</p>
+        <p>Serviço não encontrado</p>
         <Button onClick={() => navigate('/categorias-servicos')}>
           Voltar para lista
         </Button>
@@ -92,19 +92,19 @@ export function ServiceCategoryDetail() {
           </Button>
         </Space>
 
-        <Descriptions title="Informações da Categoria" bordered>
+        <Descriptions title="Informações do Serviço" bordered>
           <Descriptions.Item label="ID">
-            {category.service_category_id}
+            {category.service_id}
           </Descriptions.Item>
           <Descriptions.Item label="Nome">
-            {category.service_category_name}
+            {category.service_name}
           </Descriptions.Item>
           <Descriptions.Item label="Custo do Serviço">
             {FormatService.currency(category.service_cost)}
           </Descriptions.Item>
           <Descriptions.Item label="Status">
             <Tag color={category.is_active ? 'green' : 'red'}>
-              {category.is_active ? 'Ativa' : 'Inativa'}
+              {category.is_active ? 'Ativo' : 'Inativo'}
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Data de Criação">
@@ -170,7 +170,7 @@ export function ServiceCategoryDetail() {
        (!category.services_realized || category.services_realized.length === 0) && (
         <Card>
           <p style={{ textAlign: 'center', color: '#999' }}>
-            Nenhum serviço registrado nesta categoria
+            Nenhuma ordem de serviço ou serviço realizado vinculado
           </p>
         </Card>
       )}

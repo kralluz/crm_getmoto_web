@@ -77,9 +77,9 @@ export function ServiceForm() {
   useEffect(() => {
     if (isEditing && serviceOrder) {
       form.setFieldsValue({
-        service_category_id: serviceOrder.service_category_id,
+        service_id: serviceOrder.service_id,
         professional_name: serviceOrder.professional_name,
-        motorcycle_id: serviceOrder.motorcycle_id,
+        vehicle_id: serviceOrder.vehicle_id,
         customer_name: serviceOrder.customer_name,
         service_description: serviceOrder.service_description,
         diagnosis: serviceOrder.diagnosis,
@@ -99,9 +99,9 @@ export function ServiceForm() {
 
       // Preparar dados para submissão
       const formData: CreateServiceOrderData | UpdateServiceOrderData = {
-        service_category_id: values.service_category_id,
+        service_id: values.service_id,
         professional_name: values.professional_name,
-        motorcycle_id: values.motorcycle_id,
+        vehicle_id: values.vehicle_id,
         customer_name: values.customer_name,
         service_description: values.service_description,
         diagnosis: values.diagnosis,
@@ -138,7 +138,7 @@ export function ServiceForm() {
     try {
       // Validar campos do step atual
       if (currentStep === 0) {
-        await form.validateFields(['motorcycle_id', 'customer_name']);
+        await form.validateFields(['vehicle_id', 'customer_name']);
       }
       setCurrentStep(currentStep + 1);
     } catch (error: unknown) {
@@ -200,7 +200,7 @@ export function ServiceForm() {
               <Col xs={24} md={12}>
                 <Form.Item
                   label={t('services.vehicle')}
-                  name="motorcycle_id"
+                  name="vehicle_id"
                   rules={[{ required: true, message: t('services.vehicleRequired') }]}
                 >
                   <VehicleSelect />
@@ -242,7 +242,7 @@ export function ServiceForm() {
               <Col xs={24} md={12}>
                 <Form.Item
                   label={t('services.serviceCategory')}
-                  name="service_category_id"
+                  name="service_id"
                   rules={[{ required: true, message: t('services.serviceCategoryRequired') }]}
                 >
                   <ServiceCategorySelect />

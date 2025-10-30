@@ -28,7 +28,7 @@ export function ServiceCategoryForm() {
   useEffect(() => {
     if (category && isEditing) {
       form.setFieldsValue({
-        service_category_name: category.service_category_name,
+        service_name: category.service_name,
         service_cost: parseDecimal(category.service_cost),
         is_active: category.is_active,
       });
@@ -47,7 +47,7 @@ export function ServiceCategoryForm() {
             if (error?.response?.status === 409) {
               form.setFields([
                 {
-                  name: 'service_category_name',
+                  name: 'service_name',
                   errors: ['Já existe uma categoria com este nome'],
                 },
               ]);
@@ -64,8 +64,8 @@ export function ServiceCategoryForm() {
           if (error?.response?.status === 409) {
             form.setFields([
               {
-                name: 'service_category_name',
-                errors: ['Já existe uma categoria com este nome'],
+                name: 'service_name',
+                errors: ['Já existe um serviço com este nome'],
               },
             ]);
           }
@@ -81,8 +81,8 @@ export function ServiceCategoryForm() {
   return (
     <div>
       <PageHeader
-        title={isEditing ? 'Editar Categoria de Serviço' : 'Nova Categoria de Serviço'}
-        subtitle={isEditing ? 'Atualize os dados da categoria' : 'Preencha os dados da nova categoria'}
+        title={isEditing ? 'Editar Serviço' : 'Novo Serviço'}
+        subtitle={isEditing ? 'Atualize os dados do serviço' : 'Preencha os dados do novo serviço'}
       />
 
       <Card loading={isLoading}>
@@ -96,10 +96,10 @@ export function ServiceCategoryForm() {
           }}
         >
           <Form.Item
-            label="Nome da Categoria"
-            name="service_category_name"
+            label="Nome do Serviço"
+            name="service_name"
             rules={[
-              { required: true, message: 'Por favor, informe o nome da categoria' },
+              { required: true, message: 'Por favor, informe o nome do serviço' },
               { min: 3, message: 'O nome deve ter no mínimo 3 caracteres' },
               { max: 255, message: 'O nome deve ter no máximo 255 caracteres' },
             ]}
@@ -148,7 +148,7 @@ export function ServiceCategoryForm() {
                 loading={isCreating || isUpdating}
                 size="large"
               >
-                {isEditing ? 'Atualizar' : 'Criar'} Categoria
+                {isEditing ? 'Atualizar' : 'Criar'} Serviço
               </Button>
               <Button
                 icon={<ArrowLeftOutlined />}

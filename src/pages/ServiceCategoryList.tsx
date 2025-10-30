@@ -29,7 +29,7 @@ export function ServiceCategoryList() {
 
     return categories.filter(category => {
       const matchesSearch = searchText === '' ||
-        category.service_category_name.toLowerCase().includes(searchText.toLowerCase());
+        category.service_name.toLowerCase().includes(searchText.toLowerCase());
       return matchesSearch;
     });
   }, [categories, searchText]);
@@ -39,14 +39,12 @@ export function ServiceCategoryList() {
   };
 
   const handleDelete = async (id: number) => {
-    const category = categories?.find(c => c.service_category_id === id);
+    const category = categories?.find(c => c.service_id === id);
 
-    // Note: ServiceCategory não tem _count de service_order, mas vamos verificar se tem
-    // Podemos melhorar isso depois com uma query específica
     Modal.confirm({
-      title: 'Deletar Categoria de Serviço',
+      title: 'Deletar Serviço',
       icon: <ExclamationCircleOutlined />,
-      content: `Tem certeza que deseja deletar a categoria "${category?.service_category_name}"? Esta ação não pode ser desfeita se a categoria tiver ordens de serviço vinculadas.`,
+      content: `Tem certeza que deseja deletar o serviço "${category?.service_name}"? Esta ação não pode ser desfeita se o serviço estiver vinculado a ordens de serviço.`,
       okText: 'Sim, deletar',
       okType: 'danger',
       cancelText: 'Cancelar',
@@ -69,26 +67,26 @@ export function ServiceCategoryList() {
       fixed: 'left',
       render: (_, record) => (
         <ActionButtons
-          onView={() => navigate(`/categorias-servicos/${record.service_category_id}`)}
-          onEdit={() => handleEdit(record.service_category_id)}
-          onDelete={() => handleDelete(record.service_category_id)}
+          onView={() => navigate(`/categorias-servicos/${record.service_id}`)}
+          onEdit={() => handleEdit(record.service_id)}
+          onDelete={() => handleDelete(record.service_id)}
           showView
           showEdit
           showDelete
-          deleteTitle="Deletar Categoria"
-          deleteDescription={`Tem certeza que deseja deletar a categoria "${record.service_category_name}"?`}
+          deleteTitle="Deletar Serviço"
+          deleteDescription={`Tem certeza que deseja deletar o serviço "${record.service_name}"?`}
           iconOnly
         />
       ),
     },
     {
-      title: 'Nome da Categoria',
-      dataIndex: 'service_category_name',
-      key: 'service_category_name',
+      title: 'Nome do Serviço',
+      dataIndex: 'service_name',
+      key: 'service_name',
       ellipsis: true,
-      sorter: (a, b) => a.service_category_name.localeCompare(b.service_category_name),
+      sorter: (a, b) => a.service_name.localeCompare(b.service_name),
       render: (name: string, record) => (
-        <Link onClick={() => navigate(`/categorias-servicos/${record.service_category_id}`)}>
+        <Link onClick={() => navigate(`/categorias-servicos/${record.service_id}`)}>
           {name}
         </Link>
       ),
@@ -137,8 +135,8 @@ export function ServiceCategoryList() {
   return (
     <div>
       <PageHeader
-        title="Categorias de Serviços"
-        subtitle="Gerencie as categorias de serviços disponíveis"
+        title="Serviços"
+        subtitle="Gerencie os serviços disponíveis"
         extra={
           <Button
             type="primary"
@@ -146,7 +144,7 @@ export function ServiceCategoryList() {
             onClick={handleCreate}
             size="large"
           >
-            Registrar Tipo de Serviço
+            Novo Serviço
           </Button>
         }
       />
@@ -193,11 +191,11 @@ export function ServiceCategoryList() {
           columns={columns}
           dataSource={filteredCategories}
           loading={isLoading}
-          rowKey="service_category_id"
+          rowKey="service_id"
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} categorias`,
+            showTotal: (total) => `Total: ${total} serviços`,
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           size="small"

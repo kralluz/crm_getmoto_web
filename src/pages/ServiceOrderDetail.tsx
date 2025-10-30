@@ -145,7 +145,7 @@ export function ServiceOrderDetail() {
   const servicesColumns: ColumnsType<ServiceRealized> = [
     {
       title: 'Serviço',
-      dataIndex: ['service', 'service_category_name'],
+      dataIndex: ['service', 'service_name'],
       key: 'service_name',
     },
     {
@@ -303,7 +303,7 @@ export function ServiceOrderDetail() {
             <Descriptions.Item label="Categoria de Serviço">
               {serviceOrder.service ? (
                 <div>
-                  <Text strong>{serviceOrder.service.service_category_name}</Text>
+                  <Text strong>{serviceOrder.service.service_name}</Text>
                   <br />
                   <Text type="secondary">
                     Custo: {formatCurrency(serviceOrder.service.service_cost)}

@@ -38,10 +38,10 @@ export function useCreateServiceCategory() {
     mutationFn: (data: CreateServiceCategoryData) => serviceCategoryApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-categories'] });
-      success('Categoria de serviço criada com sucesso!');
+      success('Serviço criado com sucesso!');
     },
     onError: (error: any) => {
-      showError(error?.response?.data?.error || 'Erro ao criar categoria de serviço');
+      showError(error?.response?.data?.error || 'Erro ao criar serviço');
     },
   });
 }
@@ -57,10 +57,10 @@ export function useUpdateServiceCategory() {
       queryClient.invalidateQueries({ queryKey: ['service-categories'] });
       queryClient.invalidateQueries({ queryKey: ['service-category', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['service-category-stats', variables.id] });
-      success('Categoria de serviço atualizada com sucesso!');
+      success('Serviço atualizado com sucesso!');
     },
     onError: (error: any) => {
-      showError(error?.response?.data?.error || 'Erro ao atualizar categoria de serviço');
+      showError(error?.response?.data?.error || 'Erro ao atualizar serviço');
     },
   });
 }
@@ -73,10 +73,10 @@ export function useDeleteServiceCategory() {
     mutationFn: (id: number) => serviceCategoryApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-categories'] });
-      success('Categoria de serviço deletada com sucesso!');
+      success('Serviço desabilitado com sucesso!');
     },
     onError: (error: any) => {
-      showError(error?.response?.data?.error || 'Erro ao deletar categoria de serviço');
+      showError(error?.response?.data?.error || 'Erro ao desabilitar serviço');
     },
   });
 }
