@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-export type Language = 'pt-BR' | 'en';
+export type Language = 'pt-BR' | 'en' | 'es';
 
 interface LanguageState {
   language: Language;

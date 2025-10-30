@@ -65,6 +65,7 @@ export function GeneralSettings() {
               options={[
                 { value: 'pt-BR', label: t('settings.portuguese') },
                 { value: 'en', label: t('settings.english') },
+                { value: 'es', label: t('settings.spanish') },
               ]}
             />
           </div>
