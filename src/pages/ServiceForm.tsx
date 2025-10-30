@@ -50,7 +50,7 @@ export function ServiceForm() {
   const serviceOrderId = id ? parseInt(id) : undefined;
 
   // Hooks para dados
-  const { data: serviceOrder, isLoading: loadingServiceOrder } = useServiceOrder(serviceOrderId!);
+  const { data: serviceOrder, isLoading: loadingServiceOrder } = useServiceOrder(serviceOrderId);
   const { data: customers } = useCustomers();
 
   // Mutations
@@ -91,7 +91,7 @@ export function ServiceForm() {
     }
   }, [isEditing, serviceOrder, form]);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, any>) => {
     try {
       setLoading(true);
 
@@ -139,7 +139,8 @@ export function ServiceForm() {
         await form.validateFields(['motorcycle_id', 'customer_name']);
       }
       setCurrentStep(currentStep + 1);
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Validation error:', error);
       message.warning(t('services.fillRequiredFields'));
     }
   };
