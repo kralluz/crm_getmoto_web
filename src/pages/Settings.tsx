@@ -19,16 +19,17 @@ export function Settings() {
       ),
       children: <GeneralSettings />,
     },
-    {
-      key: 'users',
-      label: (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <UserOutlined />
-          {t('settings.usersTab')}
-        </span>
-      ),
-      children: <UsersSettings />,
-    },
+    // Temporariamente desabilitado
+    // {
+    //   key: 'users',
+    //   label: (
+    //     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    //       <UserOutlined />
+    //       {t('settings.usersTab')}
+    //     </span>
+    //   ),
+    //   children: <UsersSettings />,
+    // },
   ];
 
   return (
