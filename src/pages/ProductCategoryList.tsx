@@ -14,10 +14,10 @@ const { Link } = Typography;
 export function ProductCategoryList() {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
-  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
 
   const { data: categories, isLoading } = useProductCategories({
-    is_active: activeFilter,
+    is_active: activeFilter === 'all' ? undefined : activeFilter === 'active',
   });
   const { mutate: deleteCategory } = useDeleteProductCategory();
 
@@ -170,18 +170,18 @@ export function ProductCategoryList() {
             onChange={setActiveFilter}
             style={{ width: 150 }}
             options={[
-              { value: undefined, label: 'Todos' },
-              { value: true, label: 'Ativos' },
-              { value: false, label: 'Inativos' },
+              { value: 'all', label: 'Todos' },
+              { value: 'active', label: 'Ativos' },
+              { value: 'inactive', label: 'Inativos' },
             ]}
           />
 
-          {(searchText || activeFilter !== true) && (
+          {(searchText || activeFilter !== 'active') && (
             <Button
               icon={<FilterOutlined />}
               onClick={() => {
                 setSearchText('');
-                setActiveFilter(true);
+                setActiveFilter('active');
               }}
             >
               Limpar Filtros

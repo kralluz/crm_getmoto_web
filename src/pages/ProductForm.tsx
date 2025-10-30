@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Form, Input, InputNumber, Button, Card, Space, Switch, Row, Col, Divider } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { CategorySelect } from '../components/products/CategorySelect';
 import { parseDecimal } from '../utils';
 import { PageHeader } from '../components/common/PageHeader';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 import type { CreateProductData, UpdateProductData } from '../types/product';
 
 interface ProductFormData {
@@ -26,6 +27,10 @@ export function ProductForm() {
   const isEditing = !!id;
   const productId = id ? parseInt(id) : undefined;
 
+  // Estados para controlar os preços e calcular margem
+  const [buyPrice, setBuyPrice] = useState<number>(0);
+  const [sellPrice, setSellPrice] = useState<number>(0);
+
   const { data: product, isLoading: isLoadingProduct } = useProduct(productId);
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
   const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
@@ -33,17 +38,44 @@ export function ProductForm() {
   const isLoading = isLoadingProduct;
   const isSaving = isCreating || isUpdating;
 
+  // Calcula a margem de lucro
+  const calculateMargin = (): string => {
+    if (buyPrice && sellPrice && buyPrice > 0) {
+      const margin = ((sellPrice - buyPrice) / buyPrice) * 100;
+      return `${margin.toFixed(2)}%`;
+    }
+    return '-';
+  };
+
+  // Determina a cor da margem
+  const getMarginColor = (): string | undefined => {
+    if (buyPrice && sellPrice && buyPrice > 0) {
+      const margin = ((sellPrice - buyPrice) / buyPrice) * 100;
+      if (margin >= 30) return '#52c41a'; // Verde
+      if (margin >= 15) return '#fa8c16'; // Laranja
+      return '#ff4d4f'; // Vermelho
+    }
+    return undefined;
+  };
+
   useEffect(() => {
     if (product && isEditing) {
+      const parsedBuyPrice = parseDecimal(product.buy_price);
+      const parsedSellPrice = parseDecimal(product.sell_price);
+
       form.setFieldsValue({
         category_id: product.category_id,
         product_name: product.product_name,
-        buy_price: parseDecimal(product.buy_price),
-        sell_price: parseDecimal(product.sell_price),
+        buy_price: parsedBuyPrice,
+        sell_price: parsedSellPrice,
         quantity: parseDecimal(product.quantity),
         quantity_alert: parseDecimal(product.quantity_alert),
         is_active: product.is_active,
       });
+
+      // Atualiza os estados para cálculo da margem
+      setBuyPrice(parsedBuyPrice);
+      setSellPrice(parsedSellPrice);
     }
   }, [product, isEditing, form]);
 
@@ -127,17 +159,36 @@ export function ProductForm() {
           <Row gutter={24}>
             <Col xs={24} md={8}>
               <Form.Item label="Preço de Compra" name="buy_price" rules={[{ required: true, message: 'Informe o preço de compra' },{ type: 'number', min: 0, message: 'O preço deve ser maior ou igual a zero' }]} tooltip="Preço pelo qual você compra o produto">
-                <InputNumber style={{ width: '100%' }} prefix="R$" precision={2} min={0} placeholder="0,00" size="large" onChange={() => form.validateFields(['sell_price'])} />
+                <CurrencyInput
+                  style={{ width: '100%' }}
+                  placeholder="R$ 0,00"
+                  onChange={(value) => {
+                    setBuyPrice(value || 0);
+                    form.validateFields(['sell_price']);
+                  }}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
               <Form.Item label="Preço de Venda" name="sell_price" rules={[{ required: true, message: 'Informe o preço de venda' },{ type: 'number', min: 0, message: 'O preço deve ser maior ou igual a zero' },{ validator: validateSellPrice }]} tooltip="Preço pelo qual você vende o produto">
-                <InputNumber style={{ width: '100%' }} prefix="R$" precision={2} min={0} placeholder="0,00" size="large" />
+                <CurrencyInput
+                  style={{ width: '100%' }}
+                  placeholder="R$ 0,00"
+                  onChange={(value) => setSellPrice(value || 0)}
+                />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
               <Form.Item label="Margem de Lucro" tooltip="Calculado automaticamente com base nos preços">
-                <Input value={(() => { const buyPrice = form.getFieldValue('buy_price'); const sellPrice = form.getFieldValue('sell_price'); if (buyPrice && sellPrice && buyPrice > 0) { const margin = ((sellPrice - buyPrice) / buyPrice) * 100; return `${margin.toFixed(2)}%`; } return '-'; })()} readOnly size="large" style={{ fontWeight: 600, color: (() => { const buyPrice = form.getFieldValue('buy_price'); const sellPrice = form.getFieldValue('sell_price'); if (buyPrice && sellPrice) { const margin = ((sellPrice - buyPrice) / buyPrice) * 100; return margin >= 30 ? '#52c41a' : margin >= 15 ? '#fa8c16' : '#ff4d4f'; } return undefined; })() }} />
+                <Input
+                  value={calculateMargin()}
+                  readOnly
+                  size="large"
+                  style={{
+                    fontWeight: 600,
+                    color: getMarginColor()
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -145,12 +196,12 @@ export function ProductForm() {
           <Row gutter={24}>
             <Col xs={24} md={12}>
               <Form.Item label="Quantidade em Estoque" name="quantity" rules={[{ required: true, message: 'Informe a quantidade' },{ type: 'number', min: 0, message: 'A quantidade não pode ser negativa' }]} tooltip="Quantidade atual disponível em estoque">
-                <InputNumber style={{ width: '100%' }} precision={1} min={0} placeholder="0" size="large" suffix="unid." />
+                <InputNumber style={{ width: '100%' }} precision={0} min={0} placeholder="0" size="large" suffix="unid." step={1} />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
               <Form.Item label="Estoque Mínimo (Alerta)" name="quantity_alert" rules={[{ required: true, message: 'Informe o estoque mínimo' },{ type: 'number', min: 0, message: 'O valor não pode ser negativo' }]} tooltip="Você será alertado quando o estoque atingir ou ficar abaixo deste valor">
-                <InputNumber style={{ width: '100%' }} precision={1} min={0} placeholder="0" size="large" suffix="unid." />
+                <InputNumber style={{ width: '100%' }} precision={0} min={0} placeholder="0" size="large" suffix="unid." step={1} />
               </Form.Item>
             </Col>
           </Row>

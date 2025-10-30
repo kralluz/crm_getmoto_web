@@ -14,12 +14,12 @@ export function ProductList() {
   const navigate = useNavigate();
   const { formatCurrency } = useFormat();
   const [searchText, setSearchText] = useState('');
-  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
-  const [lowStockFilter, setLowStockFilter] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const [lowStockFilter, setLowStockFilter] = useState<'all' | 'low'>('all');
 
-  const { data: products, isLoading } = useProducts({ 
-    active: activeFilter,
-    lowStock: lowStockFilter || undefined
+  const { data: products, isLoading} = useProducts({
+    active: activeFilter === 'all' ? undefined : activeFilter === 'active',
+    lowStock: lowStockFilter === 'low' ? true : undefined
   });
   const { mutate: deleteProduct } = useDeleteProduct();
 
@@ -227,9 +227,9 @@ export function ProductList() {
             onChange={setActiveFilter}
             style={{ width: 150 }}
             options={[
-              { value: undefined, label: 'Todos' },
-              { value: true, label: 'Ativos' },
-              { value: false, label: 'Inativos' },
+              { value: 'all', label: 'Todos' },
+              { value: 'active', label: 'Ativos' },
+              { value: 'inactive', label: 'Inativos' },
             ]}
           />
 
@@ -239,18 +239,18 @@ export function ProductList() {
             onChange={setLowStockFilter}
             style={{ width: 180 }}
             options={[
-              { value: false, label: 'Todos' },
-              { value: true, label: 'Estoque Baixo' },
+              { value: 'all', label: 'Todos' },
+              { value: 'low', label: 'Estoque Baixo' },
             ]}
           />
 
-          {(searchText || activeFilter !== true || lowStockFilter) && (
+          {(searchText || activeFilter !== 'active' || lowStockFilter !== 'all') && (
             <Button
               icon={<FilterOutlined />}
               onClick={() => {
                 setSearchText('');
-                setActiveFilter(true);
-                setLowStockFilter(false);
+                setActiveFilter('active');
+                setLowStockFilter('all');
               }}
             >
               Limpar Filtros

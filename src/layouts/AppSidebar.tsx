@@ -43,6 +43,11 @@ export function AppSidebar({
   }, [initialOpenKeys]);
 
   const handleOpenChange = (keys: string[]) => {
+    // Se a sidebar está colapsada e o usuário está tentando abrir um submenu,
+    // expande a sidebar automaticamente
+    if (collapsed && keys.length > openKeys.length) {
+      onCollapse(false);
+    }
     setOpenKeys(keys);
   };
 

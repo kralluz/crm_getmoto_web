@@ -3,7 +3,6 @@ import {
   Card,
   Form,
   Input,
-  InputNumber,
   Select,
   Button,
   Space,
@@ -18,6 +17,7 @@ import {
 } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import {
   useCreateServiceOrder,
@@ -27,6 +27,7 @@ import {
 import { useCustomers } from '../hooks/useCustomers';
 import { VehicleSelect } from '../components/services/VehicleSelect';
 import { ServiceCategorySelect } from '../components/services/ServiceCategorySelect';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 import type {
   CreateServiceOrderData,
   UpdateServiceOrderData,
@@ -38,6 +39,7 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export function ServiceForm() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [form] = Form.useForm();
@@ -63,10 +65,10 @@ export function ServiceForm() {
 
   // Opções de status
   const statusOptions: { value: ServiceOrderStatus; label: string }[] = [
-    { value: 'draft', label: 'Rascunho' },
-    { value: 'in_progress', label: 'Em Progresso' },
-    { value: 'completed', label: 'Concluído' },
-    { value: 'cancelled', label: 'Cancelado' },
+    { value: 'draft', label: t('services.status.draft') },
+    { value: 'in_progress', label: t('services.status.in_progress') },
+    { value: 'completed', label: t('services.status.completed') },
+    { value: 'cancelled', label: t('services.status.cancelled') },
   ];
 
   // Carregar dados do formulário quando editing
@@ -112,15 +114,15 @@ export function ServiceForm() {
           id: serviceOrderId!,
           data: formData
         });
-        message.success('Ordem de serviço atualizada com sucesso!');
+        message.success(t('services.orderUpdatedSuccess'));
       } else {
         await createMutation.mutateAsync(formData);
-        message.success('Ordem de serviço criada com sucesso!');
+        message.success(t('services.orderCreatedSuccess'));
       }
 
       navigate('/servicos');
     } catch (error: any) {
-      message.error(error?.response?.data?.message || 'Erro ao salvar ordem de serviço');
+      message.error(error?.response?.data?.message || t('services.orderSaveError'));
     } finally {
       setLoading(false);
     }
@@ -138,7 +140,7 @@ export function ServiceForm() {
       }
       setCurrentStep(currentStep + 1);
     } catch (error) {
-      message.warning('Preencha todos os campos obrigatórios antes de continuar');
+      message.warning(t('services.fillRequiredFields'));
     }
   };
 
@@ -150,7 +152,7 @@ export function ServiceForm() {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '50px' }}>
-          <Text>Carregando...</Text>
+          <Text>{t('common.loading')}</Text>
         </div>
       </Card>
     );
@@ -158,20 +160,20 @@ export function ServiceForm() {
 
   const steps = [
     {
-      title: 'Veículo',
-      description: 'Selecione o veículo',
+      title: t('services.vehicleStep'),
+      description: t('services.vehicleStepDescription'),
     },
     {
-      title: 'Ordem de Serviço',
-      description: 'Dados do serviço',
+      title: t('services.serviceOrderStep'),
+      description: t('services.serviceOrderStepDescription'),
     },
   ];
 
   return (
     <div>
       <PageHeader
-        title={isEditing ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
-        subtitle={isEditing ? 'Atualize os dados da ordem de serviço' : 'Preencha os dados para criar uma nova ordem'}
+        title={isEditing ? t('services.editOrder') : t('services.newOrder')}
+        subtitle={isEditing ? t('services.editOrderSubtitle') : t('services.newOrderSubtitle')}
       />
 
       <Card>
@@ -189,14 +191,14 @@ export function ServiceForm() {
         >
           {/* STEP 1: Seleção de Veículo e Cliente */}
           <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
-            <Title level={4}>Informações do Veículo e Cliente</Title>
+            <Title level={4}>{t('services.vehicleClientInfo')}</Title>
 
             <Row gutter={16}>
               <Col xs={24} md={12}>
                 <Form.Item
-                  label="Veículo"
+                  label={t('services.vehicle')}
                   name="motorcycle_id"
-                  rules={[{ required: true, message: 'Selecione um veículo' }]}
+                  rules={[{ required: true, message: t('services.vehicleRequired') }]}
                 >
                   <VehicleSelect />
                 </Form.Item>
@@ -204,13 +206,13 @@ export function ServiceForm() {
 
               <Col xs={24} md={12}>
                 <Form.Item
-                  label="Nome do Cliente"
+                  label={t('services.customerName')}
                   name="customer_name"
-                  rules={[{ required: true, message: 'Informe o nome do cliente' }]}
+                  rules={[{ required: true, message: t('services.customerNameRequired') }]}
                 >
                   <AutoComplete
                     options={customerOptions}
-                    placeholder="Digite ou selecione o nome do cliente"
+                    placeholder={t('services.customerNamePlaceholder')}
                     filterOption={(inputValue, option) =>
                       option!.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
                     }
@@ -221,24 +223,24 @@ export function ServiceForm() {
 
             <Space style={{ marginTop: 24 }}>
               <Button onClick={handleBack}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button type="primary" onClick={handleNextStep} icon={<ArrowRightOutlined />}>
-                Próximo
+                {t('services.next')}
               </Button>
             </Space>
           </div>
 
           {/* STEP 2: Detalhes da Ordem de Serviço */}
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
-            <Title level={4}>Detalhes da Ordem de Serviço</Title>
+            <Title level={4}>{t('services.serviceOrderDetails')}</Title>
 
             <Row gutter={16}>
               <Col xs={24} md={12}>
                 <Form.Item
-                  label="Categoria de Serviço"
+                  label={t('services.serviceCategory')}
                   name="service_category_id"
-                  rules={[{ required: true, message: 'Selecione a categoria do serviço' }]}
+                  rules={[{ required: true, message: t('services.serviceCategoryRequired') }]}
                 >
                   <ServiceCategorySelect />
                 </Form.Item>
@@ -246,10 +248,10 @@ export function ServiceForm() {
 
               <Col xs={24} md={12}>
                 <Form.Item
-                  label="Nome do Profissional"
+                  label={t('services.professionalName')}
                   name="professional_name"
                 >
-                  <Input placeholder="Digite o nome do profissional responsável" />
+                  <Input placeholder={t('services.professionalPlaceholder')} />
                 </Form.Item>
               </Col>
             </Row>
@@ -257,27 +259,23 @@ export function ServiceForm() {
             <Row gutter={16}>
               <Col xs={24} md={12}>
                 <Form.Item
-                  label="Custo Estimado da Mão de Obra (R$)"
+                  label={t('services.estimatedLaborCost')}
                   name="estimated_labor_cost"
                 >
-                  <InputNumber
+                  <CurrencyInput
                     style={{ width: '100%' }}
-                    min={0}
-                    step={0.01}
-                    precision={2}
-                    placeholder="0,00"
-                    prefix="R$"
+                    placeholder="R$ 0,00"
                   />
                 </Form.Item>
               </Col>
 
               <Col xs={24} md={12}>
                 <Form.Item
-                  label="Status"
+                  label={t('table.status')}
                   name="status"
                   initialValue="draft"
                 >
-                  <Select placeholder="Selecione o status">
+                  <Select placeholder={t('services.selectStatus')}>
                     {statusOptions.map((option) => (
                       <Select.Option key={option.value} value={option.value}>
                         {option.label}
@@ -292,14 +290,14 @@ export function ServiceForm() {
               <Row gutter={16}>
                 <Col xs={24} md={12}>
                   <Form.Item
-                    label="Data de Finalização"
+                    label={t('services.finalizationDate')}
                     name="finalized_at"
                   >
                     <DatePicker
                       style={{ width: '100%' }}
                       showTime
                       format="DD/MM/YYYY HH:mm"
-                      placeholder="Selecione a data de finalização"
+                      placeholder={t('services.finalizationDatePlaceholder')}
                     />
                   </Form.Item>
                 </Col>
@@ -307,43 +305,43 @@ export function ServiceForm() {
             )}
 
             <Form.Item
-              label="Descrição do Serviço"
+              label={t('services.serviceDescription')}
               name="service_description"
             >
               <TextArea
                 rows={3}
-                placeholder="Descreva o serviço a ser realizado"
+                placeholder={t('services.serviceDescriptionPlaceholder')}
               />
             </Form.Item>
 
             <Form.Item
-              label="Diagnóstico"
+              label={t('services.diagnosis')}
               name="diagnosis"
             >
               <TextArea
                 rows={3}
-                placeholder="Diagnóstico do problema encontrado"
+                placeholder={t('services.diagnosisPlaceholder')}
               />
             </Form.Item>
 
             <Form.Item
-              label="Observações"
+              label={t('services.notes')}
               name="notes"
             >
               <TextArea
                 rows={2}
-                placeholder="Observações adicionais"
+                placeholder={t('services.notesPlaceholder')}
               />
             </Form.Item>
 
             <Space style={{ marginTop: 24 }}>
               {!isEditing && (
                 <Button onClick={handlePrevStep} icon={<ArrowLeftOutlined />}>
-                  Voltar
+                  {t('services.previous')}
                 </Button>
               )}
               <Button onClick={handleBack}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button
                 type="primary"
@@ -351,7 +349,7 @@ export function ServiceForm() {
                 loading={loading}
                 icon={<SaveOutlined />}
               >
-                {isEditing ? 'Atualizar' : 'Criar'} Ordem de Serviço
+                {isEditing ? t('services.updateOrder') : t('services.createOrder')}
               </Button>
             </Space>
           </div>

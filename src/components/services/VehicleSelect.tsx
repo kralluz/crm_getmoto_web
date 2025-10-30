@@ -54,20 +54,26 @@ export function VehicleSelect({ value, onChange, onVehicleCreated, ...props }: V
           }
           {...props}
         >
-          {vehicles.map(vehicle => (
-            <Select.Option
-              key={vehicle.vehicle_id}
-              value={vehicle.vehicle_id}
-              label={`${vehicle.plate} - ${vehicle.brand} ${vehicle.model}`}
-            >
-              <div>
-                <div><strong>{vehicle.plate}</strong> - {vehicle.brand} {vehicle.model}</div>
-                <div style={{ fontSize: '12px', color: '#888' }}>
-                  {vehicle.year} {vehicle.color ? `- ${vehicle.color}` : ''}
+          {vehicles.map(vehicle => {
+            const displayText = `${vehicle.plate} - ${vehicle.brand} ${vehicle.model}${vehicle.year ? ` (${vehicle.year})` : ''}${vehicle.color ? ` - ${vehicle.color}` : ''}`;
+            return (
+              <Select.Option
+                key={vehicle.vehicle_id}
+                value={vehicle.vehicle_id}
+                label={displayText}
+              >
+                <div style={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  <strong>{vehicle.plate}</strong> - {vehicle.brand} {vehicle.model}
+                  {vehicle.year && <span style={{ color: '#888', fontSize: '12px' }}> ({vehicle.year})</span>}
+                  {vehicle.color && <span style={{ color: '#888', fontSize: '12px' }}> - {vehicle.color}</span>}
                 </div>
-              </div>
-            </Select.Option>
-          ))}
+              </Select.Option>
+            );
+          })}
         </Select>
         <Button
           type="primary"

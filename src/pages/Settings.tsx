@@ -9,7 +9,7 @@ export function Settings() {
     {
       key: 'general',
       label: (
-        <span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <SettingOutlined />
           Geral
         </span>
@@ -19,7 +19,7 @@ export function Settings() {
     {
       key: 'users',
       label: (
-        <span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <UserOutlined />
           Usuários
         </span>

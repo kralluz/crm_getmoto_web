@@ -16,7 +16,7 @@ export function MovimentacoesList() {
   const navigate = useNavigate();
   const { formatCurrency, formatDate } = useFormat();
   const [searchText, setSearchText] = useState('');
-  const [directionFilter, setDirectionFilter] = useState<CashFlowDirection | undefined>(undefined);
+  const [directionFilter, setDirectionFilter] = useState<'all' | CashFlowDirection>('all');
   const [dateRange, setDateRange] = useState<[string, string] | undefined>(undefined);
 
   const { data: transactions, isLoading } = useCashFlowTransactions({
@@ -33,7 +33,7 @@ export function MovimentacoesList() {
       const matchesSearch = searchText === '' ||
         (transaction.note?.toLowerCase().includes(searchText.toLowerCase()));
 
-      const matchesDirection = !directionFilter || transaction.direction === directionFilter;
+      const matchesDirection = directionFilter === 'all' || transaction.direction === directionFilter;
 
       return matchesSearch && matchesDirection;
     });
@@ -202,7 +202,7 @@ export function MovimentacoesList() {
             onChange={setDirectionFilter}
             style={{ width: 150 }}
             options={[
-              { value: undefined, label: 'Todos' },
+              { value: 'all', label: 'Todos' },
               { value: 'entrada', label: 'Entradas' },
               { value: 'saida', label: 'Saídas' },
             ]}
@@ -215,12 +215,12 @@ export function MovimentacoesList() {
             style={{ width: 280 }}
           />
 
-          {(searchText || directionFilter || dateRange) && (
+          {(searchText || directionFilter !== 'all' || dateRange) && (
             <Button
               icon={<FilterOutlined />}
               onClick={() => {
                 setSearchText('');
-                setDirectionFilter(undefined);
+                setDirectionFilter('all');
                 setDateRange(undefined);
               }}
             >

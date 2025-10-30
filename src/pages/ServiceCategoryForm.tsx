@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { Form, Input, InputNumber, Switch, Button, Card, Space } from 'antd';
+import { Form, Input, Switch, Button, Card, Space } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '../components/common/PageHeader';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 import {
   useServiceCategory,
   useCreateServiceCategory,
@@ -121,13 +122,9 @@ export function ServiceCategoryForm() {
               },
             ]}
           >
-            <InputNumber
-              placeholder="0.00"
-              size="large"
+            <CurrencyInput
+              placeholder="R$ 0,00"
               style={{ width: '100%' }}
-              min={0}
-              precision={2}
-              prefix="R$"
             />
           </Form.Item>
 

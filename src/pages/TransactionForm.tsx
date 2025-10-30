@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   Form,
   Input,
-  InputNumber,
   Radio,
   Select,
   DatePicker,
@@ -16,6 +15,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useCreateTransaction } from '../hooks/useCashFlow';
 import { useAuthStore } from '../store/auth-store';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 import type { TransactionType } from '../types/cashflow';
 
 const { Title } = Typography;
@@ -139,11 +139,8 @@ export function TransactionForm() {
               { type: 'number', min: 0.01, message: t('transaction.amountPlaceholder') },
             ]}
           >
-            <InputNumber
+            <CurrencyInput
               style={{ width: '100%' }}
-              prefix="R$"
-              precision={2}
-              min={0}
               placeholder={t('transaction.amountPlaceholder')}
             />
           </Form.Item>

@@ -26,16 +26,27 @@ export function ServiceCategorySelect({ value, onChange, ...props }: ServiceCate
       }
       {...props}
     >
-      {categories.map(cat => (
-        <Select.Option key={cat.service_category_id} value={cat.service_category_id}>
-          <div>
-            <div>{cat.service_category_name}</div>
-            <div style={{ fontSize: '12px', color: '#888' }}>
-              Custo: {FormatService.currency(parseDecimal(cat.service_cost))}
+      {categories.map(cat => {
+        const displayText = `${cat.service_category_name} - Custo: ${FormatService.currency(parseDecimal(cat.service_cost))}`;
+        return (
+          <Select.Option
+            key={cat.service_category_id}
+            value={cat.service_category_id}
+            label={displayText}
+          >
+            <div style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              <strong>{cat.service_category_name}</strong>
+              <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>
+                Custo: {FormatService.currency(parseDecimal(cat.service_cost))}
+              </span>
             </div>
-          </div>
-        </Select.Option>
-      ))}
+          </Select.Option>
+        );
+      })}
     </Select>
   );
 }
