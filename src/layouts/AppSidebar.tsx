@@ -60,12 +60,12 @@ export function AppSidebar({
         {
           key: 'dashboard',
           icon: <BarChartOutlined />,
-          label: 'Relatório',
+          label: t('menu.dashboard'),
         },
         {
           key: 'movimentacoes',
           icon: <TransactionOutlined />,
-          label: 'Movimentações',
+          label: t('menu.cashflow'),
         },
       ],
     },
@@ -77,17 +77,17 @@ export function AppSidebar({
         {
           key: 'estoque',
           icon: <ShoppingCartOutlined />,
-          label: 'Estoque',
+          label: t('menu.products'),
         },
         {
           key: 'produtos',
           icon: <AppstoreOutlined />,
-          label: 'Produtos',
+          label: t('menu.products'),
         },
         {
           key: 'categorias-produtos',
           icon: <TagsOutlined />,
-          label: 'Categorias',
+          label: t('products.categoryTitle'),
         },
       ],
     },
@@ -99,12 +99,12 @@ export function AppSidebar({
         {
           key: 'servicos',
           icon: <ToolOutlined />,
-          label: 'Ordens de Serviço',
+          label: t('menu.services'),
         },
         {
           key: 'categorias-servicos',
           icon: <TagsOutlined />,
-          label: 'Categorias',
+          label: t('products.categoryTitle'),
         },
       ],
     },
