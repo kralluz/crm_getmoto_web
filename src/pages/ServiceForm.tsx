@@ -50,7 +50,9 @@ export function ServiceForm() {
   const serviceOrderId = id ? parseInt(id) : undefined;
 
   // Hooks para dados
-  const { data: serviceOrder, isLoading: loadingServiceOrder } = useServiceOrder(serviceOrderId);
+  const { data: serviceOrder, isLoading: loadingServiceOrder } = useServiceOrder(
+    isEditing ? serviceOrderId! : 0
+  );
   const { data: customers } = useCustomers();
 
   // Mutations

@@ -1,17 +1,20 @@
 import { Tabs } from 'antd';
 import { SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/common/PageHeader';
 import { GeneralSettings } from '../components/settings/GeneralSettings';
 import { UsersSettings } from '../components/settings/UsersSettings';
 
 export function Settings() {
+  const { t } = useTranslation();
+
   const items = [
     {
       key: 'general',
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <SettingOutlined />
-          Geral
+          {t('settings.general')}
         </span>
       ),
       children: <GeneralSettings />,
@@ -21,7 +24,7 @@ export function Settings() {
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <UserOutlined />
-          Usuários
+          {t('settings.usersTab')}
         </span>
       ),
       children: <UsersSettings />,
@@ -31,8 +34,8 @@ export function Settings() {
   return (
     <div>
       <PageHeader
-        title="Configurações"
-        subtitle="Gerencie as configurações do sistema"
+        title={t('settings.title')}
+        subtitle={t('settings.subtitle')}
       />
 
       <Tabs
