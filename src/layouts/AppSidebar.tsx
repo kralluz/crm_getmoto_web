@@ -33,7 +33,6 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const { t } = useTranslation();
   const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'produtos-submenu', 'servicos-submenu']);
-  const [isHovering, setIsHovering] = useState(false);
   const [isManuallyCollapsed, setIsManuallyCollapsed] = useState(collapsed);
 
   // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, produtos e serviços sempre abertos
@@ -49,14 +48,12 @@ export function AppSidebar({
   };
 
   const handleMouseEnter = () => {
-    setIsHovering(true);
     if (isManuallyCollapsed) {
       onCollapse(false);
     }
   };
 
   const handleMouseLeave = () => {
-    setIsHovering(false);
     if (isManuallyCollapsed) {
       onCollapse(true);
     }
