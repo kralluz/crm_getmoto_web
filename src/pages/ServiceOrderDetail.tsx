@@ -19,13 +19,16 @@ import {
   EditOutlined, 
   ToolOutlined,
   ShoppingOutlined,
-  DollarOutlined 
+  DollarOutlined,
+  FilePdfOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useServiceOrder } from '../hooks/useServices';
 import type { ServiceProduct, ServiceRealized, CashFlow } from '../types/service-order';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
+import { useState } from 'react';
+import { generateServiceOrderReport } from '../utils/reports';
+import { formatCurrency, formatDateTime, parseDecimal } from '../utils/format.util';
 
 const { Title, Text } = Typography;
 
@@ -49,6 +52,20 @@ export function ServiceOrderDetail() {
   const serviceOrderId = id ? parseInt(id) : 0;
 
   const { data: serviceOrder, isLoading, error } = useServiceOrder(serviceOrderId);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+
+  const handleGeneratePdf = () => {
+    if (!serviceOrder) return;
+
+    setIsPdfLoading(true);
+    try {
+      generateServiceOrderReport(serviceOrder);
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
 
   const handleBack = () => {
     navigate('/servicos');
@@ -56,34 +73,6 @@ export function ServiceOrderDetail() {
 
   const handleEdit = () => {
     navigate(`/servicos/${id}/editar`);
-  };
-
-  // Converter Decimal do Prisma para número
-  const parseDecimal = (value: any): number => {
-    if (typeof value === 'number') return value;
-    if (value && typeof value === 'object' && 'd' in value) {
-      // Prisma Decimal format: {s: sign, e: exponent, d: digits}
-      const sign = value.s || 1;
-      const exponent = value.e || 0;
-      const digits = value.d || [0];
-      const numStr = digits.join('');
-      const num = parseFloat(numStr) * Math.pow(10, exponent - digits.length + 1);
-      return sign * num;
-    }
-    return 0;
-  };
-
-  const formatCurrency = (value: any) => {
-    const numValue = parseDecimal(value);
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(numValue);
-  };
-
-  const formatDateTime = (date?: string) => {
-    if (!date) return '-';
-    return dayjs(date).format('DD/MM/YYYY HH:mm');
   };
 
   // Calcular totais
@@ -251,6 +240,13 @@ export function ServiceOrderDetail() {
           onClick={handleEdit}
         >
           Editar
+        </Button>
+        <Button
+          icon={<FilePdfOutlined />}
+          onClick={handleGeneratePdf}
+          loading={isPdfLoading}
+        >
+          Gerar PDF
         </Button>
       </Space>
 

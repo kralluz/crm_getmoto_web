@@ -91,4 +91,6 @@ export interface UpdateServiceOrderData extends Partial<CreateServiceOrderData> 
 export interface ServiceOrderListParams {
   status?: ServiceOrderStatus;
   customer_name?: string;
+  startDate?: string;
+  endDate?: string;
 }

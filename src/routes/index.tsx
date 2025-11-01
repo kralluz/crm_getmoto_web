@@ -1,5 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts';
+import { ProtectedRoute } from '../components/auth';
+import { Login } from '../pages/Login';
+import { Register } from '../pages/Register';
 
 import { DashboardFinanceiro } from '../pages/DashboardFinanceiro';
 import { TransactionForm } from '../pages/TransactionForm';
@@ -15,6 +18,7 @@ import { ProductCategoryDetail } from '../pages/ProductCategoryDetail';
 import { ServiceList } from '../pages/ServiceList';
 import { ServiceForm } from '../pages/ServiceForm';
 import { ServiceOrderDetail } from '../pages/ServiceOrderDetail';
+import { ServiceOrdersReport } from '../pages/ServiceOrdersReport';
 import { ServiceCategoryList } from '../pages/ServiceCategoryList';
 import { ServiceCategoryForm } from '../pages/ServiceCategoryForm';
 import { ServiceCategoryDetail } from '../pages/ServiceCategoryDetail';
@@ -24,9 +28,23 @@ import { SearchResults } from '../pages/SearchResults';
 import { Settings } from '../pages/Settings';
 
 export const router = createBrowserRouter([
+  // Rotas públicas (login e registro)
+  {
+    path: '/login',
+    element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
+  },
+  // Rotas privadas (protegidas)
   {
     path: '/',
-    element: <MainLayout />,
+    element: (
+      <ProtectedRoute>
+        <MainLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
@@ -96,6 +114,10 @@ export const router = createBrowserRouter([
       {
         path: 'estoque',
         element: <StockReport />,
+      },
+      {
+        path: 'relatorios/servicos',
+        element: <ServiceOrdersReport />,
       },
       {
         path: 'servicos',

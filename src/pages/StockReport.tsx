@@ -23,12 +23,14 @@ import { useProducts, useStockMoves } from '../hooks/useProducts';
 import { useFormat } from '../hooks/useFormat';
 import { parseDecimal } from '../utils';
 import { PageHeader } from '../components/common/PageHeader';
+import { generateLowStockReport } from '../utils/reports';
 import type { Product, StockMove } from '../types/product';
 
 const { RangePicker } = DatePicker;
 
 export function StockReport() {
   const { formatCurrency, formatDateTime } = useFormat();
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
     dayjs().startOf('month'),
     dayjs().endOf('month'),
@@ -85,6 +87,22 @@ export function StockReport() {
     ENTRY: { label: 'Entrada', color: 'green' },
     EXIT: { label: 'Saída', color: 'red' },
     ADJUSTMENT: { label: 'Ajuste', color: 'orange' },
+  };
+
+  const handleGenerateLowStockPdf = () => {
+    if (!products) return;
+
+    setIsPdfLoading(true);
+    try {
+      const lowStockProducts = products.filter(p =>
+        parseDecimal(p.quantity) <= parseDecimal(p.quantity_alert)
+      );
+      generateLowStockReport({ products: lowStockProducts });
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+    } finally {
+      setIsPdfLoading(false);
+    }
   };
 
   const productColumns: ColumnsType<Product> = [
@@ -214,8 +232,14 @@ export function StockReport() {
         title="Relatório de Estoque"
         subtitle="Análise completa do estoque e movimentações"
         extra={
-          <Button icon={<DownloadOutlined />} size="large">
-            Exportar Relatório
+          <Button
+            icon={<DownloadOutlined />}
+            size="large"
+            onClick={handleGenerateLowStockPdf}
+            loading={isPdfLoading}
+            disabled={!stats || stats.lowStockProducts === 0}
+          >
+            Alerta de Estoque Baixo (PDF)
           </Button>
         }
       />
