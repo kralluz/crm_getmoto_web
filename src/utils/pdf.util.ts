@@ -1,10 +1,11 @@
-import pdfMake from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
+import pdfMakeOriginal from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import type { TDocumentDefinitions, Content, StyleDictionary } from 'pdfmake/interfaces';
 import { formatDateTime } from './format.util';
 
 // Configurar fontes do pdfMake
-(pdfMake as any).vfs = (pdfFonts as any).pdfMake.vfs;
+const pdfMake = pdfMakeOriginal as any;
+pdfMake.vfs = pdfFonts;
 
 /**
  * Configuração padrão de estilos para todos os relatórios
