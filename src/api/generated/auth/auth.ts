@@ -26,7 +26,10 @@ import type {
 
 import type {
   PostApiAuthLoginBody,
-  PostApiAuthRegisterBody
+  PostApiAuthLogoutBody,
+  PostApiAuthRefreshBody,
+  PostApiAuthRegisterBody,
+  PutApiAuthProfileBody
 } from '.././models';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -253,3 +256,257 @@ export function useGetApiAuthMe<TData = Awaited<ReturnType<typeof getApiAuthMe>>
 
 
 
+/**
+ * @summary Renovar access token usando refresh token
+ */
+export const postApiAuthRefresh = (
+    postApiAuthRefreshBody: PostApiAuthRefreshBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/auth/refresh`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiAuthRefreshBody, signal
+    },
+      );
+    }
+  
+
+
+export const getPostApiAuthRefreshMutationOptions = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: PostApiAuthRefreshBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: PostApiAuthRefreshBody}, TContext> => {
+
+const mutationKey = ['postApiAuthRefresh'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthRefresh>>, {data: PostApiAuthRefreshBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postApiAuthRefresh(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiAuthRefreshMutationResult = NonNullable<Awaited<ReturnType<typeof postApiAuthRefresh>>>
+    export type PostApiAuthRefreshMutationBody = PostApiAuthRefreshBody
+    export type PostApiAuthRefreshMutationError = void | void
+
+    /**
+ * @summary Renovar access token usando refresh token
+ */
+export const usePostApiAuthRefresh = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthRefresh>>, TError,{data: PostApiAuthRefreshBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiAuthRefresh>>,
+        TError,
+        {data: PostApiAuthRefreshBody},
+        TContext
+      > => {
+
+      const mutationOptions = getPostApiAuthRefreshMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Fazer logout (invalidar refresh token)
+ */
+export const postApiAuthLogout = (
+    postApiAuthLogoutBody: PostApiAuthLogoutBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/auth/logout`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiAuthLogoutBody, signal
+    },
+      );
+    }
+  
+
+
+export const getPostApiAuthLogoutMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogout>>, TError,{data: PostApiAuthLogoutBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogout>>, TError,{data: PostApiAuthLogoutBody}, TContext> => {
+
+const mutationKey = ['postApiAuthLogout'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthLogout>>, {data: PostApiAuthLogoutBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postApiAuthLogout(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiAuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof postApiAuthLogout>>>
+    export type PostApiAuthLogoutMutationBody = PostApiAuthLogoutBody
+    export type PostApiAuthLogoutMutationError = void
+
+    /**
+ * @summary Fazer logout (invalidar refresh token)
+ */
+export const usePostApiAuthLogout = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogout>>, TError,{data: PostApiAuthLogoutBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiAuthLogout>>,
+        TError,
+        {data: PostApiAuthLogoutBody},
+        TContext
+      > => {
+
+      const mutationOptions = getPostApiAuthLogoutMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Fazer logout de todas as sessões
+ */
+export const postApiAuthLogoutAll = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/auth/logout-all`, method: 'POST', signal
+    },
+      );
+    }
+  
+
+
+export const getPostApiAuthLogoutAllMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogoutAll>>, TError,void, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogoutAll>>, TError,void, TContext> => {
+
+const mutationKey = ['postApiAuthLogoutAll'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAuthLogoutAll>>, void> = () => {
+          
+
+          return  postApiAuthLogoutAll()
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiAuthLogoutAllMutationResult = NonNullable<Awaited<ReturnType<typeof postApiAuthLogoutAll>>>
+    
+    export type PostApiAuthLogoutAllMutationError = void
+
+    /**
+ * @summary Fazer logout de todas as sessões
+ */
+export const usePostApiAuthLogoutAll = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAuthLogoutAll>>, TError,void, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiAuthLogoutAll>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getPostApiAuthLogoutAllMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Atualizar dados do próprio perfil (nome e cargo apenas)
+ */
+export const putApiAuthProfile = (
+    putApiAuthProfileBody: PutApiAuthProfileBody,
+ ) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/auth/profile`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: putApiAuthProfileBody
+    },
+      );
+    }
+  
+
+
+export const getPutApiAuthProfileMutationOptions = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiAuthProfile>>, TError,{data: PutApiAuthProfileBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof putApiAuthProfile>>, TError,{data: PutApiAuthProfileBody}, TContext> => {
+
+const mutationKey = ['putApiAuthProfile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putApiAuthProfile>>, {data: PutApiAuthProfileBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  putApiAuthProfile(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutApiAuthProfileMutationResult = NonNullable<Awaited<ReturnType<typeof putApiAuthProfile>>>
+    export type PutApiAuthProfileMutationBody = PutApiAuthProfileBody
+    export type PutApiAuthProfileMutationError = void | void
+
+    /**
+ * @summary Atualizar dados do próprio perfil (nome e cargo apenas)
+ */
+export const usePutApiAuthProfile = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiAuthProfile>>, TError,{data: PutApiAuthProfileBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putApiAuthProfile>>,
+        TError,
+        {data: PutApiAuthProfileBody},
+        TContext
+      > => {
+
+      const mutationOptions = getPutApiAuthProfileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

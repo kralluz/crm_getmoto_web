@@ -490,6 +490,144 @@
         }
       }
     },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "Renovar access token usando refresh token",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refreshToken"
+                ],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens renovados com sucesso"
+          },
+          "400": {
+            "description": "Refresh token não fornecido"
+          },
+          "401": {
+            "description": "Refresh token inválido ou expirado"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Fazer logout (invalidar refresh token)",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refreshToken"
+                ],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logout realizado com sucesso"
+          },
+          "400": {
+            "description": "Refresh token não fornecido"
+          }
+        }
+      }
+    },
+    "/api/auth/logout-all": {
+      "post": {
+        "summary": "Fazer logout de todas as sessões",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout de todas as sessões realizado com sucesso"
+          },
+          "401": {
+            "description": "Não autenticado"
+          }
+        }
+      }
+    },
+    "/api/auth/profile": {
+      "put": {
+        "summary": "Atualizar dados do próprio perfil (nome e cargo apenas)",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 255
+                  },
+                  "position": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil atualizado com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          }
+        }
+      }
+    },
     "/api/users": {
       "get": {
         "summary": "Listar todos os usuários",
@@ -835,12 +973,29 @@
           },
           {
             "in": "query",
-            "name": "customerId",
+            "name": "customer_name",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filtrar por nome do cliente (busca parcial)"
+          },
+          {
+            "in": "query",
+            "name": "startDate",
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "format": "date-time"
             },
-            "description": "Filtrar por cliente"
+            "description": "Data inicial (filtro por data de criação)"
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Data final (filtro por data de criação)"
           }
         ],
         "responses": {

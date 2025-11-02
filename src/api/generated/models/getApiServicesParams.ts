@@ -13,7 +13,15 @@ export type GetApiServicesParams = {
  */
 status?: GetApiServicesStatus;
 /**
- * Filtrar por cliente
+ * Filtrar por nome do cliente (busca parcial)
  */
-customerId?: string;
+customer_name?: string;
+/**
+ * Data inicial (filtro por data de criação)
+ */
+startDate?: string;
+/**
+ * Data final (filtro por data de criação)
+ */
+endDate?: string;
 };

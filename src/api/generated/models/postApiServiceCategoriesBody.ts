@@ -11,7 +11,7 @@ export type PostApiServiceCategoriesBody = {
    * @minLength 3
    * @maxLength 255
    */
-  service_name: string;
+  service_category_name: string;
   /** @minimum 0 */
   service_cost: number;
   is_active?: boolean;

@@ -6,13 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PutApiServiceCategoriesIdBody = {
+export type PutApiAuthProfileBody = {
   /**
    * @minLength 3
    * @maxLength 255
    */
-  service_category_name?: string;
-  /** @minimum 0 */
-  service_cost?: number;
-  is_active?: boolean;
+  name?: string;
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  position?: string;
 };
