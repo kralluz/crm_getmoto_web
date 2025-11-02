@@ -34,6 +34,12 @@ export function AppSidebar({
   const { t } = useTranslation();
   const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'produtos-submenu', 'servicos-submenu']);
   const [isManuallyCollapsed, setIsManuallyCollapsed] = useState(collapsed);
+  const [isHovering, setIsHovering] = useState(false);
+
+  // Sincronizar isManuallyCollapsed quando collapsed mudar externamente (ex: localStorage)
+  useEffect(() => {
+    setIsManuallyCollapsed(collapsed);
+  }, [collapsed]);
 
   // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, produtos e serviços sempre abertos
   useEffect(() => {
@@ -48,19 +54,25 @@ export function AppSidebar({
   };
 
   const handleMouseEnter = () => {
-    if (isManuallyCollapsed) {
+    // Só expande no hover se estiver manualmente minimizado
+    if (isManuallyCollapsed && !isHovering) {
+      setIsHovering(true);
       onCollapse(false);
     }
   };
 
   const handleMouseLeave = () => {
-    if (isManuallyCollapsed) {
+    // Só minimiza ao sair do hover se estava manualmente minimizado
+    if (isManuallyCollapsed && isHovering) {
+      setIsHovering(false);
       onCollapse(true);
     }
   };
 
   const handleCollapseClick = (newCollapsed: boolean) => {
+    // Quando o usuário clica manualmente, atualiza o estado e reseta o hover
     setIsManuallyCollapsed(newCollapsed);
+    setIsHovering(false);
     onCollapse(newCollapsed);
   };
 

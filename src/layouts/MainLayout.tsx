@@ -7,9 +7,19 @@ import { AppHeader } from './AppHeader';
 const { Content } = Layout;
 
 export function MainLayout() {
-  const [collapsed, setCollapsed] = useState(false);
+  // Recupera estado do localStorage ou inicia como minimizado
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved ? JSON.parse(saved) : true;
+  });
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Salva o estado no localStorage quando mudar
+  const handleCollapse = (value: boolean) => {
+    setCollapsed(value);
+    localStorage.setItem('sidebar-collapsed', JSON.stringify(value));
+  };
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -58,7 +68,7 @@ export function MainLayout() {
     <Layout style={{ minHeight: '100vh' }}>
       <AppSidebar
         collapsed={collapsed}
-        onCollapse={setCollapsed}
+        onCollapse={handleCollapse}
         selectedMenu={getSelectedMenuKey()}
         openKeys={getOpenKeys()}
         onMenuSelect={handleMenuSelect}

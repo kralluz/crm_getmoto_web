@@ -9,9 +9,14 @@ export function useLogin() {
   return useMutation({
     mutationFn: (credentials: LoginCredentials) => authApi.login(credentials),
     onSuccess: (data) => {
-      // Salvar token no storage
+      // Salvar access token no storage
       StorageService.setAuthToken(data.token);
       StorageService.setUserData(data.user);
+
+      // Salvar refresh token no localStorage (se existir)
+      if ('refreshToken' in data && data.refreshToken) {
+        localStorage.setItem('refresh_token', data.refreshToken);
+      }
 
       // Atualizar cache
       queryClient.setQueryData(['auth', 'me'], data.user);
@@ -25,9 +30,14 @@ export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterData) => authApi.register(data),
     onSuccess: (data) => {
-      // Salvar token no storage
+      // Salvar access token no storage
       StorageService.setAuthToken(data.token);
       StorageService.setUserData(data.user);
+
+      // Salvar refresh token no localStorage (se existir)
+      if ('refreshToken' in data && data.refreshToken) {
+        localStorage.setItem('refresh_token', data.refreshToken);
+      }
 
       // Atualizar cache
       queryClient.setQueryData(['auth', 'me'], data.user);
@@ -50,10 +60,13 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSuccess: () => {
-      // Limpar storage
+      // Limpar storage (access token e user data)
       StorageService.clearAuthData();
 
-      // Limpar cache
+      // Limpar refresh token
+      localStorage.removeItem('refresh_token');
+
+      // Limpar cache do React Query
       queryClient.clear();
     },
   });

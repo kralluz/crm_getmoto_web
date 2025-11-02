@@ -29,7 +29,7 @@ export default {
     cashflow: 'Transactions',
     clients: 'Clients',
     products: 'Products',
-    services: 'Services',
+    services: 'Service Orders',
     users: 'Users',
     settings: 'Settings',
   },

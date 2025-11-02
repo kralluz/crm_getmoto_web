@@ -6,7 +6,6 @@ import dayjs from 'dayjs';
 import { PeriodSelector } from '../components/dashboard/PeriodSelector';
 import { FinancialSummaryCards } from '../components/dashboard/FinancialSummaryCards';
 import { CashFlowChart } from '../components/dashboard/CashFlowChart';
-import { CategorySummaryTable } from '../components/dashboard/CategorySummaryTable';
 import { RecentTransactionsTable } from '../components/dashboard/RecentTransactionsTable';
 import { useDashboardData } from '../hooks/useCashFlow';
 import { generateCashFlowReport } from '../utils/reports';
@@ -23,7 +22,7 @@ export function DashboardFinanceiro() {
     endDate: dayjs().format('YYYY-MM-DD'),
   });
 
-  const { summary, categories, transactions, isLoading, isError } =
+  const { summary, transactions, isLoading, isError } =
     useDashboardData(dateRange.startDate, dateRange.endDate);
 
   const handlePeriodChange = (startDate: string, endDate: string) => {
@@ -31,7 +30,7 @@ export function DashboardFinanceiro() {
   };
 
   const handleGenerateCashFlowPdf = () => {
-    if (!transactions || !summary || !categories) return;
+    if (!transactions || !summary) return;
 
     setIsPdfLoading(true);
     try {
@@ -49,12 +48,7 @@ export function DashboardFinanceiro() {
           totalExpense: summary.totalExpense || 0,
           balance: summary.balance || 0,
         },
-        categorySummary: categories.map(cat => ({
-          category: cat.category || 'Sem categoria',
-          type: cat.type as 'INCOME' | 'EXPENSE',
-          total: cat.total || 0,
-          count: cat.count || 0,
-        })),
+        categorySummary: [], // Removed category summary as it's not functional
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
       });
@@ -102,8 +96,6 @@ export function DashboardFinanceiro() {
         <FinancialSummaryCards summary={summary} loading={isLoading} />
 
         <CashFlowChart transactions={transactions} loading={isLoading} />
-
-        <CategorySummaryTable categories={categories} loading={isLoading} />
 
         <RecentTransactionsTable transactions={transactions} loading={isLoading} />
       </Space>

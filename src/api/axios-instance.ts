@@ -95,12 +95,86 @@ axiosInstance.interceptors.response.use(
 );
 
 /**
- * Tratamento centralizado de erros
+ * Tratamento centralizado de erros com refresh token automático
  */
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+const subscribeTokenRefresh = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
+};
+
+const onTokenRefreshed = (newToken: string) => {
+  refreshSubscribers.forEach((callback) => callback(newToken));
+  refreshSubscribers = [];
+};
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const originalRequest = error.config;
     const apiError = ApiErrorHandler.handle(error);
+
+    // Tentativa de refresh token em caso de 401
+    if (apiError.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Se já está refreshing, aguarda o novo token
+        return new Promise((resolve) => {
+          subscribeTokenRefresh((newToken: string) => {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(axiosInstance(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+
+        if (refreshToken) {
+          // Chama endpoint de refresh
+          const response = await axiosInstance.post('/api/auth/refresh', {
+            refreshToken,
+          });
+
+          const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
+
+          // Atualiza tokens no storage
+          StorageService.setAuthToken(newAccessToken);
+          if (newRefreshToken) {
+            localStorage.setItem('refresh_token', newRefreshToken);
+          }
+
+          // Atualiza header da requisição original
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+          // Notifica todas as requisições aguardando
+          onTokenRefreshed(newAccessToken);
+          isRefreshing = false;
+
+          // Retenta a requisição original
+          return axiosInstance(originalRequest);
+        }
+      } catch (refreshError) {
+        // Se refresh falhar, limpa dados e redireciona para login
+        isRefreshing = false;
+        refreshSubscribers = [];
+
+        apiLogger.warn('Token refresh failed - clearing auth data');
+        StorageService.clearAuthData();
+        localStorage.removeItem('refresh_token');
+        requestQueue.clear();
+
+        if (!window.location.pathname.includes('/login')) {
+          apiLogger.info('Redirecting to login page');
+          window.location.href = '/login';
+        }
+
+        return Promise.reject(refreshError);
+      }
+    }
 
     // Log estruturado do erro
     ApiErrorHandler.logError(apiError, {
@@ -113,16 +187,12 @@ axiosInstance.interceptors.response.use(
       ApiErrorHandler.showNotification(apiError);
     }
 
-    // Tratamento especial para 401 (não autorizado)
-    // Não redireciona se skipErrorNotification estiver ativo
-    if (ApiErrorHandler.isCritical(apiError) && !error.config?.skipErrorNotification) {
+    // Tratamento especial para 401 (não autorizado) sem refresh token
+    if (ApiErrorHandler.isCritical(apiError) && !error.config?.skipErrorNotification && !localStorage.getItem('refresh_token')) {
       apiLogger.warn('Unauthorized request - clearing auth data');
       StorageService.clearAuthData();
-
-      // Limpa a fila de requisições
       requestQueue.clear();
 
-      // Redireciona para login (somente se não estiver já na página de login)
       if (!window.location.pathname.includes('/login')) {
         apiLogger.info('Redirecting to login page');
         window.location.href = '/login';

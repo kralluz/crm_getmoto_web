@@ -29,15 +29,10 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      // Mock user for testing - remove in production
-      user: {
-        id: 'mock-user-id',
-        name: 'Usuário Teste',
-        email: 'teste@getmoto.com',
-        role: 'ADMIN',
-      },
-      token: 'mock-token',
-      isAuthenticated: true,
+      // Estado inicial - usuário não autenticado
+      user: null,
+      token: null,
+      isAuthenticated: false,
       isLoading: false,
 
       setUser: (user) =>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Typography, Space, Select, Button, Alert } from 'antd';
+import { Table, Card, Input, Tag, Typography, Space, Select, Button, Alert, Row, Col } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
@@ -250,37 +250,45 @@ export function ServiceList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>Ordens de Serviço</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-          size="large"
-        >
-          Nova Ordem de Serviço
-        </Button>
-      </div>
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[16, 16]}>
+        <Col xs={24} sm={12}>
+          <Title level={2} style={{ margin: 0 }}>Ordens de Serviço</Title>
+        </Col>
+        <Col xs={24} sm={12} style={{ textAlign: 'right' }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+            size="large"
+            block={window.innerWidth < 576}
+          >
+            Nova Ordem de Serviço
+          </Button>
+        </Col>
+      </Row>
 
       <Card style={{ marginBottom: 16 }}>
-        <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
-          <Input
-            placeholder="Buscar por cliente, placa, descrição..."
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
-            allowClear
-          />
-          <Select
-            placeholder="Filtrar por status"
-            value={selectedStatus || undefined}
-            onChange={(value) => setSelectedStatus(value || '')}
-            style={{ width: 200 }}
-            allowClear
-            options={statusOptions}
-          />
-        </Space>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24} md={16} lg={12}>
+            <Input
+              placeholder="Buscar por cliente, placa, descrição..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              placeholder="Filtrar por status"
+              value={selectedStatus || undefined}
+              onChange={(value) => setSelectedStatus(value || '')}
+              allowClear
+              options={statusOptions}
+              style={{ width: '100%' }}
+            />
+          </Col>
+        </Row>
       </Card>
 
       {error && (
@@ -303,9 +311,11 @@ export function ServiceList() {
             pageSize: 20,
             showSizeChanger: true,
             showTotal: (total) => `Total: ${total} ordens de serviço`,
+            responsive: true,
           }}
           size="small"
           scroll={{ x: 1400 }}
+          sticky
         />
       </Card>
     </div>
