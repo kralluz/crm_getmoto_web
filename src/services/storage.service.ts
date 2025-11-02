@@ -30,7 +30,15 @@ export class StorageService {
     try {
       const item = localStorage.getItem(key);
       if (!item) return null;
-      return JSON.parse(item) as T;
+
+      // Tenta fazer parse como JSON
+      try {
+        return JSON.parse(item) as T;
+      } catch (parseError) {
+        // Se falhar, retorna a string diretamente (caso de JWT tokens salvos sem stringify)
+        serviceLogger.debug(`Item ${key} is not JSON, returning as string`);
+        return item as T;
+      }
     } catch (error) {
       serviceLogger.error(
         `Failed to get item from localStorage: ${key}`,
