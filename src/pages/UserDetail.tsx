@@ -1,12 +1,14 @@
 import { Card, Descriptions, Tag, Typography, Space, Button, Divider } from 'antd';
 import { ArrowLeftOutlined, UserOutlined, EditOutlined, KeyOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import type { User, UserRole } from '../types/user';
 
 const { Title, Text } = Typography;
 
 export function UserDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -49,10 +51,10 @@ export function UserDetail() {
 
   const getRoleLabel = (role: UserRole): string => {
     const labels: Record<UserRole, string> = {
-      ADMIN: 'Administrador',
-      MANAGER: 'Gerente',
-      MECHANIC: 'Mecânico',
-      ATTENDANT: 'Atendente',
+      ADMIN: t('users.roles.ADMIN'),
+      MANAGER: t('users.roles.MANAGER'),
+      MECHANIC: t('users.roles.MECHANIC'),
+      ATTENDANT: t('users.roles.ATTENDANT'),
     };
     return labels[role];
   };
@@ -114,9 +116,9 @@ export function UserDetail() {
               </Tag>
             </Descriptions.Item>
 
-            <Descriptions.Item label="Status">
+            <Descriptions.Item label={t('common.status')}>
               <Tag color={user.active ? 'success' : 'default'}>
-                {user.active ? 'Ativo' : 'Inativo'}
+                {user.active ? t('common.active') : t('common.inactive')}
               </Tag>
             </Descriptions.Item>
 

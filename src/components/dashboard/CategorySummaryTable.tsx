@@ -15,9 +15,9 @@ export function CategorySummaryTable({
   const { t } = useTranslation();
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
-      currency: 'BRL',
+      currency: 'GBP',
     }).format(value);
   };
 

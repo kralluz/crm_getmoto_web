@@ -276,7 +276,7 @@ export function ServiceOrdersReport() {
               title="Receita Total"
               value={stats?.totalRevenue || 0}
               precision={2}
-              prefix="R$"
+              prefix="£"
               valueStyle={{ color: '#1890ff' }}
             />
           </Card>
@@ -287,7 +287,7 @@ export function ServiceOrdersReport() {
               title="Ticket Médio"
               value={stats?.avgTicket || 0}
               precision={2}
-              prefix="R$"
+              prefix="£"
               valueStyle={{ color: '#faad14' }}
             />
           </Card>

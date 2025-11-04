@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Form, Input, Switch, Button, Card, Space } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/common/PageHeader';
 import { CurrencyInput } from '../components/common/CurrencyInput';
 import {
@@ -9,12 +10,16 @@ import {
   useCreateServiceCategory,
   useUpdateServiceCategory,
 } from '../hooks/useServiceCategories';
-import type { CreateServiceCategoryData, UpdateServiceCategoryData } from '../types/service-category';
+import type {
+  CreateServiceCategoryData,
+  UpdateServiceCategoryData,
+} from '../types/service-category';
 import { parseDecimal } from '../utils';
 
 export function ServiceCategoryForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const isEditing = !!id;
 
   const [form] = Form.useForm();
@@ -48,7 +53,7 @@ export function ServiceCategoryForm() {
               form.setFields([
                 {
                   name: 'service_name',
-                  errors: ['Já existe uma categoria com este nome'],
+                  errors: [t('services.errors.nameExists')],
                 },
               ]);
             }
@@ -65,7 +70,7 @@ export function ServiceCategoryForm() {
             form.setFields([
               {
                 name: 'service_name',
-                errors: ['Já existe um serviço com este nome'],
+                errors: [t('services.errors.nameExists')],
               },
             ]);
           }
@@ -81,8 +86,8 @@ export function ServiceCategoryForm() {
   return (
     <div>
       <PageHeader
-        title={isEditing ? 'Editar Serviço' : 'Novo Serviço'}
-        subtitle={isEditing ? 'Atualize os dados do serviço' : 'Preencha os dados do novo serviço'}
+        title={isEditing ? t('products.editServiceCategory') : t('products.newServiceCategory')}
+        subtitle={isEditing ? t('products.editServiceCategorySubtitle') : t('products.newServiceCategorySubtitle')}
       />
 
       <Card loading={isLoading}>
@@ -96,46 +101,46 @@ export function ServiceCategoryForm() {
           }}
         >
           <Form.Item
-            label="Nome do Serviço"
+            label={t('products.serviceCategoryName')}
             name="service_name"
             rules={[
-              { required: true, message: 'Por favor, informe o nome do serviço' },
-              { min: 3, message: 'O nome deve ter no mínimo 3 caracteres' },
-              { max: 255, message: 'O nome deve ter no máximo 255 caracteres' },
+              { required: true, message: t('products.serviceCategoryNameRequired') },
+              { min: 3, message: t('products.serviceCategoryNameMinLength') },
+              { max: 255, message: t('products.serviceCategoryNameMaxLength') },
             ]}
           >
             <Input
-              placeholder="Ex: Troca de Óleo, Revisão Completa, Troca de Pneus"
+              placeholder={t('products.serviceCategoryPlaceholder')}
               size="large"
             />
           </Form.Item>
 
           <Form.Item
-            label="Custo do Serviço (R$)"
+            label={t('products.serviceCost')}
             name="service_cost"
             rules={[
-              { required: true, message: 'Por favor, informe o custo do serviço' },
+              { required: true, message: t('products.serviceCostRequired') },
               {
                 type: 'number',
                 min: 0,
-                message: 'O custo deve ser maior ou igual a zero',
+                message: t('products.serviceCostPositive'),
               },
             ]}
           >
             <CurrencyInput
-              placeholder="R$ 0,00"
+              placeholder="£0.00"
               style={{ width: '100%' }}
             />
           </Form.Item>
 
           <Form.Item
-            label="Status"
+            label={t('common.status')}
             name="is_active"
             valuePropName="checked"
           >
             <Switch
-              checkedChildren="Ativo"
-              unCheckedChildren="Inativo"
+              checkedChildren={t('common.active')}
+              unCheckedChildren={t('common.inactive')}
             />
           </Form.Item>
 
@@ -148,14 +153,14 @@ export function ServiceCategoryForm() {
                 loading={isCreating || isUpdating}
                 size="large"
               >
-                {isEditing ? 'Atualizar' : 'Criar'} Serviço
+                {isEditing ? t('products.updateServiceCategory') : t('products.createServiceCategory')}
               </Button>
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={handleCancel}
                 size="large"
               >
-                Cancelar
+                {t('common.cancel')}
               </Button>
             </Space>
           </Form.Item>

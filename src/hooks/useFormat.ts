@@ -29,8 +29,8 @@ export function useFormat() {
   );
 
   const currency = useCallback(
-    (value: number, currencyCode = 'BRL') => {
-      return FormatService.currency(value, currencyCode, language);
+    (value: number, currencyCode = 'GBP') => {
+      return FormatService.currency(value, currencyCode, 'en-GB');
     },
     [language]
   );

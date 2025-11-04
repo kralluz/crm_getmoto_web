@@ -7,20 +7,10 @@
  */
 
 export interface Service {
-  service_order_id?: number;
-  customer_name?: string;
-  /** @nullable */
-  customer_phone?: string | null;
-  /** @nullable */
-  vehicle_id?: number | null;
-  /** @nullable */
-  professional_name?: string | null;
-  description?: string;
-  status?: string;
-  /** @nullable */
-  estimated_labor_cost_cents?: number | null;
-  /** @nullable */
-  category_id?: number | null;
+  service_id?: number;
+  service_name?: string;
+  service_cost?: number;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
 }

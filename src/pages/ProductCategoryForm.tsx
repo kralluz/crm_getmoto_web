@@ -2,17 +2,22 @@ import { useEffect } from 'react';
 import { Form, Input, Switch, Button, Card, Space } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/common/PageHeader';
 import {
   useProductCategory,
   useCreateProductCategory,
   useUpdateProductCategory,
 } from '../hooks/useProductCategories';
-import type { CreateProductCategoryData, UpdateProductCategoryData } from '../types/product-category';
+import type {
+  CreateProductCategoryData,
+  UpdateProductCategoryData,
+} from '../types/product-category';
 
 export function ProductCategoryForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const isEditing = !!id;
 
   const [form] = Form.useForm();
@@ -45,7 +50,7 @@ export function ProductCategoryForm() {
               form.setFields([
                 {
                   name: 'product_category_name',
-                  errors: ['Já existe uma categoria com este nome'],
+                  errors: [t('products.categoryExistsError')],
                 },
               ]);
             }
@@ -62,7 +67,7 @@ export function ProductCategoryForm() {
             form.setFields([
               {
                 name: 'product_category_name',
-                errors: ['Já existe uma categoria com este nome'],
+                errors: [t('products.categoryExistsError')],
               },
             ]);
           }
@@ -78,8 +83,8 @@ export function ProductCategoryForm() {
   return (
     <div>
       <PageHeader
-        title={isEditing ? 'Editar Categoria de Produto' : 'Nova Categoria de Produto'}
-        subtitle={isEditing ? 'Atualize os dados da categoria' : 'Preencha os dados da nova categoria'}
+        title={isEditing ? t('products.editCategoryTitle') : t('products.newCategoryTitle')}
+        subtitle={isEditing ? t('products.updateCategorySubtitle') : t('products.newCategorySubtitle')}
       />
 
       <Card loading={isLoading}>
@@ -92,28 +97,28 @@ export function ProductCategoryForm() {
           }}
         >
           <Form.Item
-            label="Nome da Categoria"
+            label={t('products.categoryName')}
             name="product_category_name"
             rules={[
-              { required: true, message: 'Por favor, informe o nome da categoria' },
-              { min: 3, message: 'O nome deve ter no mínimo 3 caracteres' },
-              { max: 255, message: 'O nome deve ter no máximo 255 caracteres' },
+              { required: true, message: t('products.categoryNameRequired') },
+              { min: 3, message: t('products.categoryNameMinLength') },
+              { max: 255, message: t('products.categoryNameMaxLength') },
             ]}
           >
             <Input
-              placeholder="Ex: Pneus, Óleo Lubrificante, Peças de Motor"
+              placeholder={t('products.categoryPlaceholder')}
               size="large"
             />
           </Form.Item>
 
           <Form.Item
-            label="Status"
+            label={t('common.status')}
             name="is_active"
             valuePropName="checked"
           >
             <Switch
-              checkedChildren="Ativo"
-              unCheckedChildren="Inativo"
+              checkedChildren={t('common.active')}
+              unCheckedChildren={t('common.inactive')}
             />
           </Form.Item>
 
@@ -126,14 +131,14 @@ export function ProductCategoryForm() {
                 loading={isCreating || isUpdating}
                 size="large"
               >
-                {isEditing ? 'Atualizar' : 'Criar'} Categoria
+                {isEditing ? t('products.updateCategory') : t('products.createCategory')}
               </Button>
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={handleCancel}
                 size="large"
               >
-                Cancelar
+                {t('common.cancel')}
               </Button>
             </Space>
           </Form.Item>

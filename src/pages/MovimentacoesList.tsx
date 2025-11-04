@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Table, Card, Input, Tag, Space, Select, Button, DatePicker } from 'antd';
 import { SearchOutlined, PlusOutlined, FilterOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import { useCashFlowTransactions, useDeleteTransaction } from '../hooks/useCashFlow';
 import { ActionButtons } from '../components/common/ActionButtons';
@@ -13,6 +14,7 @@ import dayjs from 'dayjs';
 const { RangePicker } = DatePicker;
 
 export function MovimentacoesList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { formatCurrency, formatDate } = useFormat();
   const [searchText, setSearchText] = useState('');
@@ -64,7 +66,7 @@ export function MovimentacoesList() {
 
   const columns: ColumnsType<CashFlowTransaction> = [
     {
-      title: 'Ações',
+      title: t('cashflow.actions'),
       key: 'actions',
       width: 80,
       align: 'center',
@@ -75,8 +77,8 @@ export function MovimentacoesList() {
           onDelete={() => handleDelete(record.cash_flow_id)}
           showView
           showEdit={false}
-          deleteTitle="Deletar Movimentação"
-          deleteDescription={`Tem certeza que deseja deletar esta movimentação?`}
+          deleteTitle={t('cashflow.deleteMovement')}
+          deleteDescription={t('cashflow.deleteMovementConfirm')}
           iconOnly
         />
       ),
@@ -89,7 +91,7 @@ export function MovimentacoesList() {
       sorter: (a, b) => Number(a.cash_flow_id) - Number(b.cash_flow_id),
     },
     {
-      title: 'Data',
+      title: t('cashflow.date'),
       dataIndex: 'occurred_at',
       key: 'occurred_at',
       width: 120,
@@ -97,7 +99,7 @@ export function MovimentacoesList() {
       sorter: (a, b) => dayjs(a.occurred_at).unix() - dayjs(b.occurred_at).unix(),
     },
     {
-      title: 'Tipo',
+      title: t('cashflow.type'),
       dataIndex: 'direction',
       key: 'direction',
       width: 100,
@@ -109,25 +111,25 @@ export function MovimentacoesList() {
             color={isIncome ? 'green' : 'red'}
             icon={isIncome ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
           >
-            {isIncome ? 'Entrada' : 'Saída'}
+            {isIncome ? t('cashflow.income') : t('cashflow.expense')}
           </Tag>
         );
       },
       filters: [
-        { text: 'Entrada', value: 'entrada' },
-        { text: 'Saída', value: 'saida' },
+        { text: t('cashflow.income'), value: 'entrada' },
+        { text: t('cashflow.expense'), value: 'saida' },
       ],
       onFilter: (value, record) => record.direction === value,
     },
     {
-      title: 'Descrição',
+      title: t('cashflow.description'),
       dataIndex: 'note',
       key: 'note',
       ellipsis: true,
       render: (note: string | null) => note || '-',
     },
     {
-      title: 'Valor',
+      title: t('cashflow.value'),
       dataIndex: 'amount',
       key: 'amount',
       width: 150,
@@ -197,20 +199,20 @@ export function MovimentacoesList() {
           />
 
           <Select
-            placeholder="Tipo"
+            placeholder={t('cashflow.typeFilter')}
             value={directionFilter}
             onChange={setDirectionFilter}
             style={{ width: 150 }}
             options={[
-              { value: 'all', label: 'Todos' },
-              { value: 'entrada', label: 'Entradas' },
-              { value: 'saida', label: 'Saídas' },
+              { value: 'all', label: t('cashflow.allTypes') },
+              { value: 'entrada', label: t('cashflow.incomes') },
+              { value: 'saida', label: t('cashflow.expenses') },
             ]}
           />
 
           <RangePicker
             format="DD/MM/YYYY"
-            placeholder={['Data Inicial', 'Data Final']}
+            placeholder={[t('cashflow.startDate'), t('cashflow.endDate')]}
             onChange={handleDateRangeChange}
             style={{ width: 280 }}
           />

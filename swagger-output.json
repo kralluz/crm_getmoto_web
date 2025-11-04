@@ -47,6 +47,10 @@
     {
       "name": "CashFlow",
       "description": "Gerenciamento de fluxo de caixa"
+    },
+    {
+      "name": "Search",
+      "description": "Busca unificada no sistema"
     }
   ],
   "components": {
@@ -166,68 +170,15 @@
           }
         }
       },
-      "Service": {
-        "type": "object",
-        "properties": {
-          "service_order_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "customer_name": {
-            "type": "string"
-          },
-          "customer_phone": {
-            "type": "string",
-            "nullable": true
-          },
-          "vehicle_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "professional_name": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "estimated_labor_cost_cents": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "category_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "ProductCategory": {
         "type": "object",
         "properties": {
-          "category_id": {
+          "product_category_id": {
             "type": "integer",
             "format": "int64"
           },
-          "name": {
+          "product_category_name": {
             "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
           },
           "is_active": {
             "type": "boolean"
@@ -242,19 +193,34 @@
           }
         }
       },
-      "ServiceCategory": {
+      "ProductCategoryWithStats": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProductCategory"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "product_count": {
+                "type": "integer"
+              }
+            }
+          }
+        ]
+      },
+      "Service": {
         "type": "object",
         "properties": {
-          "category_id": {
+          "service_id": {
             "type": "integer",
             "format": "int64"
           },
-          "name": {
+          "service_name": {
             "type": "string"
           },
-          "description": {
-            "type": "string",
-            "nullable": true
+          "service_cost": {
+            "type": "number",
+            "format": "float"
           },
           "is_active": {
             "type": "boolean"
@@ -268,6 +234,21 @@
             "format": "date-time"
           }
         }
+      },
+      "ServiceWithStats": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Service"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "service_order_count": {
+                "type": "integer"
+              }
+            }
+          }
+        ]
       },
       "Vehicle": {
         "type": "object",
@@ -352,6 +333,44 @@
             "format": "date-time"
           }
         }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "product",
+              "service",
+              "vehicle",
+              "serviceOrder"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "subtitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title"
+        ]
       }
     }
   },
@@ -413,7 +432,25 @@
         },
         "responses": {
           "201": {
-            "description": "Usuário criado com sucesso"
+            "description": "Usuário criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Dados inválidos"
@@ -455,7 +492,25 @@
         },
         "responses": {
           "200": {
-            "description": "Login realizado com sucesso"
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Dados inválidos"
@@ -479,7 +534,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Dados do usuário"
+            "description": "Dados do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
           },
           "401": {
             "description": "Não autenticado"
@@ -648,39 +710,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "email": {
-                        "type": "string"
-                      },
-                      "role": {
-                        "type": "string",
-                        "enum": [
-                          "ADMIN",
-                          "MANAGER",
-                          "MECHANIC",
-                          "ATTENDANT"
-                        ]
-                      },
-                      "active": {
-                        "type": "boolean"
-                      },
-                      "createdAt": {
-                        "type": "string",
-                        "format": "date-time"
-                      },
-                      "updatedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                      }
-                    }
+                    "$ref": "#/components/schemas/User"
                   }
                 }
               }
@@ -688,6 +718,78 @@
           },
           "401": {
             "description": "Não autenticado"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar novo usuário",
+        "description": "Cria um novo usuário no sistema (apenas ADMIN e MANAGER)",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "role"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 100
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "ADMIN",
+                      "MANAGER",
+                      "MECHANIC",
+                      "ATTENDANT"
+                    ]
+                  },
+                  "position": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "409": {
+            "description": "Email já em uso"
           }
         }
       }
@@ -718,7 +820,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Dados do usuário"
+            "description": "Dados do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
           },
           "401": {
             "description": "Não autenticado"
@@ -848,6 +957,74 @@
         }
       }
     },
+    "/api/users/{id}/password": {
+      "put": {
+        "summary": "Alterar senha do usuário",
+        "description": "Altera a senha de um usuário (apenas ADMIN e MANAGER)",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "ID do usuário"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "newPassword"
+                ],
+                "properties": {
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "Nova senha do usuário"
+                  },
+                  "confirmPassword": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "Confirmação da nova senha"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Senha alterada com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
     "/api/services": {
       "post": {
         "summary": "Criar nova ordem de serviço",
@@ -934,7 +1111,14 @@
         },
         "responses": {
           "201": {
-            "description": "Serviço criado com sucesso"
+            "description": "Serviço criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Service"
+                }
+              }
+            }
           },
           "400": {
             "description": "Dados inválidos"
@@ -1000,7 +1184,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de serviços"
+            "description": "Lista de serviços",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Service"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Não autenticado"
@@ -1033,7 +1227,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Dados do serviço"
+            "description": "Dados do serviço",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Service"
+                }
+              }
+            }
           },
           "401": {
             "description": "Não autenticado"
@@ -1160,6 +1361,122 @@
         }
       }
     },
+    "/api/services/{id}/cancel": {
+      "post": {
+        "summary": "Cancelar ordem de serviço",
+        "description": "Cancela uma ordem de serviço e estorna automaticamente o fluxo de caixa e estoque",
+        "tags": [
+          "Services"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID da ordem de serviço"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cancelled_by"
+                ],
+                "properties": {
+                  "cancelled_by": {
+                    "type": "string",
+                    "description": "ID do usuário que está cancelando"
+                  },
+                  "cancellation_reason": {
+                    "type": "string",
+                    "description": "Motivo do cancelamento",
+                    "example": "Cliente solicitou cancelamento"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ordem cancelada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "service_order_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "cancelled"
+                          ]
+                        },
+                        "cancelled_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "cancelled_by": {
+                          "type": "string"
+                        },
+                        "cancellation_reason": {
+                          "type": "string"
+                        },
+                        "cancellation_summary": {
+                          "type": "object",
+                          "properties": {
+                            "cash_flow_reversed": {
+                              "type": "number",
+                              "description": "Quantidade de lançamentos de caixa estornados"
+                            },
+                            "stock_returned": {
+                              "type": "number",
+                              "description": "Quantidade de produtos devolvidos ao estoque"
+                            },
+                            "total_products_returned": {
+                              "type": "number",
+                              "description": "Quantidade total de unidades devolvidas"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ordem já cancelada ou finalizada"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "404": {
+            "description": "Ordem não encontrada"
+          }
+        }
+      }
+    },
     "/api/products": {
       "post": {
         "summary": "Criar novo produto",
@@ -1249,7 +1566,14 @@
         },
         "responses": {
           "201": {
-            "description": "Produto criado com sucesso"
+            "description": "Produto criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
           },
           "400": {
             "description": "Dados inválidos"
@@ -1291,7 +1615,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de produtos"
+            "description": "Lista de produtos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Não autenticado"
@@ -1325,7 +1659,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Dados do produto"
+            "description": "Dados do produto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
           },
           "401": {
             "description": "Não autenticado"
@@ -1666,7 +2007,14 @@
         },
         "responses": {
           "201": {
-            "description": "Registro criado com sucesso"
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashFlow"
+                }
+              }
+            }
           },
           "400": {
             "description": "Dados inválidos"
@@ -1732,7 +2080,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de registros"
+            "description": "Lista de registros",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CashFlow"
+                  }
+                }
+              }
+            }
           },
           "401": {
             "description": "Não autenticado"
@@ -2067,7 +2425,14 @@
         },
         "responses": {
           "201": {
-            "description": "Categoria criada com sucesso"
+            "description": "Categoria criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Service"
+                }
+              }
+            }
           },
           "409": {
             "description": "Categoria já existe"
@@ -2092,7 +2457,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de categorias"
+            "description": "Lista de categorias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Service"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2117,7 +2492,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Categoria encontrada"
+            "description": "Categoria encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Service"
+                }
+              }
+            }
           },
           "404": {
             "description": "Categoria não encontrada"
@@ -2167,7 +2549,14 @@
         },
         "responses": {
           "200": {
-            "description": "Categoria atualizada"
+            "description": "Categoria atualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Service"
+                }
+              }
+            }
           },
           "404": {
             "description": "Categoria não encontrada"
@@ -2227,7 +2616,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Categoria com estatísticas"
+            "description": "Categoria com estatísticas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceWithStats"
+                }
+              }
+            }
           },
           "404": {
             "description": "Categoria não encontrada"
@@ -2268,7 +2664,14 @@
         },
         "responses": {
           "201": {
-            "description": "Categoria criada com sucesso"
+            "description": "Categoria criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategory"
+                }
+              }
+            }
           },
           "409": {
             "description": "Categoria já existe"
@@ -2293,7 +2696,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de categorias"
+            "description": "Lista de categorias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductCategory"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2318,7 +2731,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Categoria encontrada"
+            "description": "Categoria encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategory"
+                }
+              }
+            }
           },
           "404": {
             "description": "Categoria não encontrada"
@@ -2364,7 +2784,14 @@
         },
         "responses": {
           "200": {
-            "description": "Categoria atualizada"
+            "description": "Categoria atualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategory"
+                }
+              }
+            }
           },
           "404": {
             "description": "Categoria não encontrada"
@@ -2424,7 +2851,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Categoria com estatísticas"
+            "description": "Categoria com estatísticas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryWithStats"
+                }
+              }
+            }
           },
           "404": {
             "description": "Categoria não encontrada"
@@ -2484,7 +2918,14 @@
         },
         "responses": {
           "201": {
-            "description": "Veículo criado com sucesso"
+            "description": "Veículo criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
           },
           "409": {
             "description": "Veículo já existe"
@@ -2517,7 +2958,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Lista de veículos"
+            "description": "Lista de veículos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Vehicle"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2643,6 +3094,115 @@
           },
           "404": {
             "description": "Veículo não encontrado"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "summary": "Busca unificada no sistema",
+        "description": "Busca por produtos, serviços, veículos e ordens de serviço",
+        "tags": [
+          "Search"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "description": "Termo de busca"
+          },
+          {
+            "in": "query",
+            "name": "types",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tipos separados por vírgula (product,service,vehicle,serviceOrder)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Limite de resultados por tipo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultados da busca",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "query": {
+                          "type": "string"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "results": {
+                          "type": "object",
+                          "properties": {
+                            "products": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/SearchResult"
+                              }
+                            },
+                            "services": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/SearchResult"
+                              }
+                            },
+                            "vehicles": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/SearchResult"
+                              }
+                            },
+                            "serviceOrders": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/SearchResult"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parâmetros inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
           }
         }
       }

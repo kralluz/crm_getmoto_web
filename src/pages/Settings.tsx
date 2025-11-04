@@ -1,10 +1,9 @@
 import { Tabs } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
+import { SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/common/PageHeader';
 import { GeneralSettings } from '../components/settings/GeneralSettings';
-// import { UserOutlined } from '@ant-design/icons';
-// import { UsersSettings } from '../components/settings/UsersSettings';
+import { UsersSettings } from '../components/settings/UsersSettings';
 
 export function Settings() {
   const { t } = useTranslation();
@@ -20,17 +19,16 @@ export function Settings() {
       ),
       children: <GeneralSettings />,
     },
-    // Temporariamente desabilitado
-    // {
-    //   key: 'users',
-    //   label: (
-    //     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    //       <UserOutlined />
-    //       {t('settings.usersTab')}
-    //     </span>
-    //   ),
-    //   children: <UsersSettings />,
-    // },
+    {
+      key: 'users',
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <UserOutlined />
+          {t('settings.usersTab')}
+        </span>
+      ),
+      children: <UsersSettings />,
+    },
   ];
 
   return (

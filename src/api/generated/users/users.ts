@@ -25,8 +25,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  GetApiUsers200Item,
-  PutApiUsersIdBody
+  PostApiUsersBody,
+  PutApiUsersIdBody,
+  PutApiUsersIdPasswordBody,
+  User
 } from '.././models';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -44,7 +46,7 @@ export const getApiUsers = (
 ) => {
       
       
-      return customAxiosInstance<GetApiUsers200Item[]>(
+      return customAxiosInstance<User[]>(
       {url: `/api/users`, method: 'GET', signal
     },
       );
@@ -127,6 +129,71 @@ export function useGetApiUsers<TData = Awaited<ReturnType<typeof getApiUsers>>, 
 
 
 /**
+ * Cria um novo usuário no sistema (apenas ADMIN e MANAGER)
+ * @summary Criar novo usuário
+ */
+export const postApiUsers = (
+    postApiUsersBody: PostApiUsersBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/users`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiUsersBody, signal
+    },
+      );
+    }
+  
+
+
+export const getPostApiUsersMutationOptions = <TError = void | void | void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiUsers>>, TError,{data: PostApiUsersBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof postApiUsers>>, TError,{data: PostApiUsersBody}, TContext> => {
+
+const mutationKey = ['postApiUsers'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiUsers>>, {data: PostApiUsersBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postApiUsers(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiUsersMutationResult = NonNullable<Awaited<ReturnType<typeof postApiUsers>>>
+    export type PostApiUsersMutationBody = PostApiUsersBody
+    export type PostApiUsersMutationError = void | void | void | void
+
+    /**
+ * @summary Criar novo usuário
+ */
+export const usePostApiUsers = <TError = void | void | void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiUsers>>, TError,{data: PostApiUsersBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiUsers>>,
+        TError,
+        {data: PostApiUsersBody},
+        TContext
+      > => {
+
+      const mutationOptions = getPostApiUsersMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Retorna dados de um usuário específico
  * @summary Buscar usuário por ID
  */
@@ -136,7 +203,7 @@ export const getApiUsersId = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<User>(
       {url: `/api/users/${id}`, method: 'GET', signal
     },
       );
@@ -342,6 +409,71 @@ export const useDeleteApiUsersId = <TError = void | void | void,
       > => {
 
       const mutationOptions = getDeleteApiUsersIdMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Altera a senha de um usuário (apenas ADMIN e MANAGER)
+ * @summary Alterar senha do usuário
+ */
+export const putApiUsersIdPassword = (
+    id: string,
+    putApiUsersIdPasswordBody: PutApiUsersIdPasswordBody,
+ ) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/users/${id}/password`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: putApiUsersIdPasswordBody
+    },
+      );
+    }
+  
+
+
+export const getPutApiUsersIdPasswordMutationOptions = <TError = void | void | void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiUsersIdPassword>>, TError,{id: string;data: PutApiUsersIdPasswordBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof putApiUsersIdPassword>>, TError,{id: string;data: PutApiUsersIdPasswordBody}, TContext> => {
+
+const mutationKey = ['putApiUsersIdPassword'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putApiUsersIdPassword>>, {id: string;data: PutApiUsersIdPasswordBody}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putApiUsersIdPassword(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutApiUsersIdPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof putApiUsersIdPassword>>>
+    export type PutApiUsersIdPasswordMutationBody = PutApiUsersIdPasswordBody
+    export type PutApiUsersIdPasswordMutationError = void | void | void | void
+
+    /**
+ * @summary Alterar senha do usuário
+ */
+export const usePutApiUsersIdPassword = <TError = void | void | void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiUsersIdPassword>>, TError,{id: string;data: PutApiUsersIdPasswordBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putApiUsersIdPassword>>,
+        TError,
+        {id: string;data: PutApiUsersIdPasswordBody},
+        TContext
+      > => {
+
+      const mutationOptions = getPutApiUsersIdPasswordMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

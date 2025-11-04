@@ -24,10 +24,12 @@ import type { ColumnsType } from 'antd/es/table';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useChangePassword } from '../../hooks/useUsers';
 import type { User, UserRole, CreateUserInput, UpdateUserInput } from '../../types/user';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 const { confirm } = Modal;
 
 export function UsersSettings() {
+  const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -52,13 +54,7 @@ export function UsersSettings() {
   };
 
   const getRoleLabel = (role: UserRole): string => {
-    const labels: Record<UserRole, string> = {
-      ADMIN: 'Administrador',
-      MANAGER: 'Gerente',
-      MECHANIC: 'Mecânico',
-      ATTENDANT: 'Atendente',
-    };
-    return labels[role];
+    return t(`users.roles.${role}`);
   };
 
   const handleCreate = () => {
@@ -80,19 +76,19 @@ export function UsersSettings() {
 
   const handleDelete = (user: User) => {
     confirm({
-      title: 'Deletar Usuário',
+      title: t('users.deleteUser'),
       icon: <ExclamationCircleOutlined />,
-      content: `Tem certeza que deseja deletar o usuário "${user.name}"?`,
-      okText: 'Sim, deletar',
+      content: t('users.deleteUserConfirm', { name: user.name }),
+      okText: t('users.yesDelete'),
       okType: 'danger',
-      cancelText: 'Cancelar',
+      cancelText: t('users.cancel'),
       onOk() {
         deleteUser(user.id, {
           onSuccess: () => {
-            message.success('Usuário deletado com sucesso!');
+            message.success(t('users.userDeletedSuccess'));
           },
           onError: (error: any) => {
-            message.error(error?.response?.data?.message || 'Erro ao deletar usuário');
+            message.error(error?.response?.data?.message || t('users.userDeleteError'));
           },
         });
       },
@@ -112,13 +108,13 @@ export function UsersSettings() {
           { id: passwordUserId, data: { newPassword: values.password, confirmPassword: values.confirmPassword } },
           {
             onSuccess: () => {
-              message.success('Senha alterada com sucesso!');
+              message.success(t('users.passwordChangedSuccess'));
               setIsPasswordModalOpen(false);
               passwordForm.resetFields();
               setPasswordUserId(null);
             },
             onError: (error: any) => {
-              message.error(error?.response?.data?.message || 'Erro ao alterar senha');
+              message.error(error?.response?.data?.message || t('users.passwordChangeError'));
             },
           }
         );
@@ -141,13 +137,13 @@ export function UsersSettings() {
           { id: editingUser.id, data: updateData },
           {
             onSuccess: () => {
-              message.success('Usuário atualizado com sucesso!');
+              message.success(t('users.userUpdatedSuccess'));
               setIsModalOpen(false);
               form.resetFields();
               setEditingUser(null);
             },
             onError: (error: any) => {
-              message.error(error?.response?.data?.message || 'Erro ao atualizar usuário');
+              message.error(error?.response?.data?.message || t('users.userUpdateError'));
             },
           }
         );
@@ -162,12 +158,12 @@ export function UsersSettings() {
 
         createUser(createData, {
           onSuccess: () => {
-            message.success('Usuário criado com sucesso!');
+            message.success(t('users.userCreatedSuccess'));
             setIsModalOpen(false);
             form.resetFields();
           },
           onError: (error: any) => {
-            message.error(error?.response?.data?.message || 'Erro ao criar usuário');
+            message.error(error?.response?.data?.message || t('users.userCreateError'));
           },
         });
       }
@@ -176,14 +172,14 @@ export function UsersSettings() {
 
   const columns: ColumnsType<User> = [
     {
-      title: 'Ações',
+      title: t('users.actions'),
       key: 'actions',
       width: 140,
       align: 'center',
       fixed: 'left',
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="Editar">
+          <Tooltip title={t('users.edit')}>
             <Button
               type="text"
               size="small"
@@ -191,7 +187,7 @@ export function UsersSettings() {
               onClick={() => handleEdit(record)}
             />
           </Tooltip>
-          <Tooltip title="Alterar senha">
+          <Tooltip title={t('users.changePassword')}>
             <Button
               type="text"
               size="small"
@@ -199,7 +195,7 @@ export function UsersSettings() {
               onClick={() => handleChangePassword(record.id)}
             />
           </Tooltip>
-          <Tooltip title="Deletar">
+          <Tooltip title={t('users.delete')}>
             <Button
               type="text"
               size="small"
@@ -212,18 +208,18 @@ export function UsersSettings() {
       ),
     },
     {
-      title: 'Nome',
+      title: t('users.name'),
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: 'Email',
+      title: t('users.email'),
       dataIndex: 'email',
       key: 'email',
     },
     {
-      title: 'Cargo',
+      title: t('users.role'),
       dataIndex: 'role',
       key: 'role',
       width: 130,
@@ -234,19 +230,19 @@ export function UsersSettings() {
       ),
     },
     {
-      title: 'Status',
+      title: t('users.status'),
       dataIndex: 'active',
       key: 'active',
       width: 100,
       align: 'center',
       render: (active: boolean) => (
         <Tag color={active ? 'success' : 'default'}>
-          {active ? 'Ativo' : 'Inativo'}
+          {active ? t('users.active') : t('users.inactive')}
         </Tag>
       ),
     },
     {
-      title: 'Data Cadastro',
+      title: t('users.createdDate'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 130,
@@ -265,7 +261,7 @@ export function UsersSettings() {
             icon={<PlusOutlined />}
             onClick={handleCreate}
           >
-            Novo Usuário
+            {t('users.newUser')}
           </Button>
         </Space>
 
@@ -277,14 +273,14 @@ export function UsersSettings() {
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} usuários`,
+            showTotal: (total) => t('users.totalUsers', { total }),
           }}
         />
       </Card>
 
       {/* Modal de Criar/Editar */}
       <Modal
-        title={editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+        title={editingUser ? t('users.editUser') : t('users.newUser')}
         open={isModalOpen}
         onOk={handleSubmit}
         onCancel={() => {
@@ -292,8 +288,8 @@ export function UsersSettings() {
           form.resetFields();
           setEditingUser(null);
         }}
-        okText={editingUser ? 'Atualizar' : 'Criar'}
-        cancelText="Cancelar"
+        okText={editingUser ? t('users.update') : t('users.create')}
+        cancelText={t('users.cancel')}
         confirmLoading={isCreating || isUpdating}
         width={600}
       >
@@ -303,60 +299,60 @@ export function UsersSettings() {
           style={{ marginTop: 16 }}
         >
           <Form.Item
-            label="Nome"
+            label={t('users.name')}
             name="name"
             rules={[
-              { required: true, message: 'Nome é obrigatório' },
-              { min: 3, max: 100, message: 'Nome deve ter entre 3 e 100 caracteres' }
+              { required: true, message: t('users.nameRequired') },
+              { min: 3, max: 100, message: t('users.nameMinLength') }
             ]}
           >
-            <Input placeholder="Nome completo" />
+            <Input placeholder={t('users.fullName')} />
           </Form.Item>
 
           <Form.Item
-            label="Email"
+            label={t('users.email')}
             name="email"
             rules={[
-              { required: true, message: 'Email é obrigatório' },
-              { type: 'email', message: 'Email inválido' }
+              { required: true, message: t('users.emailRequired') },
+              { type: 'email', message: t('users.emailInvalid') }
             ]}
           >
-            <Input placeholder="email@exemplo.com" />
+            <Input placeholder={t('users.emailExample')} />
           </Form.Item>
 
           {!editingUser && (
             <Form.Item
-              label="Senha"
+              label={t('users.password')}
               name="password"
               rules={[
-                { required: true, message: 'Senha é obrigatória' },
-                { min: 6, message: 'Senha deve ter no mínimo 6 caracteres' }
+                { required: true, message: t('users.passwordRequired') },
+                { min: 6, message: t('users.passwordMinLength') }
               ]}
             >
-              <Input.Password placeholder="Senha inicial" />
+              <Input.Password placeholder={t('users.initialPassword')} />
             </Form.Item>
           )}
 
           <Form.Item
-            label="Cargo"
+            label={t('users.role')}
             name="role"
-            rules={[{ required: true, message: 'Cargo é obrigatório' }]}
+            rules={[{ required: true, message: t('users.roleRequired') }]}
           >
-            <Select placeholder="Selecione o cargo">
-              <Select.Option value="ADMIN">Administrador</Select.Option>
-              <Select.Option value="MANAGER">Gerente</Select.Option>
-              <Select.Option value="MECHANIC">Mecânico</Select.Option>
-              <Select.Option value="ATTENDANT">Atendente</Select.Option>
+            <Select placeholder={t('users.selectRole')}>
+              <Select.Option value="ADMIN">{t('users.roles.ADMIN')}</Select.Option>
+              <Select.Option value="MANAGER">{t('users.roles.MANAGER')}</Select.Option>
+              <Select.Option value="MECHANIC">{t('users.roles.MECHANIC')}</Select.Option>
+              <Select.Option value="ATTENDANT">{t('users.roles.ATTENDANT')}</Select.Option>
             </Select>
           </Form.Item>
 
           {editingUser && (
             <Form.Item
-              label="Status"
+              label={t('users.status')}
               name="active"
               valuePropName="checked"
             >
-              <Switch checkedChildren="Ativo" unCheckedChildren="Inativo" />
+              <Switch checkedChildren={t('users.active')} unCheckedChildren={t('users.inactive')} />
             </Form.Item>
           )}
         </Form>
@@ -364,7 +360,7 @@ export function UsersSettings() {
 
       {/* Modal de Alterar Senha */}
       <Modal
-        title="Alterar Senha"
+        title={t('users.changePassword')}
         open={isPasswordModalOpen}
         onOk={handleSubmitPassword}
         onCancel={() => {
@@ -372,8 +368,8 @@ export function UsersSettings() {
           passwordForm.resetFields();
           setPasswordUserId(null);
         }}
-        okText="Alterar"
-        cancelText="Cancelar"
+        okText={t('users.change')}
+        cancelText={t('users.cancel')}
         confirmLoading={isChangingPassword}
       >
         <Form
@@ -382,33 +378,33 @@ export function UsersSettings() {
           style={{ marginTop: 16 }}
         >
           <Form.Item
-            label="Nova Senha"
+            label={t('users.newPassword')}
             name="password"
             rules={[
-              { required: true, message: 'Senha é obrigatória' },
-              { min: 6, message: 'Senha deve ter no mínimo 6 caracteres' }
+              { required: true, message: t('users.passwordRequired') },
+              { min: 6, message: t('users.passwordMinLength') }
             ]}
           >
-            <Input.Password placeholder="Digite a nova senha" />
+            <Input.Password placeholder={t('users.passwordPlaceholder')} />
           </Form.Item>
 
           <Form.Item
-            label="Confirmar Senha"
+            label={t('users.confirmPassword')}
             name="confirmPassword"
             dependencies={['password']}
             rules={[
-              { required: true, message: 'Confirme a senha' },
+              { required: true, message: t('users.confirmPasswordRequired') },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('password') === value) {
                     return Promise.resolve();
                   }
-                  return Promise.reject(new Error('As senhas não coincidem'));
+                  return Promise.reject(new Error(t('users.passwordMismatch')));
                 },
               }),
             ]}
           >
-            <Input.Password placeholder="Confirme a nova senha" />
+            <Input.Password placeholder={t('users.confirmPasswordPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>

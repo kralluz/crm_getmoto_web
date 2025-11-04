@@ -141,7 +141,7 @@ Utilitário de formatação de dados.
 // Converte Decimal do Prisma para número
 const num = parseDecimal(value);
 
-// Formata para moeda brasileira (R$)
+// Formata para moeda (£)
 const formatted = formatCurrency(value);
 
 // Formata data/hora

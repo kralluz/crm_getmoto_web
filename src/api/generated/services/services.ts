@@ -27,7 +27,10 @@ import type {
 import type {
   GetApiServicesParams,
   PostApiServicesBody,
-  PutApiServicesIdBody
+  PostApiServicesIdCancel200,
+  PostApiServicesIdCancelBody,
+  PutApiServicesIdBody,
+  Service
 } from '.././models';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -45,7 +48,7 @@ export const postApiServices = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Service>(
       {url: `/api/services`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiServicesBody, signal
@@ -110,7 +113,7 @@ export const getApiServices = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Service[]>(
       {url: `/api/services`, method: 'GET',
         params, signal
     },
@@ -203,7 +206,7 @@ export const getApiServicesId = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Service>(
       {url: `/api/services/${id}`, method: 'GET', signal
     },
       );
@@ -409,6 +412,72 @@ export const useDeleteApiServicesId = <TError = void | void,
       > => {
 
       const mutationOptions = getDeleteApiServicesIdMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Cancela uma ordem de serviço e estorna automaticamente o fluxo de caixa e estoque
+ * @summary Cancelar ordem de serviço
+ */
+export const postApiServicesIdCancel = (
+    id: string,
+    postApiServicesIdCancelBody: PostApiServicesIdCancelBody,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<PostApiServicesIdCancel200>(
+      {url: `/api/services/${id}/cancel`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiServicesIdCancelBody, signal
+    },
+      );
+    }
+  
+
+
+export const getPostApiServicesIdCancelMutationOptions = <TError = void | void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiServicesIdCancel>>, TError,{id: string;data: PostApiServicesIdCancelBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof postApiServicesIdCancel>>, TError,{id: string;data: PostApiServicesIdCancelBody}, TContext> => {
+
+const mutationKey = ['postApiServicesIdCancel'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiServicesIdCancel>>, {id: string;data: PostApiServicesIdCancelBody}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postApiServicesIdCancel(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiServicesIdCancelMutationResult = NonNullable<Awaited<ReturnType<typeof postApiServicesIdCancel>>>
+    export type PostApiServicesIdCancelMutationBody = PostApiServicesIdCancelBody
+    export type PostApiServicesIdCancelMutationError = void | void | void
+
+    /**
+ * @summary Cancelar ordem de serviço
+ */
+export const usePostApiServicesIdCancel = <TError = void | void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiServicesIdCancel>>, TError,{id: string;data: PostApiServicesIdCancelBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiServicesIdCancel>>,
+        TError,
+        {id: string;data: PostApiServicesIdCancelBody},
+        TContext
+      > => {
+
+      const mutationOptions = getPostApiServicesIdCancelMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -8,36 +8,48 @@ import {
   Radio,
   Empty,
   Spin,
+  Alert,
 } from 'antd';
 import {
   ShoppingCartOutlined,
   ToolOutlined,
-  UserOutlined,
   CarOutlined,
   FileTextOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import type { SearchResult, SearchResultType } from '../types/search';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useGetApiSearch } from '../api/generated/search/search';
+import type { SearchResult } from '../api/generated/models/searchResult';
+import type { SearchResultType } from '../api/generated/models/searchResultType';
 
 const { Title, Text } = Typography;
 
 export function SearchResults() {
   const { t } = useTranslation();
-  // const [searchParams] = useSearchParams();
-  // TODO: Usar searchQuery para filtrar resultados
-  // const searchQuery = searchParams.get('q') || '';
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
   const navigate = useNavigate();
 
   const [selectedType, setSelectedType] = useState<SearchResultType | 'all'>('all');
-  const [isLoading] = useState(false);
+
+  // Busca na API
+  const { data, isLoading, error } = useGetApiSearch(
+    { q: searchQuery },
+    {
+      query: {
+        enabled: !!searchQuery.trim()
+      }
+    }
+  );
+
+  const searchData = data?.data;
 
   const handleResultClick = (type: string, id: string) => {
     const routes: Record<string, string> = {
       product: '/produtos',
       service: '/servicos',
-      client: '/clientes',
       vehicle: '/veiculos',
+      serviceOrder: '/servicos', // Ordens de serviço vão para a rota de serviços
     };
 
     const basePath = routes[type];
@@ -46,52 +58,20 @@ export function SearchResults() {
     }
   };
 
-  // Mock data - substituir por chamada real à API
-  const mockResults: SearchResult[] = [
-    {
-      id: '1',
-      type: 'product',
-      title: 'Óleo Motul 5W30',
-      description: 'Óleo sintético premium para motores',
-      subtitle: 'R$ 89,90',
-      metadata: { stock: 15, category: 'Lubrificantes' },
-    },
-    {
-      id: '2',
-      type: 'service',
-      title: 'Troca de Óleo Completa',
-      description: 'Inclui óleo, filtro e mão de obra',
-      subtitle: 'R$ 150,00',
-      metadata: { duration: '30min' },
-    },
-    {
-      id: '3',
-      type: 'client',
-      title: 'João Silva',
-      description: 'joao.silva@email.com',
-      subtitle: '(11) 98765-4321',
-      metadata: { cpf: '123.456.789-00' },
-    },
-    {
-      id: '4',
-      type: 'vehicle',
-      title: 'Honda CG 160',
-      description: 'Placa: ABC-1234',
-      subtitle: 'Ano: 2020',
-      metadata: { color: 'Vermelho', owner: 'João Silva' },
-    },
-    {
-      id: '5',
-      type: 'serviceOrder',
-      title: 'OS #1234',
-      description: 'Revisão completa - Honda CG 160',
-      subtitle: 'Em andamento',
-      metadata: { clientName: 'João Silva', total: 450.00 },
-    },
-  ];
+  // Combinar todos os resultados da API
+  const allResults: SearchResult[] = useMemo(() => {
+    if (!searchData?.results) return [];
+
+    return [
+      ...(searchData.results.products || []),
+      ...(searchData.results.services || []),
+      ...(searchData.results.vehicles || []),
+      ...(searchData.results.serviceOrders || []),
+    ];
+  }, [searchData]);
 
   const filteredResults = useMemo(() => {
-    let results = mockResults;
+    let results = allResults;
 
     // Filtrar por tipo
     if (selectedType !== 'all') {
@@ -99,7 +79,7 @@ export function SearchResults() {
     }
 
     return results;
-  }, [selectedType]);
+  }, [allResults, selectedType]);
 
   const getIcon = (type: SearchResultType) => {
     switch (type) {
@@ -107,8 +87,6 @@ export function SearchResults() {
         return <ShoppingCartOutlined />;
       case 'service':
         return <ToolOutlined />;
-      case 'client':
-        return <UserOutlined />;
       case 'vehicle':
         return <CarOutlined />;
       case 'serviceOrder':
@@ -124,8 +102,6 @@ export function SearchResults() {
         return 'blue';
       case 'service':
         return 'green';
-      case 'client':
-        return 'purple';
       case 'vehicle':
         return 'orange';
       case 'serviceOrder':
@@ -141,12 +117,10 @@ export function SearchResults() {
         return t('menu.products');
       case 'service':
         return t('menu.services');
-      case 'client':
-        return t('menu.clients');
       case 'vehicle':
-        return 'Veículos';
+        return t('search.vehicles');
       case 'serviceOrder':
-        return 'Ordens de Serviço';
+        return t('search.serviceOrders');
       default:
         return '';
     }
@@ -158,23 +132,46 @@ export function SearchResults() {
   };
 
   const typeFilters = [
-    { label: 'Todos', value: 'all' },
+    { label: t('search.all'), value: 'all' },
     { label: t('menu.products'), value: 'product' },
     { label: t('menu.services'), value: 'service' },
-    { label: t('menu.clients'), value: 'client' },
-    { label: 'Veículos', value: 'vehicle' },
-    { label: 'Ordens de Serviço', value: 'serviceOrder' },
+    { label: t('search.vehicles'), value: 'vehicle' },
+    { label: t('search.serviceOrders'), value: 'serviceOrder' },
   ];
+
+  // Mostrar mensagem se não há query
+  if (!searchQuery.trim()) {
+    return (
+      <div>
+        <Title level={2}>{t('search.title')}</Title>
+        <Card>
+          <Empty description={t('search.emptyStateDescription')} />
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Title level={2}>Resultados da Busca</Title>
+        <div>
+          <Title level={2}>{t('search.resultsTitle')}</Title>
+          <Text type="secondary">{t('search.searchingFor', { query: searchQuery })}</Text>
+        </div>
+
+        {!!error && (
+          <Alert
+            message={t('search.errorTitle')}
+            description={t('search.errorDescription')}
+            type="error"
+            showIcon
+          />
+        )}
 
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <div>
-              <Text strong>Filtrar por tipo:</Text>
+              <Text strong>{t('search.filterByType')}</Text>
               <Radio.Group
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
@@ -192,7 +189,7 @@ export function SearchResults() {
 
             <div>
               <Text type="secondary">
-                {filteredResults.length} resultado(s) encontrado(s)
+                {searchData ? t('search.resultsCount', { count: filteredResults.length, total: searchData.total || 0 }) : t('search.loading')}
               </Text>
             </div>
           </Space>
@@ -206,12 +203,12 @@ export function SearchResults() {
           </Card>
         ) : filteredResults.length === 0 ? (
           <Card>
-            <Empty description="Nenhum resultado encontrado" />
+            <Empty description={t('search.noResultsFound')} />
           </Card>
         ) : selectedType === 'all' ? (
           // Visualização agrupada por tipo (estilo YouTube)
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            {(['product', 'service', 'client', 'vehicle', 'serviceOrder'] as SearchResultType[]).map((type) => {
+            {(['product', 'service', 'vehicle', 'serviceOrder'] as SearchResultType[]).map((type) => {
               const typeResults = filteredResults.filter((r) => r.type === type);
               if (typeResults.length === 0) return null;
 

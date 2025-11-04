@@ -25,11 +25,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  PostApiAuthLogin200,
   PostApiAuthLoginBody,
   PostApiAuthLogoutBody,
   PostApiAuthRefreshBody,
+  PostApiAuthRegister201,
   PostApiAuthRegisterBody,
-  PutApiAuthProfileBody
+  PutApiAuthProfileBody,
+  User
 } from '.././models';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -46,7 +49,7 @@ export const postApiAuthRegister = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<PostApiAuthRegister201>(
       {url: `/api/auth/register`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiAuthRegisterBody, signal
@@ -110,7 +113,7 @@ export const postApiAuthLogin = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<PostApiAuthLogin200>(
       {url: `/api/auth/login`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiAuthLoginBody, signal
@@ -174,7 +177,7 @@ export const getApiAuthMe = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<User>(
       {url: `/api/auth/me`, method: 'GET', signal
     },
       );

@@ -27,7 +27,8 @@ import type {
 import type {
   GetApiVehiclesParams,
   PostApiVehiclesBody,
-  PutApiVehiclesIdBody
+  PutApiVehiclesIdBody,
+  Vehicle
 } from '.././models';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -45,7 +46,7 @@ export const postApiVehicles = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Vehicle>(
       {url: `/api/vehicles`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiVehiclesBody, signal
@@ -110,7 +111,7 @@ export const getApiVehicles = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Vehicle[]>(
       {url: `/api/vehicles`, method: 'GET',
         params, signal
     },

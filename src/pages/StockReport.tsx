@@ -19,6 +19,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import { useProducts, useStockMoves } from '../hooks/useProducts';
 import { useFormat } from '../hooks/useFormat';
 import { parseDecimal } from '../utils';
@@ -29,6 +30,7 @@ import type { Product, StockMove } from '../types/product';
 const { RangePicker } = DatePicker;
 
 export function StockReport() {
+  const { t } = useTranslation();
   const { formatCurrency, formatDateTime } = useFormat();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs]>([
@@ -119,7 +121,7 @@ export function StockReport() {
       render: (category: string) => <Tag color="blue">{category}</Tag>,
     },
     {
-      title: 'Estoque',
+      title: t('inventory.stock'),
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'center',
@@ -137,21 +139,21 @@ export function StockReport() {
       sorter: (a, b) => parseDecimal(a.quantity) - parseDecimal(b.quantity),
     },
     {
-      title: 'Valor Custo',
+      title: t('inventory.costValue'),
       key: 'cost_value',
       align: 'right',
       render: (_, record) => formatCurrency(parseDecimal(record.quantity) * parseDecimal(record.buy_price)),
       sorter: (a, b) => (parseDecimal(a.quantity) * parseDecimal(a.buy_price)) - (parseDecimal(b.quantity) * parseDecimal(b.buy_price)),
     },
     {
-      title: 'Valor Venda',
+      title: t('inventory.saleValue'),
       key: 'sell_value',
       align: 'right',
       render: (_, record) => formatCurrency(parseDecimal(record.quantity) * parseDecimal(record.sell_price)),
       sorter: (a, b) => (parseDecimal(a.quantity) * parseDecimal(a.sell_price)) - (parseDecimal(b.quantity) * parseDecimal(b.sell_price)),
     },
     {
-      title: 'Lucro Potencial',
+      title: t('inventory.potentialProfit'),
       key: 'potential_profit',
       align: 'right',
       render: (_, record) => {
@@ -172,7 +174,7 @@ export function StockReport() {
 
   const movementColumns: ColumnsType<StockMove> = [
     {
-      title: 'Data',
+      title: t('cashflow.date'),
       dataIndex: 'created_at',
       key: 'created_at',
       render: (date: string) => formatDateTime(date),
@@ -180,12 +182,12 @@ export function StockReport() {
       defaultSortOrder: 'descend',
     },
     {
-      title: 'Produto',
+      title: t('inventory.product'),
       dataIndex: ['products', 'product_name'],
       key: 'product',
     },
     {
-      title: 'Tipo',
+      title: t('cashflow.type'),
       dataIndex: 'move_type',
       key: 'move_type',
       render: (type: string) => {
@@ -194,15 +196,15 @@ export function StockReport() {
       },
     },
     {
-      title: 'Quantidade',
+      title: t('inventory.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'right',
       render: (qty: any, record) => {
         const qtyNum = parseDecimal(qty);
-        const color = record.move_type === 'ENTRY' ? '#52c41a' : 
+        const color = record.move_type === 'ENTRY' ? '#52c41a' :
                       record.move_type === 'EXIT' ? '#ff4d4f' : '#fa8c16';
-        const prefix = record.move_type === 'ENTRY' ? '+' : 
+        const prefix = record.move_type === 'ENTRY' ? '+' :
                        record.move_type === 'EXIT' ? '-' : '';
         return (
           <span style={{ color, fontWeight: 600 }}>
@@ -212,13 +214,13 @@ export function StockReport() {
       },
     },
     {
-      title: 'Responsável',
+      title: t('inventory.responsible'),
       dataIndex: ['users', 'name'],
       key: 'user',
       render: (name: string) => name || '-',
     },
     {
-      title: 'Observações',
+      title: t('inventory.observations'),
       dataIndex: 'notes',
       key: 'notes',
       ellipsis: true,
@@ -229,8 +231,8 @@ export function StockReport() {
   return (
     <div>
       <PageHeader
-        title="Relatório de Estoque"
-        subtitle="Análise completa do estoque e movimentações"
+        title={t('inventory.stockReport')}
+        subtitle={t('products.subtitle')}
         extra={
           <Button
             icon={<DownloadOutlined />}
@@ -271,7 +273,7 @@ export function StockReport() {
               title="Valor Total (Venda)"
               value={stats?.totalStockValue || 0}
               precision={2}
-              prefix="R$"
+              prefix="£"
               valueStyle={{ color: '#52c41a' }}
             />
           </Card>
@@ -282,7 +284,7 @@ export function StockReport() {
               title="Lucro Potencial"
               value={stats?.profitPotential || 0}
               precision={2}
-              prefix="R$"
+              prefix="£"
               valueStyle={{ color: '#faad14' }}
             />
           </Card>
@@ -329,10 +331,9 @@ export function StockReport() {
               onChange={(dates) => dates && setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs])}
               format="DD/MM/YYYY"
               presets={[
-                { label: 'Hoje', value: [dayjs().startOf('day'), dayjs().endOf('day')] },
-                { label: 'Esta Semana', value: [dayjs().startOf('week'), dayjs().endOf('week')] },
-                { label: 'Este Mês', value: [dayjs().startOf('month'), dayjs().endOf('month')] },
-                { label: 'Últimos 30 dias', value: [dayjs().subtract(30, 'days'), dayjs()] },
+                { label: t('inventory.today'), value: [dayjs().startOf('day'), dayjs().endOf('day')] },
+                { label: t('inventory.thisWeek'), value: [dayjs().startOf('week'), dayjs().endOf('week')] },
+                { label: t('inventory.thisMonth'), value: [dayjs().startOf('month'), dayjs().endOf('month')] },
               ]}
             />
           </Space>
@@ -385,7 +386,7 @@ export function StockReport() {
           }}
           size="small"
           locale={{
-            emptyText: 'Nenhuma movimentação no período selecionado',
+            emptyText: t('inventory.noMovementInPeriod'),
           }}
         />
       </Card>

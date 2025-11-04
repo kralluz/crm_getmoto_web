@@ -53,7 +53,7 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
     yAxis: {
       label: {
         formatter: (v: string) =>
-          `R$ ${Number(v).toLocaleString('pt-BR', {
+          `£${Number(v).toLocaleString('en-GB', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           })}`,
@@ -63,7 +63,7 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
       formatter: (datum: { type: string; value: number }) => {
         return {
           name: datum.type,
-          value: `R$ ${Number(datum.value).toLocaleString('pt-BR', {
+          value: `£${Number(datum.value).toLocaleString('en-GB', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}`,

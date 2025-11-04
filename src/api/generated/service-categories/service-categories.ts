@@ -27,7 +27,9 @@ import type {
 import type {
   GetApiServiceCategoriesParams,
   PostApiServiceCategoriesBody,
-  PutApiServiceCategoriesIdBody
+  PutApiServiceCategoriesIdBody,
+  Service,
+  ServiceWithStats
 } from '.././models';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -45,7 +47,7 @@ export const postApiServiceCategories = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Service>(
       {url: `/api/service-categories`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiServiceCategoriesBody, signal
@@ -110,7 +112,7 @@ export const getApiServiceCategories = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Service[]>(
       {url: `/api/service-categories`, method: 'GET',
         params, signal
     },
@@ -203,7 +205,7 @@ export const getApiServiceCategoriesId = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Service>(
       {url: `/api/service-categories/${id}`, method: 'GET', signal
     },
       );
@@ -295,7 +297,7 @@ export const putApiServiceCategoriesId = (
  ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Service>(
       {url: `/api/service-categories/${id}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: putApiServiceCategoriesIdBody
@@ -422,7 +424,7 @@ export const getApiServiceCategoriesIdStats = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<ServiceWithStats>(
       {url: `/api/service-categories/${id}/stats`, method: 'GET', signal
     },
       );

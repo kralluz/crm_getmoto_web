@@ -59,7 +59,7 @@ export function ClientDetail() {
             </Descriptions.Item>
             <Descriptions.Item label={t('table.status')}>
               <Tag color={client.active ? 'green' : 'default'}>
-                {client.active ? 'Ativo' : 'Inativo'}
+                {client.active ? t('common.active') : t('common.inactive')}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="E-mail" span={2}>

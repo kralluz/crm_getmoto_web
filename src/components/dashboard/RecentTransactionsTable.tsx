@@ -37,9 +37,9 @@ export function RecentTransactionsTable({
 
   const formatCurrency = (value: unknown) => {
     const num = parseAmount(value);
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
-      currency: 'BRL',
+      currency: 'GBP',
     }).format(num);
   };
 

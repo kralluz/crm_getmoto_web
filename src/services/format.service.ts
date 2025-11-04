@@ -60,12 +60,12 @@ export class FormatService {
   }
 
   /**
-   * Formata moeda
+   * Formata moeda (Libra Esterlina - GBP)
    */
   static currency(
     value: number,
-    currency = 'BRL',
-    locale = 'pt-BR'
+    currency = 'GBP',
+    locale = 'en-GB'
   ): string {
     return new Intl.NumberFormat(locale, {
       style: 'currency',

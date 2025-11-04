@@ -9,8 +9,10 @@ import { PageHeader } from '../components/common/PageHeader';
 import type { Product } from '../types/product';
 import { useFormat } from '../hooks/useFormat';
 import { parseDecimal } from '../utils';
+import { useTranslation } from 'react-i18next';
 
 export function ProductList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { formatCurrency } = useFormat();
   const [searchText, setSearchText] = useState('');
@@ -65,7 +67,7 @@ export function ProductList() {
 
   const columns: ColumnsType<Product> = [
     {
-      title: 'Ações',
+      title: t('products.actions'),
       key: 'actions',
       width: 100,
       align: 'center',
@@ -76,8 +78,8 @@ export function ProductList() {
           onEdit={() => handleEdit(record.product_id)}
           onDelete={() => handleDelete(record.product_id)}
           showView
-          deleteTitle="Deletar Produto"
-          deleteDescription={`Tem certeza que deseja deletar o produto "${record.product_name}"?`}
+          deleteTitle={t('products.deleteProduct')}
+          deleteDescription={t('products.deleteProductConfirm', { name: record.product_name })}
           iconOnly
         />
       ),
@@ -90,24 +92,24 @@ export function ProductList() {
       sorter: (a, b) => a.product_id - b.product_id,
     },
     {
-      title: 'Produto',
+      title: t('products.product'),
       dataIndex: 'product_name',
       key: 'product_name',
       ellipsis: true,
       sorter: (a, b) => a.product_name.localeCompare(b.product_name),
     },
     {
-      title: 'Categoria',
+      title: t('products.category'),
       dataIndex: ['product_category', 'product_category_name'],
       key: 'category',
       width: 150,
       render: (category: string) => category && <Tag color="blue">{category}</Tag>,
       filters: categories.map(cat => ({ text: cat, value: cat })),
-      onFilter: (value, record) => 
+      onFilter: (value, record) =>
         record.product_category?.product_category_name === value,
     },
     {
-      title: 'Preço Compra',
+      title: t('products.purchasePrice'),
       dataIndex: 'buy_price',
       key: 'buy_price',
       width: 130,
@@ -116,7 +118,7 @@ export function ProductList() {
       sorter: (a, b) => parseDecimal(a.buy_price) - parseDecimal(b.buy_price),
     },
     {
-      title: 'Preço Venda',
+      title: t('products.salesPriceColumn'),
       dataIndex: 'sell_price',
       key: 'sell_price',
       width: 130,
@@ -129,7 +131,7 @@ export function ProductList() {
       sorter: (a, b) => parseDecimal(a.sell_price) - parseDecimal(b.sell_price),
     },
     {
-      title: 'Margem',
+      title: t('products.margin'),
       key: 'margin',
       width: 100,
       align: 'center',
@@ -154,7 +156,7 @@ export function ProductList() {
       },
     },
     {
-      title: 'Estoque',
+      title: t('products.stockColumn'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
@@ -164,7 +166,7 @@ export function ProductList() {
         const alertQty = parseDecimal(record.quantity_alert);
         const isLowStock = qty <= alertQty;
         return (
-          <Tooltip title={isLowStock ? `Estoque mínimo: ${alertQty.toFixed(1)}` : ''}>
+          <Tooltip title={isLowStock ? `${t('products.minStockLabel')}: ${alertQty.toFixed(1)}` : ''}>
             <span style={{ color: isLowStock ? '#ff4d4f' : undefined, fontWeight: isLowStock ? 600 : 400 }}>
               {isLowStock && <WarningOutlined style={{ marginRight: 4 }} />}
               {qty.toFixed(1)}
@@ -175,19 +177,19 @@ export function ProductList() {
       sorter: (a, b) => parseDecimal(a.quantity) - parseDecimal(b.quantity),
     },
     {
-      title: 'Status',
+      title: t('products.statusFilter'),
       dataIndex: 'is_active',
       key: 'is_active',
       width: 100,
       align: 'center',
       render: (active: boolean) => (
         <Tag color={active ? 'green' : 'default'}>
-          {active ? 'Ativo' : 'Inativo'}
+          {active ? t('products.active') : t('products.inactive')}
         </Tag>
       ),
       filters: [
-        { text: 'Ativo', value: true },
-        { text: 'Inativo', value: false },
+        { text: t('products.active'), value: true },
+        { text: t('products.inactive'), value: false },
       ],
       onFilter: (value, record) => record.is_active === value,
     },
@@ -196,8 +198,8 @@ export function ProductList() {
   return (
     <div>
       <PageHeader
-        title="Produtos"
-        subtitle="Gerencie o catálogo de produtos e estoque"
+        title={t('products.title')}
+        subtitle={t('products.productListSubtitle')}
         extra={
           <Button
             type="primary"
@@ -205,7 +207,7 @@ export function ProductList() {
             onClick={handleCreate}
             size="large"
           >
-            Novo Produto
+            {t('products.newProduct')}
           </Button>
         }
       />
@@ -213,34 +215,34 @@ export function ProductList() {
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Input
-            placeholder="Buscar por produto ou categoria..."
+            placeholder={t('products.searchPlaceholder')}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{ width: 300 }}
             allowClear
           />
-          
+
           <Select
-            placeholder="Status"
+            placeholder={t('products.statusFilter')}
             value={activeFilter}
             onChange={setActiveFilter}
             style={{ width: 150 }}
             options={[
-              { value: 'all', label: 'Todos' },
-              { value: 'active', label: 'Ativos' },
-              { value: 'inactive', label: 'Inativos' },
+              { value: 'all', label: t('products.all') },
+              { value: 'active', label: t('products.actives') },
+              { value: 'inactive', label: t('products.inactives') },
             ]}
           />
 
           <Select
-            placeholder="Estoque"
+            placeholder={t('products.stockFilter')}
             value={lowStockFilter}
             onChange={setLowStockFilter}
             style={{ width: 180 }}
             options={[
-              { value: 'all', label: 'Todos' },
-              { value: 'low', label: 'Estoque Baixo' },
+              { value: 'all', label: t('products.all') },
+              { value: 'low', label: t('products.lowStockFilter') },
             ]}
           />
 
@@ -253,7 +255,7 @@ export function ProductList() {
                 setLowStockFilter('all');
               }}
             >
-              Limpar Filtros
+              {t('products.clearFilters')}
             </Button>
           )}
         </Space>
@@ -268,7 +270,7 @@ export function ProductList() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} produtos`,
+            showTotal: (total) => t('products.totalProducts', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           size="small"

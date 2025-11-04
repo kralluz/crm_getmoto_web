@@ -29,6 +29,7 @@ import type {
   GetApiProductsStockMovementsParams,
   PostApiProductsBody,
   PostApiProductsStockMovementsBody,
+  Product,
   PutApiProductsIdBody
 } from '.././models';
 
@@ -47,7 +48,7 @@ export const postApiProducts = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Product>(
       {url: `/api/products`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiProductsBody, signal
@@ -112,7 +113,7 @@ export const getApiProducts = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Product[]>(
       {url: `/api/products`, method: 'GET',
         params, signal
     },
@@ -205,7 +206,7 @@ export const getApiProductsId = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<Product>(
       {url: `/api/products/${id}`, method: 'GET', signal
     },
       );

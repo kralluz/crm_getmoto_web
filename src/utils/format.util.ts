@@ -20,13 +20,13 @@ export function parseDecimal(value: any): number {
 }
 
 /**
- * Formata valor numérico para moeda brasileira (BRL)
+ * Formata valor numérico para libra esterlina (GBP)
  */
 export function formatCurrency(value: any): string {
   const numValue = parseDecimal(value);
-  return new Intl.NumberFormat('pt-BR', {
+  return new Intl.NumberFormat('en-GB', {
     style: 'currency',
-    currency: 'BRL',
+    currency: 'GBP',
   }).format(numValue);
 }
 

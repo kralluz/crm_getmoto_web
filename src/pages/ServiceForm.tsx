@@ -267,7 +267,7 @@ export function ServiceForm() {
                 >
                   <CurrencyInput
                     style={{ width: '100%' }}
-                    placeholder="R$ 0,00"
+                    placeholder="£0.00"
                   />
                 </Form.Item>
               </Col>

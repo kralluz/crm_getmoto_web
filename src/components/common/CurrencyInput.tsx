@@ -16,15 +16,15 @@ interface CurrencyInputProps {
  * O usuário digita e o valor começa pelos centavos, aumentando conforme digita.
  *
  * Exemplo de comportamento:
- * - Digita "1" → R$ 0,01
- * - Digita "2" → R$ 0,12
- * - Digita "3" → R$ 1,23
- * - Digita "4" → R$ 12,34
+ * - Digita "1" → £0.01
+ * - Digita "2" → £0.12
+ * - Digita "3" → £1.23
+ * - Digita "4" → £12.34
  */
 export function CurrencyInput({
   value,
   onChange,
-  placeholder = 'R$ 0,00',
+  placeholder = '£0.00',
   disabled,
   style,
   prefix,
@@ -100,7 +100,7 @@ export function CurrencyInput({
       placeholder={placeholder}
       disabled={disabled}
       style={style}
-      prefix={prefix || 'R$'}
+      prefix={prefix || '£'}
       suffix={suffix}
       inputMode="numeric"
     />

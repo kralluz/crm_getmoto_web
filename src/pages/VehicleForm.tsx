@@ -1,16 +1,31 @@
 import { useEffect } from 'react';
-import { Form, Input, InputNumber, Switch, Button, Card, Space, Row, Col } from 'antd';
+import {
+  Form,
+  Input,
+  InputNumber,
+  Switch,
+  Button,
+  Card,
+  Space,
+  Row,
+  Col,
+} from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../components/common/PageHeader';
 import {
   useVehicle,
   useCreateVehicle,
   useUpdateVehicle,
 } from '../hooks/useMotorcycles';
-import type { CreateMotorcycleData, UpdateMotorcycleData } from '../types/motorcycle';
+import type {
+  CreateMotorcycleData,
+  UpdateMotorcycleData,
+} from '../types/motorcycle';
 
 export function VehicleForm() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
@@ -62,8 +77,12 @@ export function VehicleForm() {
   return (
     <div>
       <PageHeader
-        title={isEditing ? 'Editar Veículo' : 'Novo Veículo'}
-        subtitle={isEditing ? 'Atualize os dados do veículo' : 'Cadastre um novo veículo no sistema'}
+        title={isEditing ? t('vehicles.editVehicle') : t('vehicles.newVehicle')}
+        subtitle={
+          isEditing
+            ? t('vehicles.updateVehicleSubtitle')
+            : t('vehicles.registerNewVehicleSubtitle')
+        }
       />
 
       <Card loading={isLoading}>
@@ -78,16 +97,25 @@ export function VehicleForm() {
           <Row gutter={16}>
             <Col xs={24} sm={12} md={8}>
               <Form.Item
-                label="Placa"
+                label={t('vehicles.plate')}
                 name="plate"
                 rules={[
-                  { required: true, message: 'Por favor, informe a placa' },
-                  { min: 7, message: 'A placa deve ter no mínimo 7 caracteres' },
-                  { max: 10, message: 'A placa deve ter no máximo 10 caracteres' },
+                  {
+                    required: true,
+                    message: t('vehicles.plateRequiredError'),
+                  },
+                  {
+                    min: 7,
+                    message: t('vehicles.plateMinLengthError'),
+                  },
+                  {
+                    max: 10,
+                    message: t('vehicles.plateMaxLengthError'),
+                  },
                 ]}
               >
                 <Input
-                  placeholder="ABC-1234 ou ABC1D23"
+                  placeholder={t('vehicles.platePlaceholder')}
                   maxLength={10}
                   style={{ textTransform: 'uppercase' }}
                 />
@@ -96,62 +124,89 @@ export function VehicleForm() {
 
             <Col xs={24} sm={12} md={8}>
               <Form.Item
-                label="Marca"
+                label={t('vehicles.brand')}
                 name="brand"
                 rules={[
-                  { min: 2, message: 'A marca deve ter no mínimo 2 caracteres' },
-                  { max: 100, message: 'A marca deve ter no máximo 100 caracteres' },
+                  {
+                    min: 2,
+                    message: t('vehicles.brandMinLengthError'),
+                  },
+                  {
+                    max: 100,
+                    message: t('vehicles.brandMaxLengthError'),
+                  },
                 ]}
               >
-                <Input placeholder="Ex: Honda, Yamaha, Suzuki" maxLength={100} />
+                <Input
+                  placeholder={t('vehicles.brandPlaceholder')}
+                  maxLength={100}
+                />
               </Form.Item>
             </Col>
 
             <Col xs={24} sm={12} md={8}>
               <Form.Item
-                label="Modelo"
+                label={t('vehicles.model')}
                 name="model"
                 rules={[
-                  { min: 2, message: 'O modelo deve ter no mínimo 2 caracteres' },
-                  { max: 100, message: 'O modelo deve ter no máximo 100 caracteres' },
+                  {
+                    min: 2,
+                    message: t('vehicles.modelMinLengthError'),
+                  },
+                  {
+                    max: 100,
+                    message: t('vehicles.modelMaxLengthError'),
+                  },
                 ]}
               >
-                <Input placeholder="Ex: CG 160, Factor 150" maxLength={100} />
+                <Input
+                  placeholder={t('vehicles.modelPlaceholder')}
+                  maxLength={100}
+                />
               </Form.Item>
             </Col>
 
             <Col xs={24} sm={12} md={8}>
               <Form.Item
-                label="Cor"
+                label={t('vehicles.color')}
                 name="color"
                 rules={[
-                  { min: 2, message: 'A cor deve ter no mínimo 2 caracteres' },
-                  { max: 50, message: 'A cor deve ter no máximo 50 caracteres' },
+                  {
+                    min: 2,
+                    message: t('vehicles.colorMinLengthError'),
+                  },
+                  {
+                    max: 50,
+                    message: t('vehicles.colorMaxLengthError'),
+                  },
                 ]}
               >
-                <Input placeholder="Ex: Vermelha, Preta" maxLength={50} />
+                <Input
+                  placeholder={t('vehicles.colorPlaceholder')}
+                  maxLength={50}
+                />
               </Form.Item>
             </Col>
 
             <Col xs={24} sm={12} md={8}>
               <Form.Item
-                label="Ano"
+                label={t('vehicles.year')}
                 name="year"
                 rules={[
                   {
                     type: 'number',
                     min: 1900,
-                    message: 'Ano inválido',
+                    message: t('vehicles.invalidYearError'),
                   },
                   {
                     type: 'number',
                     max: new Date().getFullYear() + 1,
-                    message: 'Ano no futuro não permitido',
+                    message: t('vehicles.futureYearError'),
                   },
                 ]}
               >
                 <InputNumber
-                  placeholder="Ex: 2023"
+                  placeholder={t('vehicles.yearPlaceholder')}
                   style={{ width: '100%' }}
                   min={1900}
                   max={new Date().getFullYear() + 1}
@@ -161,13 +216,13 @@ export function VehicleForm() {
 
             <Col xs={24} sm={12} md={8}>
               <Form.Item
-                label="Status"
+                label={t('common.status')}
                 name="is_active"
                 valuePropName="checked"
               >
                 <Switch
-                  checkedChildren="Ativo"
-                  unCheckedChildren="Inativo"
+                  checkedChildren={t('common.active')}
+                  unCheckedChildren={t('common.inactive')}
                 />
               </Form.Item>
             </Col>
@@ -181,14 +236,14 @@ export function VehicleForm() {
                 icon={<SaveOutlined />}
                 loading={isCreating || isUpdating}
               >
-                {isEditing ? 'Atualizar' : 'Cadastrar'}
+                {isEditing ? t('common.update') : t('common.register')}
               </Button>
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={handleCancel}
                 disabled={isCreating || isUpdating}
               >
-                Cancelar
+                {t('common.cancel')}
               </Button>
             </Space>
           </Form.Item>

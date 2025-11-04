@@ -1,6 +1,7 @@
 import { AutoComplete, Input } from 'antd';
 import { SearchOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface GlobalSearchProps {
   onSearch: (query: string) => void;
@@ -11,6 +12,7 @@ const STORAGE_KEY = 'search_history';
 const MAX_HISTORY = 10;
 
 export function GlobalSearch({ onSearch, placeholder }: GlobalSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -62,6 +64,7 @@ export function GlobalSearch({ onSearch, placeholder }: GlobalSearchProps) {
       saveToHistory(valueToSearch);
       onSearch(valueToSearch.trim());
       setOpen(false);
+      setQuery(''); // Limpar o campo após buscar
     }
   };
 
@@ -76,7 +79,7 @@ export function GlobalSearch({ onSearch, placeholder }: GlobalSearchProps) {
         {
           label: (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-              <span style={{ fontSize: 12, color: '#999', fontWeight: 500 }}>BUSCAS RECENTES</span>
+              <span style={{ fontSize: 12, color: '#999', fontWeight: 500 }}>{t('search.recentSearches')}</span>
               <span
                 onClick={(e) => {
                   e.stopPropagation();
@@ -84,7 +87,7 @@ export function GlobalSearch({ onSearch, placeholder }: GlobalSearchProps) {
                 }}
                 style={{ fontSize: 12, color: '#1890ff', cursor: 'pointer' }}
               >
-                Limpar tudo
+                {t('search.clearAll')}
               </span>
             </div>
           ),
@@ -126,7 +129,7 @@ export function GlobalSearch({ onSearch, placeholder }: GlobalSearchProps) {
       popupMatchSelectWidth={400}
     >
       <Input
-        placeholder={placeholder || 'Buscar produtos, serviços, clientes...'}
+        placeholder={placeholder || t('search.placeholder')}
         prefix={<SearchOutlined />}
         size="large"
         allowClear

@@ -27,6 +27,8 @@ import type {
 import type {
   GetApiProductCategoriesParams,
   PostApiProductCategoriesBody,
+  ProductCategory,
+  ProductCategoryWithStats,
   PutApiProductCategoriesIdBody
 } from '.././models';
 
@@ -45,7 +47,7 @@ export const postApiProductCategories = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<ProductCategory>(
       {url: `/api/product-categories`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiProductCategoriesBody, signal
@@ -110,7 +112,7 @@ export const getApiProductCategories = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<ProductCategory[]>(
       {url: `/api/product-categories`, method: 'GET',
         params, signal
     },
@@ -203,7 +205,7 @@ export const getApiProductCategoriesId = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<ProductCategory>(
       {url: `/api/product-categories/${id}`, method: 'GET', signal
     },
       );
@@ -295,7 +297,7 @@ export const putApiProductCategoriesId = (
  ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<ProductCategory>(
       {url: `/api/product-categories/${id}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: putApiProductCategoriesIdBody
@@ -422,7 +424,7 @@ export const getApiProductCategoriesIdStats = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<ProductCategoryWithStats>(
       {url: `/api/product-categories/${id}/stats`, method: 'GET', signal
     },
       );

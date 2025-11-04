@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Form, Input, InputNumber, Button, Card, Space, Switch, Row, Col, Divider } from 'antd';
+import {
+  Form,
+  Input,
+  InputNumber,
+  Button,
+  Card,
+  Space,
+  Switch,
+  Row,
+  Col,
+  Divider,
+} from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useProduct, useCreateProduct, useUpdateProduct } from '../hooks/useProducts';
 import { CategorySelect } from '../components/products/CategorySelect';
 import { parseDecimal } from '../utils';
@@ -24,10 +36,10 @@ export function ProductForm() {
   const [form] = Form.useForm<ProductFormData>();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const isEditing = !!id;
   const productId = id ? parseInt(id) : undefined;
 
-  // Estados para controlar os preços e calcular margem
   const [buyPrice, setBuyPrice] = useState<number>(0);
   const [sellPrice, setSellPrice] = useState<number>(0);
 
@@ -38,7 +50,6 @@ export function ProductForm() {
   const isLoading = isLoadingProduct;
   const isSaving = isCreating || isUpdating;
 
-  // Calcula a margem de lucro
   const calculateMargin = (): string => {
     if (buyPrice && sellPrice && buyPrice > 0) {
       const margin = ((sellPrice - buyPrice) / buyPrice) * 100;
@@ -47,13 +58,12 @@ export function ProductForm() {
     return '-';
   };
 
-  // Determina a cor da margem
   const getMarginColor = (): string | undefined => {
     if (buyPrice && sellPrice && buyPrice > 0) {
       const margin = ((sellPrice - buyPrice) / buyPrice) * 100;
-      if (margin >= 30) return '#52c41a'; // Verde
-      if (margin >= 15) return '#fa8c16'; // Laranja
-      return '#ff4d4f'; // Vermelho
+      if (margin >= 30) return '#52c41a';
+      if (margin >= 15) return '#fa8c16';
+      return '#ff4d4f';
     }
     return undefined;
   };
@@ -73,7 +83,6 @@ export function ProductForm() {
         is_active: product.is_active,
       });
 
-      // Atualiza os estados para cálculo da margem
       setBuyPrice(parsedBuyPrice);
       setSellPrice(parsedSellPrice);
     }
@@ -123,7 +132,7 @@ export function ProductForm() {
   const validateSellPrice = (_: any, value: number) => {
     const buyPrice = form.getFieldValue('buy_price');
     if (value && buyPrice && value < buyPrice) {
-      return Promise.reject('O preço de venda deve ser maior ou igual ao preço de compra');
+      return Promise.reject(t('products.salePriceValidation'));
     }
     return Promise.resolve();
   };
@@ -135,33 +144,33 @@ export function ProductForm() {
   return (
     <div>
       <Button icon={<ArrowLeftOutlined />} onClick={handleCancel} style={{ marginBottom: 16 }}>
-        Voltar
+        {t('common.back')}
       </Button>
       <PageHeader
-        title={isEditing ? 'Editar Produto' : 'Novo Produto'}
-        subtitle={isEditing ? `Editando: ${product?.product_name}` : 'Cadastre um novo produto no estoque'}
+        title={isEditing ? t('products.editProduct') : t('products.newProduct')}
+        subtitle={isEditing ? `${t('products.editingProduct')}: ${product?.product_name}` : t('products.newProductSubtitle')}
       />
       <Card loading={isSaving}>
         <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ is_active: true, quantity: 0, quantity_alert: 0 }} style={{ maxWidth: 900 }}>
           <Row gutter={24}>
             <Col xs={24} md={16}>
-              <Form.Item label="Nome do Produto" name="product_name" rules={[{ required: true, message: 'Por favor, informe o nome do produto' },{ min: 3, message: 'O nome deve ter pelo menos 3 caracteres' },{ max: 200, message: 'O nome deve ter no máximo 200 caracteres' }]}>
-                <Input placeholder="Ex: Óleo Motul 15W-40" size="large" />
+              <Form.Item label={t('products.productName')} name="product_name" rules={[{ required: true, message: t('products.productNameRequired') },{ min: 3, message: t('products.productNameMinLength') },{ max: 200, message: t('products.productNameMaxLength') }]}>
+                <Input placeholder={t('products.productNamePlaceholder')} size="large" />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
-              <Form.Item label="Categoria" name="category_id" rules={[{ required: true, message: 'Por favor, selecione a categoria' }]}>
+              <Form.Item label={t('products.category')} name="category_id" rules={[{ required: true, message: t('products.categoryRequired') }]}>
                 <CategorySelect size="large" />
               </Form.Item>
             </Col>
           </Row>
-          <Divider orientation="left">Preços</Divider>
+          <Divider orientation="left">{t('products.prices')}</Divider>
           <Row gutter={24}>
             <Col xs={24} md={8}>
-              <Form.Item label="Preço de Compra" name="buy_price" rules={[{ required: true, message: 'Informe o preço de compra' },{ type: 'number', min: 0, message: 'O preço deve ser maior ou igual a zero' }]} tooltip="Preço pelo qual você compra o produto">
+              <Form.Item label={t('products.costPriceLabel')} name="buy_price" rules={[{ required: true, message: t('products.costPriceRequired') },{ type: 'number', min: 0, message: t('products.costPricePositive') }]} tooltip={t('products.costPriceTooltip')}>
                 <CurrencyInput
                   style={{ width: '100%' }}
-                  placeholder="R$ 0,00"
+                  placeholder="£0.00"
                   onChange={(value) => {
                     setBuyPrice(value || 0);
                     form.validateFields(['sell_price']);
@@ -170,51 +179,51 @@ export function ProductForm() {
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
-              <Form.Item label="Preço de Venda" name="sell_price" rules={[{ required: true, message: 'Informe o preço de venda' },{ type: 'number', min: 0, message: 'O preço deve ser maior ou igual a zero' },{ validator: validateSellPrice }]} tooltip="Preço pelo qual você vende o produto">
+              <Form.Item label={t('products.salePriceLabel')} name="sell_price" rules={[{ required: true, message: t('products.salePriceRequired') },{ type: 'number', min: 0, message: t('products.salePricePositive') },{ validator: validateSellPrice }]} tooltip={t('products.salePriceTooltip')}>
                 <CurrencyInput
                   style={{ width: '100%' }}
-                  placeholder="R$ 0,00"
+                  placeholder="£0.00"
                   onChange={(value) => setSellPrice(value || 0)}
                 />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
-              <Form.Item label="Margem de Lucro" tooltip="Calculado automaticamente com base nos preços">
+              <Form.Item label={t('products.profitMargin')} tooltip={t('products.profitMarginTooltip')}>
                 <Input
                   value={calculateMargin()}
                   readOnly
                   size="large"
                   style={{
                     fontWeight: 600,
-                    color: getMarginColor()
+                    color: getMarginColor(),
                   }}
                 />
               </Form.Item>
             </Col>
           </Row>
-          <Divider orientation="left">Estoque</Divider>
+          <Divider orientation="left">{t('products.stock')}</Divider>
           <Row gutter={24}>
             <Col xs={24} md={12}>
-              <Form.Item label="Quantidade em Estoque" name="quantity" rules={[{ required: true, message: 'Informe a quantidade' },{ type: 'number', min: 0, message: 'A quantidade não pode ser negativa' }]} tooltip="Quantidade atual disponível em estoque">
+              <Form.Item label={t('products.stockQuantityLabel')} name="quantity" rules={[{ required: true, message: t('products.stockQuantityRequired') },{ type: 'number', min: 0, message: t('products.stockQuantityPositive') }]} tooltip={t('products.stockQuantityTooltip')}>
                 <InputNumber style={{ width: '100%' }} precision={0} min={0} placeholder="0" size="large" suffix="unid." step={1} />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
-              <Form.Item label="Estoque Mínimo (Alerta)" name="quantity_alert" rules={[{ required: true, message: 'Informe o estoque mínimo' },{ type: 'number', min: 0, message: 'O valor não pode ser negativo' }]} tooltip="Você será alertado quando o estoque atingir ou ficar abaixo deste valor">
+              <Form.Item label={t('products.minStockLabel')} name="quantity_alert" rules={[{ required: true, message: t('products.minStockRequired') },{ type: 'number', min: 0, message: t('products.minStockPositive') }]} tooltip={t('products.minStockTooltip')}>
                 <InputNumber style={{ width: '100%' }} precision={0} min={0} placeholder="0" size="large" suffix="unid." step={1} />
               </Form.Item>
             </Col>
           </Row>
           <Divider />
-          <Form.Item label="Status" name="is_active" valuePropName="checked">
-            <Switch checkedChildren="Ativo" unCheckedChildren="Inativo" />
+          <Form.Item label={t('common.status')} name="is_active" valuePropName="checked">
+            <Switch checkedChildren={t('common.active')} unCheckedChildren={t('common.inactive')} />
           </Form.Item>
           <Form.Item style={{ marginTop: 24 }}>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} size="large" loading={isSaving}>
-                {isEditing ? 'Atualizar Produto' : 'Criar Produto'}
+                {isEditing ? t('products.updateProduct') : t('products.createProduct')}
               </Button>
-              <Button onClick={handleCancel} size="large" disabled={isSaving}>Cancelar</Button>
+              <Button onClick={handleCancel} size="large" disabled={isSaving}>{t('common.cancel')}</Button>
             </Space>
           </Form.Item>
         </Form>

@@ -7,6 +7,7 @@ import { useServiceOrders, useDeleteServiceOrder } from '../hooks/useServices';
 import { ActionButtons } from '../components/common/ActionButtons';
 import type { ServiceOrder, ServiceOrderStatus } from '../types/service-order';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 
@@ -17,17 +18,18 @@ const STATUS_COLORS: Record<ServiceOrderStatus, string> = {
   cancelled: 'red',
 };
 
-const STATUS_LABELS: Record<ServiceOrderStatus, string> = {
-  draft: 'Rascunho',
-  in_progress: 'Em Progresso',
-  completed: 'Concluído',
-  cancelled: 'Cancelado',
-};
-
 export function ServiceList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<ServiceOrderStatus | ''>('');
+
+  const STATUS_LABELS: Record<ServiceOrderStatus, string> = {
+    draft: t('services.status.draft'),
+    in_progress: t('services.status.in_progress'),
+    completed: t('services.status.completed'),
+    cancelled: t('services.status.cancelled'),
+  };
 
   const { data: serviceOrders, isLoading, error } = useServiceOrders({
     status: selectedStatus || undefined,
@@ -74,9 +76,9 @@ export function ServiceList() {
 
   const formatCurrency = (value?: any) => {
     const numValue = parseDecimal(value);
-    return new Intl.NumberFormat('pt-BR', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
-      currency: 'BRL',
+      currency: 'GBP',
     }).format(numValue);
   };
 
@@ -132,7 +134,7 @@ export function ServiceList() {
 
   const columns: ColumnsType<ServiceOrder> = [
     {
-      title: 'Ações',
+      title: t('services.actions'),
       key: 'actions',
       width: 120,
       align: 'center',
@@ -146,8 +148,8 @@ export function ServiceList() {
           showEdit
           showDelete
           iconOnly
-          deleteTitle="Deletar Ordem de Serviço"
-          deleteDescription={`Tem certeza que deseja deletar a ordem de serviço #${record.service_order_id}?`}
+          deleteTitle={t('services.deleteServiceOrder')}
+          deleteDescription={t('services.deleteServiceOrderConfirm', { id: record.service_order_id })}
         />
       ),
     },
@@ -159,14 +161,14 @@ export function ServiceList() {
       render: (id: number) => `#${id}`,
     },
     {
-      title: 'Cliente',
+      title: t('services.customer'),
       dataIndex: 'customer_name',
       key: 'customer_name',
       width: 150,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Veículo',
+      title: t('services.vehicle'),
       key: 'vehicle',
       width: 200,
       render: (_, record) => {
@@ -182,21 +184,21 @@ export function ServiceList() {
       },
     },
     {
-      title: 'Descrição',
+      title: t('services.description'),
       dataIndex: 'service_description',
       key: 'service_description',
       ellipsis: true,
       render: (text: string) => text || '-',
     },
     {
-      title: 'Profissional',
+      title: t('services.professional'),
       dataIndex: 'professional_name',
       key: 'professional_name',
       width: 130,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Status',
+      title: t('services.status'),
       dataIndex: 'status',
       key: 'status',
       width: 120,
@@ -208,7 +210,7 @@ export function ServiceList() {
       ),
     },
     {
-      title: 'Criado em',
+      title: t('services.createdIn'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 110,
@@ -216,7 +218,7 @@ export function ServiceList() {
       render: (date: string) => formatDate(date),
     },
     {
-      title: 'Finalizado em',
+      title: t('services.finalizedIn'),
       dataIndex: 'finalized_at',
       key: 'finalized_at',
       width: 130,
@@ -224,7 +226,7 @@ export function ServiceList() {
       render: (date: string) => formatDateTime(date),
     },
     {
-      title: 'Custo Estimado',
+      title: t('services.estimatedCost'),
       dataIndex: 'estimated_labor_cost',
       key: 'estimated_labor_cost',
       width: 120,
@@ -232,7 +234,7 @@ export function ServiceList() {
       render: (value: any) => formatCurrency(value),
     },
     {
-      title: 'Total Estimado',
+      title: t('services.totalEstimated'),
       key: 'total_estimated',
       width: 130,
       align: 'right',
@@ -241,18 +243,18 @@ export function ServiceList() {
   ];
 
   const statusOptions: { value: ServiceOrderStatus | ''; label: string }[] = [
-    { value: '', label: 'Todos os Status' },
-    { value: 'draft', label: 'Rascunho' },
-    { value: 'in_progress', label: 'Em Progresso' },
-    { value: 'completed', label: 'Concluído' },
-    { value: 'cancelled', label: 'Cancelado' },
+    { value: '', label: t('services.allStatuses') },
+    { value: 'draft', label: t('services.status.draft') },
+    { value: 'in_progress', label: t('services.status.in_progress') },
+    { value: 'completed', label: t('services.status.completed') },
+    { value: 'cancelled', label: t('services.status.cancelled') },
   ];
 
   return (
     <div>
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[16, 16]}>
         <Col xs={24} sm={12}>
-          <Title level={2} style={{ margin: 0 }}>Ordens de Serviço</Title>
+          <Title level={2} style={{ margin: 0 }}>{t('services.ordersList')}</Title>
         </Col>
         <Col xs={24} sm={12} style={{ textAlign: 'right' }}>
           <Button
@@ -262,7 +264,7 @@ export function ServiceList() {
             size="large"
             block={window.innerWidth < 576}
           >
-            Nova Ordem de Serviço
+            {t('services.newOrder')}
           </Button>
         </Col>
       </Row>
@@ -271,7 +273,7 @@ export function ServiceList() {
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={24} md={16} lg={12}>
             <Input
-              placeholder="Buscar por cliente, placa, descrição..."
+              placeholder={t('services.searchPlaceholder')}
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -280,7 +282,7 @@ export function ServiceList() {
           </Col>
           <Col xs={24} sm={12} md={8} lg={6}>
             <Select
-              placeholder="Filtrar por status"
+              placeholder={t('services.filterByStatus')}
               value={selectedStatus || undefined}
               onChange={(value) => setSelectedStatus(value || '')}
               allowClear
@@ -293,8 +295,8 @@ export function ServiceList() {
 
       {error && (
         <Alert
-          message="Erro ao carregar ordens de serviço"
-          description="Não foi possível carregar as ordens de serviço. A API pode não estar disponível ou você pode não ter permissão."
+          message={t('services.errorLoading')}
+          description={t('services.errorLoadingDescription')}
           type="error"
           showIcon
           style={{ marginBottom: 16 }}
@@ -310,7 +312,7 @@ export function ServiceList() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} ordens de serviço`,
+            showTotal: (total) => t('services.totalOrders', { total }),
             responsive: true,
           }}
           size="small"

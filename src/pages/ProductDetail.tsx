@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useProduct } from '../hooks/useProducts';
 import { useFormat } from '../hooks/useFormat';
 import { parseDecimal } from '../utils';
@@ -31,6 +32,7 @@ import type { StockMove } from '../types/product';
 const { Text } = Typography;
 
 export function ProductDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { formatDateTime } = useFormat();
@@ -75,14 +77,14 @@ export function ProductDetail() {
     : 0;
 
   const moveTypeLabels: Record<string, { label: string; color: string }> = {
-    ENTRY: { label: 'Entrada', color: 'green' },
-    EXIT: { label: 'Saída', color: 'red' },
-    ADJUSTMENT: { label: 'Ajuste', color: 'orange' },
+    ENTRY: { label: t('inventory.entry'), color: 'green' },
+    EXIT: { label: t('inventory.exit'), color: 'red' },
+    ADJUSTMENT: { label: t('inventory.adjustment'), color: 'orange' },
   };
 
   const stockMoveColumns: ColumnsType<StockMove> = [
     {
-      title: 'Data',
+      title: t('cashflow.date'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 180,
@@ -91,7 +93,7 @@ export function ProductDetail() {
       defaultSortOrder: 'descend',
     },
     {
-      title: 'Tipo',
+      title: t('cashflow.type'),
       dataIndex: 'move_type',
       key: 'move_type',
       width: 120,
@@ -100,23 +102,23 @@ export function ProductDetail() {
         return <Tag color={config?.color}>{config?.label || type}</Tag>;
       },
       filters: [
-        { text: 'Entrada', value: 'ENTRY' },
-        { text: 'Saída', value: 'EXIT' },
-        { text: 'Ajuste', value: 'ADJUSTMENT' },
+        { text: t('inventory.entry'), value: 'ENTRY' },
+        { text: t('inventory.exit'), value: 'EXIT' },
+        { text: t('inventory.adjustment'), value: 'ADJUSTMENT' },
       ],
       onFilter: (value, record) => record.move_type === value,
     },
     {
-      title: 'Quantidade',
+      title: t('inventory.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
       align: 'right',
       render: (qty: any, record) => {
         const qtyNum = parseDecimal(qty);
-        const color = record.move_type === 'ENTRY' ? '#52c41a' : 
+        const color = record.move_type === 'ENTRY' ? '#52c41a' :
                       record.move_type === 'EXIT' ? '#ff4d4f' : '#fa8c16';
-        const prefix = record.move_type === 'ENTRY' ? '+' : 
+        const prefix = record.move_type === 'ENTRY' ? '+' :
                        record.move_type === 'EXIT' ? '-' : '';
         return (
           <Text strong style={{ color }}>
@@ -126,14 +128,14 @@ export function ProductDetail() {
       },
     },
     {
-      title: 'Responsável',
+      title: t('inventory.responsible'),
       dataIndex: ['users', 'name'],
       key: 'user',
       width: 180,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Observações',
+      title: t('inventory.observations'),
       dataIndex: 'notes',
       key: 'notes',
       ellipsis: true,
@@ -205,7 +207,7 @@ export function ProductDetail() {
               title="Preço de Venda"
               value={sellPrice}
               precision={2}
-              prefix="R$"
+              prefix="£"
               valueStyle={{ color: '#52c41a', fontWeight: 600 }}
             />
           </Card>
@@ -216,7 +218,7 @@ export function ProductDetail() {
               title="Preço de Compra"
               value={buyPrice}
               precision={2}
-              prefix="R$"
+              prefix="£"
             />
           </Card>
         </Col>

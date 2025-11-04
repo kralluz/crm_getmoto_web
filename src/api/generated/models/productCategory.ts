@@ -7,10 +7,8 @@
  */
 
 export interface ProductCategory {
-  category_id?: number;
-  name?: string;
-  /** @nullable */
-  description?: string | null;
+  product_category_id?: number;
+  product_category_name?: string;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;

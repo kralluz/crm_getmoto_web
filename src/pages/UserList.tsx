@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Table, Card, Input, Tag, Typography, Space, Select, Button, Tooltip } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, KeyOutlined } from '@ant-design/icons';
-// import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import type { User, UserRole } from '../types/user';
@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 const { Title } = Typography;
 
 export function UserList() {
-  // const { t } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | ''>('');
@@ -90,10 +90,10 @@ export function UserList() {
 
   const getRoleLabel = (role: UserRole): string => {
     const labels: Record<UserRole, string> = {
-      ADMIN: 'Administrador',
-      MANAGER: 'Gerente',
-      MECHANIC: 'Mecânico',
-      ATTENDANT: 'Atendente',
+      ADMIN: t('users.roles.ADMIN'),
+      MANAGER: t('users.roles.MANAGER'),
+      MECHANIC: t('users.roles.MECHANIC'),
+      ATTENDANT: t('users.roles.ATTENDANT'),
     };
     return labels[role];
   };
@@ -117,14 +117,14 @@ export function UserList() {
 
   const columns: ColumnsType<User> = [
     {
-      title: 'Ações',
+      title: t('common.actions'),
       key: 'actions',
       width: 140,
       align: 'center',
       fixed: 'left',
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="Ver detalhes">
+          <Tooltip title={t('users.viewDetails')}>
             <Button
               type="text"
               size="small"
@@ -132,7 +132,7 @@ export function UserList() {
               onClick={() => handleView(record.id)}
             />
           </Tooltip>
-          <Tooltip title="Editar">
+          <Tooltip title={t('common.edit')}>
             <Button
               type="text"
               size="small"
@@ -140,7 +140,7 @@ export function UserList() {
               onClick={() => handleEdit(record.id)}
             />
           </Tooltip>
-          <Tooltip title="Alterar senha">
+          <Tooltip title={t('users.changePassword')}>
             <Button
               type="text"
               size="small"
@@ -148,7 +148,7 @@ export function UserList() {
               onClick={() => handleChangePassword(record.id)}
             />
           </Tooltip>
-          <Tooltip title="Deletar">
+          <Tooltip title={t('users.delete')}>
             <Button
               type="text"
               size="small"
@@ -161,18 +161,18 @@ export function UserList() {
       ),
     },
     {
-      title: 'Nome',
+      title: t('users.name'),
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: 'Email',
+      title: t('users.email'),
       dataIndex: 'email',
       key: 'email',
     },
     {
-      title: 'Cargo',
+      title: t('users.role'),
       dataIndex: 'role',
       key: 'role',
       width: 130,
@@ -183,19 +183,19 @@ export function UserList() {
       ),
     },
     {
-      title: 'Status',
+      title: t('common.status'),
       dataIndex: 'active',
       key: 'active',
       width: 100,
       align: 'center',
       render: (active: boolean) => (
         <Tag color={active ? 'success' : 'default'}>
-          {active ? 'Ativo' : 'Inativo'}
+          {active ? t('common.active') : t('common.inactive')}
         </Tag>
       ),
     },
     {
-      title: 'Data Cadastro',
+      title: t('users.registrationDate'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 130,
@@ -206,37 +206,37 @@ export function UserList() {
   ];
 
   const roleOptions = [
-    { value: '', label: 'Todos os cargos' },
-    { value: 'ADMIN', label: 'Administrador' },
-    { value: 'MANAGER', label: 'Gerente' },
-    { value: 'MECHANIC', label: 'Mecânico' },
-    { value: 'ATTENDANT', label: 'Atendente' },
+    { value: '', label: t('users.allRoles') },
+    { value: 'ADMIN', label: t('users.roles.ADMIN') },
+    { value: 'MANAGER', label: t('users.roles.MANAGER') },
+    { value: 'MECHANIC', label: t('users.roles.MECHANIC') },
+    { value: 'ATTENDANT', label: t('users.roles.ATTENDANT') },
   ];
 
   const statusOptions = [
-    { value: '', label: 'Todos' },
-    { value: 'active', label: 'Ativos' },
-    { value: 'inactive', label: 'Inativos' },
+    { value: '', label: t('users.allStatuses') },
+    { value: 'active', label: t('common.active') },
+    { value: 'inactive', label: t('common.inactive') },
   ];
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0 }}>Usuários</Title>
+        <Title level={2} style={{ margin: 0 }}>{t('users.title')}</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => navigate('/usuarios/novo')}
           size="large"
         >
-          Novo Usuário
+          {t('users.newUser')}
         </Button>
       </div>
 
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Input
-            placeholder="Buscar por nome ou email"
+            placeholder={t('users.searchPlaceholder')}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -244,7 +244,7 @@ export function UserList() {
             allowClear
           />
           <Select
-            placeholder="Filtrar por cargo"
+            placeholder={t('users.filterByRole')}
             value={selectedRole || undefined}
             onChange={(value) => setSelectedRole(value || '')}
             style={{ width: 180 }}
@@ -252,7 +252,7 @@ export function UserList() {
             options={roleOptions}
           />
           <Select
-            placeholder="Filtrar por status"
+            placeholder={t('users.filterByStatus')}
             value={selectedStatus || undefined}
             onChange={(value) => setSelectedStatus(value || '')}
             style={{ width: 150 }}
@@ -271,7 +271,7 @@ export function UserList() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} usuários`,
+            showTotal: (total) => t('users.totalUsers', { total }),
           }}
           size="small"
         />

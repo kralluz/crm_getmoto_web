@@ -16,6 +16,7 @@ import {
   ArrowDownOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useFormat } from '../hooks/useFormat';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
 import { PageHeader } from '../components/common/PageHeader';
@@ -34,6 +35,7 @@ function useTransaction(id: string | undefined) {
 }
 
 export function MovimentacaoDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { formatCurrency, formatDate, formatDateTime } = useFormat();
@@ -79,7 +81,7 @@ export function MovimentacaoDetail() {
               title="Valor"
               value={transaction.amount}
               precision={2}
-              prefix="R$"
+              prefix="£"
               valueStyle={{
                 color: isIncome ? '#52c41a' : '#ff4d4f',
                 fontWeight: 600
@@ -90,8 +92,8 @@ export function MovimentacaoDetail() {
         <Col xs={24} sm={8}>
           <Card>
             <Statistic
-              title="Tipo"
-              value={isIncome ? 'Entrada' : 'Saída'}
+              title={t('cashflow.type')}
+              value={isIncome ? t('cashflow.income') : t('cashflow.expense')}
               valueStyle={{ color: isIncome ? '#52c41a' : '#ff4d4f' }}
               prefix={isIncome ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             />
@@ -100,7 +102,7 @@ export function MovimentacaoDetail() {
         <Col xs={24} sm={8}>
           <Card>
             <Statistic
-              title="Data"
+              title={t('cashflow.date')}
               value={formatDate(transaction.occurred_at)}
             />
           </Card>
@@ -114,16 +116,16 @@ export function MovimentacaoDetail() {
             <Text copyable>{String(transaction.cash_flow_id)}</Text>
           </Descriptions.Item>
 
-          <Descriptions.Item label="Tipo">
+          <Descriptions.Item label={t('cashflow.type')}>
             <Tag
               color={isIncome ? 'green' : 'red'}
               icon={isIncome ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             >
-              {isIncome ? 'Entrada' : 'Saída'}
+              {isIncome ? t('cashflow.income') : t('cashflow.expense')}
             </Tag>
           </Descriptions.Item>
 
-          <Descriptions.Item label="Valor">
+          <Descriptions.Item label={t('cashflow.value')}>
             <Text
               strong
               style={{
@@ -135,9 +137,9 @@ export function MovimentacaoDetail() {
             </Text>
           </Descriptions.Item>
 
-          <Descriptions.Item label="Status">
+          <Descriptions.Item label={t('common.status')}>
             <Tag color={transaction.is_active ? 'green' : 'default'}>
-              {transaction.is_active ? 'Ativo' : 'Inativo'}
+              {transaction.is_active ? t('common.active') : t('common.inactive')}
             </Tag>
           </Descriptions.Item>
 

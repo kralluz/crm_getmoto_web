@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Button, Space, Tag, Table, Statistic, Row, Col, Spin } from 'antd';
 import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useProductCategoryWithStats } from '../hooks/useProductCategories';
 import { FormatService } from '../services/format.service';
 import type { ColumnsType } from 'antd/es/table';
@@ -16,6 +17,7 @@ interface Product {
 export function ProductCategoryDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: category, isLoading } = useProductCategoryWithStats(Number(id));
 
   if (isLoading) {
@@ -29,9 +31,9 @@ export function ProductCategoryDetail() {
   if (!category) {
     return (
       <Card>
-        <p>Categoria não encontrada</p>
+        <p>{t('products.categoryNotFound')}</p>
         <Button onClick={() => navigate('/categorias-produtos')}>
-          Voltar para lista
+          {t('common.backToList')}
         </Button>
       </Card>
     );
@@ -39,18 +41,18 @@ export function ProductCategoryDetail() {
 
   const columns: ColumnsType<Product> = [
     {
-      title: 'ID',
+      title: t('vehicles.id'),
       dataIndex: 'product_id',
       key: 'product_id',
       width: 80,
     },
     {
-      title: 'Produto',
+      title: t('products.product'),
       dataIndex: 'product_name',
       key: 'product_name',
     },
     {
-      title: 'Quantidade',
+      title: t('table.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
@@ -62,7 +64,7 @@ export function ProductCategoryDetail() {
       ),
     },
     {
-      title: 'Preço Compra',
+      title: t('products.purchasePrice'),
       dataIndex: 'buy_price',
       key: 'buy_price',
       width: 150,
@@ -70,7 +72,7 @@ export function ProductCategoryDetail() {
       render: (price: number) => FormatService.currency(price),
     },
     {
-      title: 'Preço Venda',
+      title: t('products.salesPriceColumn'),
       dataIndex: 'sell_price',
       key: 'sell_price',
       width: 150,
@@ -87,43 +89,43 @@ export function ProductCategoryDetail() {
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate('/categorias-produtos')}
           >
-            Voltar
+            {t('common.back')}
           </Button>
           <Button
             type="primary"
             icon={<EditOutlined />}
             onClick={() => navigate(`/categorias-produtos/${id}/editar`)}
           >
-            Editar
+            {t('common.edit')}
           </Button>
         </Space>
 
-        <Descriptions title="Informações da Categoria" bordered>
-          <Descriptions.Item label="ID">
+        <Descriptions title={t('products.categoryInfo')} bordered>
+          <Descriptions.Item label={t('vehicles.id')}>
             {category.product_category_id}
           </Descriptions.Item>
-          <Descriptions.Item label="Nome">
+          <Descriptions.Item label={t('common.name')}>
             {category.product_category_name}
           </Descriptions.Item>
-          <Descriptions.Item label="Status">
+          <Descriptions.Item label={t('common.status')}>
             <Tag color={category.is_active ? 'green' : 'red'}>
-              {category.is_active ? 'Ativa' : 'Inativa'}
+              {category.is_active ? t('products.activeStatus') : t('products.inactiveStatus')}
             </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="Data de Criação">
+          <Descriptions.Item label={t('products.creationDate')}>
             {FormatService.date(category.created_at, 'short')}
           </Descriptions.Item>
-          <Descriptions.Item label="Última Atualização">
+          <Descriptions.Item label={t('products.lastUpdate')}>
             {FormatService.date(category.updated_at, 'short')}
           </Descriptions.Item>
         </Descriptions>
       </Card>
 
-      <Card title="Estatísticas">
+      <Card title={t('products.stats')}>
         <Row gutter={16}>
           <Col span={8}>
             <Statistic
-              title="Total de Produtos"
+              title={t('products.totalProducts')}
               value={category.stats?.total_products || 0}
               valueStyle={{ color: '#3f8600' }}
             />
@@ -132,7 +134,7 @@ export function ProductCategoryDetail() {
       </Card>
 
       {category.stats?.recent_products && category.stats.recent_products.length > 0 && (
-        <Card title="Produtos Recentes">
+        <Card title={t('products.recentProducts')}>
           <Table
             columns={columns}
             dataSource={category.stats.recent_products}
@@ -145,7 +147,7 @@ export function ProductCategoryDetail() {
       {(!category.stats?.recent_products || category.stats.recent_products.length === 0) && (
         <Card>
           <p style={{ textAlign: 'center', color: '#999' }}>
-            Nenhum produto cadastrado nesta categoria
+            {t('products.noProductsInCategory')}
           </p>
         </Card>
       )}

@@ -1,6 +1,7 @@
 import { Form, Input, Button, Card, Typography, Space, message } from 'antd';
 import { ArrowLeftOutlined, KeyOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
@@ -10,6 +11,7 @@ interface ChangePasswordFormData {
 }
 
 export function UserChangePassword() {
+  const { t } = useTranslation();
   const [form] = Form.useForm<ChangePasswordFormData>();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -22,10 +24,10 @@ export function UserChangePassword() {
       // TODO: Implementar chamada à API
       console.log('Change password for user:', id, values);
 
-      message.success('Senha alterada com sucesso!');
+      message.success(t('users.passwordChangeSuccess'));
       navigate(`/usuarios/${id}`);
     } catch (error) {
-      message.error('Erro ao alterar senha. Tente novamente.');
+      message.error(t('users.passwordChangeError'));
       console.error('Error changing password:', error);
     }
   };
@@ -64,11 +66,11 @@ export function UserChangePassword() {
               label="Nova senha"
               name="newPassword"
               rules={[
-                { required: true, message: 'Por favor, informe a nova senha' },
-                { min: 6, message: 'A senha deve ter pelo menos 6 caracteres' },
+                { required: true, message: t('users.passwordRequired') },
+                { min: 6, message: t('users.passwordMinLength') },
                 {
                   pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                  message: 'A senha deve conter letras maiúsculas, minúsculas e números',
+                  message: t('users.passwordMinLength'),
                 },
               ]}
               extra="A senha deve ter no mínimo 6 caracteres, incluindo letras maiúsculas, minúsculas e números"
@@ -84,13 +86,13 @@ export function UserChangePassword() {
               name="confirmPassword"
               dependencies={['newPassword']}
               rules={[
-                { required: true, message: 'Por favor, confirme a nova senha' },
+                { required: true, message: t('users.confirmPasswordRequired') },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue('newPassword') === value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('As senhas não coincidem'));
+                    return Promise.reject(new Error(t('users.passwordMismatch')));
                   },
                 }),
               ]}

@@ -1,8 +1,24 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, Modal, Typography } from 'antd';
-import { SearchOutlined, PlusOutlined, FilterOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import {
+  Table,
+  Card,
+  Input,
+  Tag,
+  Space,
+  Select,
+  Button,
+  Modal,
+  Typography,
+} from 'antd';
+import {
+  SearchOutlined,
+  PlusOutlined,
+  FilterOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
 import { useProductCategories, useDeleteProductCategory } from '../hooks/useProductCategories';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
@@ -13,6 +29,7 @@ const { Link } = Typography;
 
 export function ProductCategoryList() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
 
@@ -24,8 +41,9 @@ export function ProductCategoryList() {
   const filteredCategories = useMemo(() => {
     if (!Array.isArray(categories)) return [];
 
-    return categories.filter(category => {
-      const matchesSearch = searchText === '' ||
+    return categories.filter((category) => {
+      const matchesSearch =
+        searchText === '' ||
         category.product_category_name.toLowerCase().includes(searchText.toLowerCase());
       return matchesSearch;
     });
@@ -36,20 +54,30 @@ export function ProductCategoryList() {
   };
 
   const handleDelete = async (id: number) => {
-    const category = categories?.find(c => c.product_category_id === id);
+    const category = categories?.find((c) => c.product_category_id === id);
     const productCount = category?._count?.products || 0;
 
     if (productCount > 0) {
       Modal.warning({
-        title: 'Não é possível deletar esta categoria',
+        title: t('products.cannotDeleteCategory'),
         icon: <ExclamationCircleOutlined />,
-        content: `Esta categoria possui ${productCount} produto(s) vinculado(s). Para deletar a categoria, primeiro remova ou reatribua os produtos.`,
-        okText: 'Entendido',
+        content: t('products.cannotDeleteCategoryMessage', { count: productCount }),
+        okText: t('products.understood'),
       });
       return;
     }
 
-    deleteCategory(id);
+    Modal.confirm({
+      title: t('products.deleteCategory'),
+      icon: <ExclamationCircleOutlined />,
+      content: t('products.deleteCategoryConfirm', { name: category?.product_category_name }),
+      okText: t('common.yes'),
+      okType: 'danger',
+      cancelText: t('common.cancel'),
+      onOk: () => {
+        deleteCategory(id);
+      },
+    });
   };
 
   const handleCreate = () => {
@@ -58,7 +86,7 @@ export function ProductCategoryList() {
 
   const columns: ColumnsType<ProductCategory> = [
     {
-      title: 'Ações',
+      title: t('common.actions'),
       key: 'actions',
       width: 100,
       align: 'center',
@@ -71,21 +99,23 @@ export function ProductCategoryList() {
           showView
           showEdit
           showDelete
-          deleteTitle="Deletar Categoria"
-          deleteDescription={`Tem certeza que deseja deletar a categoria "${record.product_category_name}"?`}
+          deleteTitle={t('products.deleteCategory')}
+          deleteDescription={t('products.deleteCategoryConfirm', {
+            name: record.product_category_name,
+          })}
           iconOnly
         />
       ),
     },
     {
-      title: 'ID',
+      title: t('vehicles.id'),
       dataIndex: 'product_category_id',
       key: 'product_category_id',
       width: 80,
       sorter: (a, b) => a.product_category_id - b.product_category_id,
     },
     {
-      title: 'Nome da Categoria',
+      title: t('products.categoryName'),
       dataIndex: 'product_category_name',
       key: 'product_category_name',
       ellipsis: true,
@@ -97,36 +127,36 @@ export function ProductCategoryList() {
       ),
     },
     {
-      title: 'Produtos Vinculados',
+      title: t('products.linkedProducts'),
       key: 'products_count',
       width: 150,
       align: 'center',
       render: (_, record) => (
         <Tag color="blue">
-          {record._count?.products || 0} produto(s)
+          {t('products.linkedProductsCount', { count: record._count?.products || 0 })}
         </Tag>
       ),
       sorter: (a, b) => (a._count?.products || 0) - (b._count?.products || 0),
     },
     {
-      title: 'Status',
+      title: t('common.status'),
       dataIndex: 'is_active',
       key: 'is_active',
       width: 100,
       align: 'center',
       render: (active: boolean) => (
         <Tag color={active ? 'green' : 'default'}>
-          {active ? 'Ativo' : 'Inativo'}
+          {active ? t('common.active') : t('common.inactive')}
         </Tag>
       ),
       filters: [
-        { text: 'Ativo', value: true },
-        { text: 'Inativo', value: false },
+        { text: t('common.active'), value: true },
+        { text: t('common.inactive'), value: false },
       ],
       onFilter: (value, record) => record.is_active === value,
     },
     {
-      title: 'Criado em',
+      title: t('products.createdAt'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 130,
@@ -139,8 +169,8 @@ export function ProductCategoryList() {
   return (
     <div>
       <PageHeader
-        title="Categorias de Produtos"
-        subtitle="Gerencie as categorias do catálogo de produtos"
+        title={t('products.categoryTitle')}
+        subtitle={t('products.categorySubtitle')}
         extra={
           <Button
             type="primary"
@@ -148,7 +178,7 @@ export function ProductCategoryList() {
             onClick={handleCreate}
             size="large"
           >
-            Nova Categoria
+            {t('products.newCategory')}
           </Button>
         }
       />
@@ -156,7 +186,7 @@ export function ProductCategoryList() {
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Input
-            placeholder="Buscar por nome..."
+            placeholder={t('products.searchCategory')}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -165,14 +195,14 @@ export function ProductCategoryList() {
           />
 
           <Select
-            placeholder="Status"
+            placeholder={t('common.status')}
             value={activeFilter}
             onChange={setActiveFilter}
             style={{ width: 150 }}
             options={[
-              { value: 'all', label: 'Todos' },
-              { value: 'active', label: 'Ativos' },
-              { value: 'inactive', label: 'Inativos' },
+              { value: 'all', label: t('products.all') },
+              { value: 'active', label: t('products.actives') },
+              { value: 'inactive', label: t('products.inactives') },
             ]}
           />
 
@@ -184,7 +214,7 @@ export function ProductCategoryList() {
                 setActiveFilter('active');
               }}
             >
-              Limpar Filtros
+              {t('common.clearFilters')}
             </Button>
           )}
         </Space>
@@ -199,7 +229,7 @@ export function ProductCategoryList() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} categorias`,
+            showTotal: (total) => t('products.totalCategories', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           size="small"

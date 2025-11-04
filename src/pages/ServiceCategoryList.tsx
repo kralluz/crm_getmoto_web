@@ -1,8 +1,24 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, Modal, Typography } from 'antd';
-import { SearchOutlined, PlusOutlined, FilterOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import {
+  Table,
+  Card,
+  Input,
+  Tag,
+  Space,
+  Select,
+  Button,
+  Modal,
+  Typography,
+} from 'antd';
+import {
+  SearchOutlined,
+  PlusOutlined,
+  FilterOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
 import { useServiceCategories, useDeleteServiceCategory } from '../hooks/useServiceCategories';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
@@ -15,6 +31,7 @@ const { Link } = Typography;
 
 export function ServiceCategoryList() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { formatCurrency } = useFormat();
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
@@ -27,8 +44,9 @@ export function ServiceCategoryList() {
   const filteredCategories = useMemo(() => {
     if (!Array.isArray(categories)) return [];
 
-    return categories.filter(category => {
-      const matchesSearch = searchText === '' ||
+    return categories.filter((category) => {
+      const matchesSearch =
+        searchText === '' ||
         category.service_name.toLowerCase().includes(searchText.toLowerCase());
       return matchesSearch;
     });
@@ -39,15 +57,15 @@ export function ServiceCategoryList() {
   };
 
   const handleDelete = async (id: number) => {
-    const category = categories?.find(c => c.service_id === id);
+    const category = categories?.find((c) => c.service_id === id);
 
     Modal.confirm({
-      title: 'Deletar Serviço',
+      title: t('services.deleteService'),
       icon: <ExclamationCircleOutlined />,
-      content: `Tem certeza que deseja deletar o serviço "${category?.service_name}"? Esta ação não pode ser desfeita se o serviço estiver vinculado a ordens de serviço.`,
-      okText: 'Sim, deletar',
+      content: t('services.deleteServiceConfirm', { name: category?.service_name }),
+      okText: t('services.yesDelete'),
       okType: 'danger',
-      cancelText: 'Cancelar',
+      cancelText: t('common.cancel'),
       onOk: () => {
         deleteCategory(id);
       },
@@ -60,7 +78,7 @@ export function ServiceCategoryList() {
 
   const columns: ColumnsType<ServiceCategory> = [
     {
-      title: 'Ações',
+      title: t('common.actions'),
       key: 'actions',
       width: 100,
       align: 'center',
@@ -73,14 +91,14 @@ export function ServiceCategoryList() {
           showView
           showEdit
           showDelete
-          deleteTitle="Deletar Serviço"
-          deleteDescription={`Tem certeza que deseja deletar o serviço "${record.service_name}"?`}
+          deleteTitle={t('services.deleteService')}
+          deleteDescription={t('services.deleteServiceConfirm', { name: record.service_name })}
           iconOnly
         />
       ),
     },
     {
-      title: 'Nome do Serviço',
+      title: t('services.serviceName'),
       dataIndex: 'service_name',
       key: 'service_name',
       ellipsis: true,
@@ -92,7 +110,7 @@ export function ServiceCategoryList() {
       ),
     },
     {
-      title: 'Custo do Serviço',
+      title: t('services.serviceCost'),
       dataIndex: 'service_cost',
       key: 'service_cost',
       width: 150,
@@ -105,24 +123,24 @@ export function ServiceCategoryList() {
       sorter: (a, b) => parseDecimal(a.service_cost) - parseDecimal(b.service_cost),
     },
     {
-      title: 'Status',
+      title: t('common.status'),
       dataIndex: 'is_active',
       key: 'is_active',
       width: 100,
       align: 'center',
       render: (active: boolean) => (
         <Tag color={active ? 'green' : 'default'}>
-          {active ? 'Ativo' : 'Inativo'}
+          {active ? t('common.active') : t('common.inactive')}
         </Tag>
       ),
       filters: [
-        { text: 'Ativo', value: true },
-        { text: 'Inativo', value: false },
+        { text: t('common.active'), value: true },
+        { text: t('common.inactive'), value: false },
       ],
       onFilter: (value, record) => record.is_active === value,
     },
     {
-      title: 'Criado em',
+      title: t('vehicles.createdAt'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 130,
@@ -135,8 +153,8 @@ export function ServiceCategoryList() {
   return (
     <div>
       <PageHeader
-        title="Serviços"
-        subtitle="Gerencie os serviços disponíveis"
+        title={t('services.title')}
+        subtitle={t('services.availableServices')}
         extra={
           <Button
             type="primary"
@@ -144,7 +162,7 @@ export function ServiceCategoryList() {
             onClick={handleCreate}
             size="large"
           >
-            Novo Serviço
+            {t('products.newServiceCategory')}
           </Button>
         }
       />
@@ -152,7 +170,7 @@ export function ServiceCategoryList() {
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Input
-            placeholder="Buscar por nome..."
+            placeholder={t('services.searchByName')}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -161,14 +179,14 @@ export function ServiceCategoryList() {
           />
 
           <Select
-            placeholder="Status"
+            placeholder={t('common.status')}
             value={activeFilter}
             onChange={setActiveFilter}
             style={{ width: 150 }}
             options={[
-              { value: undefined, label: 'Todos' },
-              { value: true, label: 'Ativos' },
-              { value: false, label: 'Inativos' },
+              { value: undefined, label: t('products.all') },
+              { value: true, label: t('products.actives') },
+              { value: false, label: t('products.inactives') },
             ]}
           />
 
@@ -180,7 +198,7 @@ export function ServiceCategoryList() {
                 setActiveFilter(true);
               }}
             >
-              Limpar Filtros
+              {t('common.clearFilters')}
             </Button>
           )}
         </Space>
@@ -195,7 +213,7 @@ export function ServiceCategoryList() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} serviços`,
+            showTotal: (total) => t('services.totalServices', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           size="small"

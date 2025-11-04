@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CashFlow,
   GetApiCashflowParams,
   GetApiCashflowSummary200,
   GetApiCashflowSummaryCategories200Item,
@@ -49,7 +50,7 @@ export const postApiCashflow = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<CashFlow>(
       {url: `/api/cashflow`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postApiCashflowBody, signal
@@ -114,7 +115,7 @@ export const getApiCashflow = (
 ) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<CashFlow[]>(
       {url: `/api/cashflow`, method: 'GET',
         params, signal
     },
