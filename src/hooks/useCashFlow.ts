@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cashFlowApi } from '../api/cashflow-api';
-import type { CreateTransactionData } from '../types/cashflow';
 import dayjs from 'dayjs';
 
 // Hook para obter resumo financeiro
@@ -32,19 +31,12 @@ export function useCashFlowTransactions(params?: {
   });
 }
 
-// Hook para criar transação
-export function useCreateTransaction() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CreateTransactionData) =>
-      cashFlowApi.createTransaction(data),
-    onSuccess: () => {
-      // Invalidar queries para atualizar dados
-      queryClient.invalidateQueries({ queryKey: ['cashflow'] });
-    },
-  });
-}
+// NOTA: useCreateTransaction foi REMOVIDO
+// Cashflow agora é criado automaticamente através de:
+// - Vendas em Ordens de Serviço (useCreateServiceOrder)
+// - Compras de Estoque (useCreatePurchaseOrder)
+// - Despesas Operacionais (useCreateExpense)
+// Isso garante RASTREABILIDADE TOTAL de todas as transações.
 
 // Hook para deletar transação
 export function useDeleteTransaction() {

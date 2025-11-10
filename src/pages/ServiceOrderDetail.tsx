@@ -11,19 +11,27 @@ import {
   Col,
   Statistic,
   Spin,
-  Empty
+  Empty,
+  Modal,
+  Form,
+  Input,
+  Alert
 } from 'antd';
 import { 
   ArrowLeftOutlined, 
   FileTextOutlined, 
-  EditOutlined, 
+  StopOutlined, 
   ToolOutlined,
   ShoppingOutlined,
   DollarOutlined,
-  FilePdfOutlined
+  FilePdfOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useServiceOrder } from '../hooks/useServices';
+import { useTranslation } from 'react-i18next';
+import { useServiceOrder, useCancelServiceOrder } from '../hooks/useServices';
+import { useAuthStore } from '../store/auth-store';
+import { NotificationService } from '../services/notification.service';
 import type { ServiceProduct, ServiceRealized, CashFlow } from '../types/service-order';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
@@ -32,27 +40,18 @@ import { formatCurrency, formatDateTime, parseDecimal } from '../utils/format.ut
 
 const { Title, Text } = Typography;
 
-const STATUS_COLORS = {
-  draft: 'default',
-  in_progress: 'blue',
-  completed: 'green',
-  cancelled: 'red',
-};
-
-const STATUS_LABELS = {
-  draft: 'Rascunho',
-  in_progress: 'Em Progresso',
-  completed: 'Concluído',
-  cancelled: 'Cancelado',
-};
-
 export function ServiceOrderDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const serviceOrderId = id ? parseInt(id) : 0;
 
   const { data: serviceOrder, isLoading, error } = useServiceOrder(serviceOrderId);
+  const { mutate: cancelOrder, isPending: isCancelling } = useCancelServiceOrder();
+  const { user } = useAuthStore();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelForm] = Form.useForm();
 
   const handleGeneratePdf = () => {
     if (!serviceOrder) return;
@@ -71,8 +70,54 @@ export function ServiceOrderDetail() {
     navigate('/servicos');
   };
 
-  const handleEdit = () => {
-    navigate(`/servicos/${id}/editar`);
+  const handleCancelOrder = () => {
+    if (serviceOrder?.status === 'cancelled') {
+      NotificationService.warning(t('services.orderAlreadyCancelled'));
+      return;
+    }
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      const values = await cancelForm.validateFields();
+      
+      if (!user || !user.id) {
+        NotificationService.error(t('common.error'), t('auth.userNotFound'));
+        return;
+      }
+
+      const cancelledBy = parseInt(user.id, 10);
+      
+      if (isNaN(cancelledBy)) {
+        NotificationService.error(t('common.error'), 'ID de usuário inválido');
+        return;
+      }
+
+      cancelOrder(
+        {
+          id: serviceOrderId,
+          cancelled_by: cancelledBy,
+          cancellation_reason: values.cancellation_reason,
+        },
+        {
+          onSuccess: () => {
+            NotificationService.success(t('services.orderCancelledSuccess'));
+            setIsCancelModalOpen(false);
+            cancelForm.resetFields();
+            // Redireciona após 1 segundo para o usuário ver a mensagem
+            setTimeout(() => navigate('/servicos'), 1000);
+          },
+          onError: (error: any) => {
+            NotificationService.error(
+              error?.response?.data?.message || t('services.orderCancelError')
+            );
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Erro na validação do formulário:', error);
+    }
   };
 
   // Calcular totais
@@ -100,26 +145,26 @@ export function ServiceOrderDetail() {
   // Colunas da tabela de produtos
   const productsColumns: ColumnsType<ServiceProduct> = [
     {
-      title: 'Produto',
+      title: t('services.product'),
       dataIndex: ['products', 'product_name'],
       key: 'product_name',
     },
     {
-      title: 'Quantidade',
+      title: t('services.quantity'),
       dataIndex: 'product_qtd',
       key: 'product_qtd',
       align: 'center',
       render: (qty: any) => parseDecimal(qty).toFixed(2),
     },
     {
-      title: 'Preço Unitário',
+      title: t('services.unitPrice'),
       dataIndex: ['products', 'sell_price'],
       key: 'sell_price',
       align: 'right',
       render: (price: any) => formatCurrency(price),
     },
     {
-      title: 'Total',
+      title: t('common.total'),
       key: 'total',
       align: 'right',
       render: (_, record) => {
@@ -133,26 +178,26 @@ export function ServiceOrderDetail() {
   // Colunas da tabela de serviços realizados
   const servicesColumns: ColumnsType<ServiceRealized> = [
     {
-      title: 'Serviço',
+      title: t('services.service'),
       dataIndex: ['service', 'service_name'],
       key: 'service_name',
     },
     {
-      title: 'Quantidade',
+      title: t('services.quantity'),
       dataIndex: 'service_qtd',
       key: 'service_qtd',
       align: 'center',
       render: (qty: any) => parseDecimal(qty),
     },
     {
-      title: 'Preço Unitário',
+      title: t('services.unitPrice'),
       dataIndex: ['service', 'service_cost'],
       key: 'service_cost',
       align: 'right',
       render: (cost: any) => formatCurrency(cost),
     },
     {
-      title: 'Total',
+      title: t('common.total'),
       key: 'total',
       align: 'right',
       render: (_, record) => {
@@ -166,35 +211,35 @@ export function ServiceOrderDetail() {
   // Colunas da tabela de movimentações financeiras
   const cashFlowColumns: ColumnsType<CashFlow> = [
     {
-      title: 'Data',
+      title: t('common.date'),
       dataIndex: 'occurred_at',
       key: 'occurred_at',
       render: (date: string) => formatDateTime(date),
     },
     {
-      title: 'Tipo',
+      title: t('cashflow.type'),
       dataIndex: 'direction',
       key: 'direction',
       align: 'center',
-      render: (direction: 'in' | 'out') => (
-        <Tag color={direction === 'in' ? 'green' : 'red'}>
-          {direction === 'in' ? 'Entrada' : 'Saída'}
+      render: (direction: 'entrada' | 'saida') => (
+        <Tag color={direction === 'entrada' ? 'green' : 'red'}>
+          {direction === 'entrada' ? t('cashflow.income') : t('cashflow.expense')}
         </Tag>
       ),
     },
     {
-      title: 'Valor',
+      title: t('cashflow.amount'),
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
       render: (amount: any, record) => (
-        <Text style={{ color: record.direction === 'in' ? '#52c41a' : '#ff4d4f' }}>
+        <Text style={{ color: record.direction === 'entrada' ? '#52c41a' : '#ff4d4f' }}>
           {formatCurrency(amount)}
         </Text>
       ),
     },
     {
-      title: 'Observação',
+      title: t('common.observations'),
       dataIndex: 'note',
       key: 'note',
     },
@@ -216,9 +261,9 @@ export function ServiceOrderDetail() {
           onClick={handleBack}
           style={{ marginBottom: 16 }}
         >
-          Voltar
+          {t('common.back')}
         </Button>
-        <Empty description="Ordem de serviço não encontrada" />
+        <Empty description={t('services.serviceNotFound')} />
       </div>
     );
   }
@@ -227,41 +272,64 @@ export function ServiceOrderDetail() {
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={handleBack}
         >
-          Voltar
+          {t('common.back')}
         </Button>
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={handleEdit}
-        >
-          Editar
-        </Button>
-        <Button
-          icon={<FilePdfOutlined />}
-          onClick={handleGeneratePdf}
-          loading={isPdfLoading}
-        >
-          Gerar PDF
-        </Button>
-      </Space>
+        <Space>
+          {serviceOrder.status !== 'cancelled' && (
+            <Button
+              danger
+              icon={<StopOutlined />}
+              onClick={handleCancelOrder}
+              style={{ 
+                backgroundColor: '#ff4d4f', 
+                borderColor: '#ff4d4f',
+                color: 'white'
+              }}
+            >
+              {t('services.cancelOrder')}
+            </Button>
+          )}
+          <Button
+            icon={<FilePdfOutlined />}
+            onClick={handleGeneratePdf}
+            loading={isPdfLoading}
+          >
+            {t('services.generateInvoice')}
+          </Button>
+        </Space>
+      </div>
 
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
             <Space>
-              <FileTextOutlined style={{ fontSize: 32, color: '#13c2c2' }} />
+              <FileTextOutlined style={{ fontSize: 32, color: serviceOrder.status === 'cancelled' ? '#ff4d4f' : '#13c2c2' }} />
               <div>
-                <Title level={2} style={{ margin: 0 }}>
-                  Ordem de Serviço #{serviceOrder.service_order_id}
-                </Title>
-                <Text type="secondary">
-                  Criada em {formatDateTime(serviceOrder.created_at)}
-                </Text>
+                <Space direction="vertical" size={0}>
+                  <Space>
+                    <Title level={2} style={{ margin: 0 }}>
+                      {t('services.serviceOrderNumber')} #{serviceOrder.service_order_id}
+                    </Title>
+                    {serviceOrder.status === 'cancelled' && (
+                      <Tag color="error" icon={<StopOutlined />}>
+                        {t('services.cancelledLabel')}
+                      </Tag>
+                    )}
+                  </Space>
+                  <Text type="secondary">
+                    {t('services.createdOn')} {formatDateTime(serviceOrder.created_at)}
+                  </Text>
+                  {serviceOrder.status === 'cancelled' && serviceOrder.cancelled_at && (
+                    <Text type="danger">
+                      {t('services.cancelledOn')} {formatDateTime(serviceOrder.cancelled_at)}
+                    </Text>
+                  )}
+                </Space>
               </div>
             </Space>
           </div>
@@ -269,13 +337,13 @@ export function ServiceOrderDetail() {
           <Divider />
 
           <Descriptions bordered column={{ xs: 1, sm: 1, md: 2 }}>
-            <Descriptions.Item label="Cliente">
+            <Descriptions.Item label={t('services.client')}>
               <Text strong>{serviceOrder.customer_name || '-'}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Profissional">
+            <Descriptions.Item label={t('services.professionalLabel')}>
               <Text strong>{serviceOrder.professional_name || '-'}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Veículo">
+            <Descriptions.Item label={t('services.vehicleLabel')}>
               {serviceOrder.vehicles ? (
                 <div>
                   <Text strong>
@@ -291,68 +359,69 @@ export function ServiceOrderDetail() {
                 '-'
               )}
             </Descriptions.Item>
-            <Descriptions.Item label="Status">
-              <Tag color={STATUS_COLORS[serviceOrder.status]}>
-                {STATUS_LABELS[serviceOrder.status]}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Categoria de Serviço">
-              {serviceOrder.service ? (
-                <div>
-                  <Text strong>{serviceOrder.service.service_name}</Text>
-                  <br />
-                  <Text type="secondary">
-                    Custo: {formatCurrency(serviceOrder.service.service_cost)}
-                  </Text>
-                </div>
-              ) : (
-                '-'
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Data de Finalização">
-              <Text strong>{formatDateTime(serviceOrder.finalized_at)}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Descrição do Serviço" span={2}>
+            <Descriptions.Item label={t('services.serviceDescriptionLabel')} span={2}>
               {serviceOrder.service_description || '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="Diagnóstico" span={2}>
-              {serviceOrder.diagnosis || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Observações" span={2}>
+            {serviceOrder.diagnosis && (
+              <Descriptions.Item label={t('services.diagnosisLabel')} span={2}>
+                {serviceOrder.diagnosis}
+              </Descriptions.Item>
+            )}
+            <Descriptions.Item label={t('services.observationsLabel')} span={2}>
               {serviceOrder.notes || '-'}
             </Descriptions.Item>
+            {serviceOrder.status === 'cancelled' && serviceOrder.cancellation_reason && (
+              <Descriptions.Item label={t('services.cancellationReasonLabel')} span={2}>
+                <Alert
+                  message={serviceOrder.cancellation_reason}
+                  type="error"
+                  showIcon
+                  icon={<StopOutlined />}
+                />
+              </Descriptions.Item>
+            )}
+            {serviceOrder.discount_percent && (
+              <Descriptions.Item label={t('services.discountPercentLabel')}>
+                {serviceOrder.discount_percent}%
+              </Descriptions.Item>
+            )}
+            {serviceOrder.discount_amount && (
+              <Descriptions.Item label={t('services.discountAmountLabel')}>
+                {formatCurrency(serviceOrder.discount_amount)}
+              </Descriptions.Item>
+            )}
           </Descriptions>
 
           {/* Resumo Financeiro */}
           <Card 
-            title={<><DollarOutlined /> Resumo Financeiro</>}
+            title={<><DollarOutlined /> {t('services.financialSummary')}</>}
             style={{ marginTop: 24 }}
           >
             <Row gutter={16}>
               <Col xs={12} md={6}>
                 <Statistic
-                  title="Produtos"
+                  title={t('services.totalProducts')}
                   value={totals.products}
                   formatter={(value) => formatCurrency(Number(value))}
                 />
               </Col>
               <Col xs={12} md={6}>
                 <Statistic
-                  title="Serviços"
+                  title={t('services.totalServicesLabel')}
                   value={totals.services}
                   formatter={(value) => formatCurrency(Number(value))}
                 />
               </Col>
               <Col xs={12} md={6}>
                 <Statistic
-                  title="Mão de Obra"
+                  title={t('services.laborCostLabel')}
                   value={totals.labor}
                   formatter={(value) => formatCurrency(Number(value))}
                 />
               </Col>
               <Col xs={12} md={6}>
                 <Statistic
-                  title="Total"
+                  title={t('services.grandTotalLabel')}
                   value={totals.total}
                   formatter={(value) => formatCurrency(Number(value))}
                   valueStyle={{ color: '#52c41a', fontWeight: 'bold' }}
@@ -364,7 +433,7 @@ export function ServiceOrderDetail() {
           {/* Produtos Utilizados */}
           {serviceOrder.service_products && serviceOrder.service_products.length > 0 && (
             <Card 
-              title={<><ShoppingOutlined /> Produtos Utilizados</>}
+              title={<><ShoppingOutlined /> {t('services.productsSoldLabel')}</>}
               style={{ marginTop: 24 }}
             >
               <Table
@@ -380,7 +449,7 @@ export function ServiceOrderDetail() {
           {/* Serviços Realizados */}
           {serviceOrder.services_realized && serviceOrder.services_realized.length > 0 && (
             <Card 
-              title={<><ToolOutlined /> Serviços Realizados</>}
+              title={<><ToolOutlined /> {t('services.servicesRealizedLabel')}</>}
               style={{ marginTop: 24 }}
             >
               <Table
@@ -396,7 +465,7 @@ export function ServiceOrderDetail() {
           {/* Movimentações Financeiras */}
           {serviceOrder.cash_flow && serviceOrder.cash_flow.length > 0 && (
             <Card 
-              title={<><DollarOutlined /> Movimentações Financeiras</>}
+              title={<><DollarOutlined /> {t('services.financialMovements')}</>}
               style={{ marginTop: 24 }}
             >
               <Table
@@ -410,6 +479,54 @@ export function ServiceOrderDetail() {
           )}
         </Space>
       </Card>
+
+      {/* Cancellation Modal */}
+      <Modal
+        title={
+          <Space>
+            <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+            {t('services.confirmCancellation')}
+          </Space>
+        }
+        open={isCancelModalOpen}
+        onCancel={() => {
+          setIsCancelModalOpen(false);
+          cancelForm.resetFields();
+        }}
+        onOk={handleConfirmCancel}
+        confirmLoading={isCancelling}
+        okText={t('services.confirmCancel')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ danger: true }}
+        width={600}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Alert
+            message={t('services.cancellationWarning')}
+            description={t('services.cancellationExplanation')}
+            type="warning"
+            showIcon
+          />
+          
+          <Form form={cancelForm} layout="vertical">
+            <Form.Item
+              name="cancellation_reason"
+              label={t('services.cancellationReason')}
+              rules={[
+                { required: true, message: t('services.cancellationReasonRequired') },
+                { min: 10, message: t('services.cancellationReasonMinLength') }
+              ]}
+            >
+              <Input.TextArea
+                rows={4}
+                placeholder={t('services.cancellationReasonPlaceholder')}
+                maxLength={500}
+                showCount
+              />
+            </Form.Item>
+          </Form>
+        </Space>
+      </Modal>
     </div>
   );
 }

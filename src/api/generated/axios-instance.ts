@@ -1,9 +1,23 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 
+// Validação de variável de ambiente obrigatória
+const getApiBaseUrl = (): string => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (!baseUrl) {
+    const errorMessage = '❌ Variável de ambiente VITE_API_BASE_URL não configurada';
+    console.error(errorMessage);
+    // Exibe alerta visual no navegador
+    if (typeof window !== 'undefined') {
+      alert('Erro de Configuração:\n\nVITE_API_BASE_URL não está configurada.\n\nPor favor, configure a variável de ambiente no arquivo .env');
+    }
+    throw new Error(errorMessage);
+  }
+  return baseUrl;
+};
+
 // Configuração customizada da instância do Axios
 const axiosInstance = axios.create({
-  // baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api-crm-getmoto-api.i5mfns.easypanel.host/',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

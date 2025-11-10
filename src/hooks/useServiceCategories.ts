@@ -11,6 +11,9 @@ export function useServiceCategories(params?: ServiceCategoryFilters) {
   return useQuery({
     queryKey: ['service-categories', params],
     queryFn: () => serviceCategoryApi.getAll(params),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 

@@ -10,7 +10,8 @@ import {
   AppstoreOutlined,
   TagsOutlined,
   BarChartOutlined,
-  TransactionOutlined,
+  DollarOutlined,
+  CarOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
@@ -32,7 +33,7 @@ export function AppSidebar({
   onMenuSelect,
 }: AppSidebarProps) {
   const { t } = useTranslation();
-  const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'produtos-submenu', 'servicos-submenu']);
+  const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu']);
   const [isManuallyCollapsed, setIsManuallyCollapsed] = useState(collapsed);
   const [isHovering, setIsHovering] = useState(false);
 
@@ -41,10 +42,10 @@ export function AppSidebar({
     setIsManuallyCollapsed(collapsed);
   }, [collapsed]);
 
-  // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, produtos e serviços sempre abertos
+  // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, serviços, despesas e produtos sempre abertos
   useEffect(() => {
     // Mescla os openKeys iniciais com os padrões
-    const defaultKeys = ['dashboard-submenu', 'produtos-submenu', 'servicos-submenu'];
+    const defaultKeys = ['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu'];
     const mergedKeys = Array.from(new Set([...defaultKeys, ...initialOpenKeys]));
     setOpenKeys(mergedKeys);
   }, [initialOpenKeys]);
@@ -80,56 +81,68 @@ export function AppSidebar({
     {
       key: 'dashboard-submenu',
       icon: <DashboardOutlined />,
-      label: t('menu.dashboard'),
+      label: t('menu.overview'),
       children: [
         {
           key: 'dashboard',
           icon: <BarChartOutlined />,
           label: t('menu.dashboard'),
         },
-        {
-          key: 'movimentacoes',
-          icon: <TransactionOutlined />,
-          label: t('menu.cashflow'),
-        },
-      ],
-    },
-    {
-      key: 'produtos-submenu',
-      icon: <ShoppingCartOutlined />,
-      label: t('menu.products'),
-      children: [
-        {
-          key: 'estoque',
-          icon: <ShoppingCartOutlined />,
-          label: t('menu.products'),
-        },
-        {
-          key: 'produtos',
-          icon: <AppstoreOutlined />,
-          label: t('menu.products'),
-        },
-        {
-          key: 'categorias-produtos',
-          icon: <TagsOutlined />,
-          label: t('products.categoryTitle'),
-        },
       ],
     },
     {
       key: 'servicos-submenu',
       icon: <ToolOutlined />,
-      label: t('menu.services'),
+      label: t('menu.serviceOrders'),
       children: [
         {
           key: 'servicos',
           icon: <ToolOutlined />,
-          label: t('menu.services'),
+          label: t('menu.manageOrders'),
         },
         {
           key: 'categorias-servicos',
           icon: <TagsOutlined />,
-          label: t('products.categoryTitle'),
+          label: t('menu.serviceCategories'),
+        },
+      ],
+    },
+    {
+      key: 'despesas-submenu',
+      icon: <DollarOutlined />,
+      label: t('menu.expenses'),
+      children: [
+        {
+          key: 'despesas',
+          icon: <DollarOutlined />,
+          label: t('menu.manageExpenses'),
+        },
+      ],
+    },
+    {
+      key: 'veiculos',
+      icon: <CarOutlined />,
+      label: t('menu.vehicles'),
+    },
+    {
+      key: 'produtos-submenu',
+      icon: <ShoppingCartOutlined />,
+      label: t('menu.productsStock'),
+      children: [
+        {
+          key: 'estoque',
+          icon: <ShoppingCartOutlined />,
+          label: t('menu.stockControl'),
+        },
+        {
+          key: 'produtos',
+          icon: <AppstoreOutlined />,
+          label: t('menu.productRegistration'),
+        },
+        {
+          key: 'categorias-produtos',
+          icon: <TagsOutlined />,
+          label: t('menu.productCategories'),
         },
       ],
     },
@@ -144,6 +157,8 @@ export function AppSidebar({
     <Sider
       collapsible
       collapsed={collapsed}
+      width={260}
+      collapsedWidth={80}
       onCollapse={handleCollapseClick}
       theme="light"
       onMouseEnter={handleMouseEnter}

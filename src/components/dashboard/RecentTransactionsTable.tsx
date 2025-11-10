@@ -2,6 +2,9 @@ import { Card, Table, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 import type { CashFlowTransaction } from '../../types/cashflow';
 
 interface RecentTransactionsTableProps {
@@ -48,7 +51,7 @@ export function RecentTransactionsTable({
       title: t('table.date'),
       dataIndex: 'occurred_at',
       key: 'occurred_at',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
       width: 120,
     },
     {

@@ -5,10 +5,12 @@
 
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
 import 'dayjs/locale/pt-br';
 import 'dayjs/locale/es';
 
 dayjs.extend(relativeTime);
+dayjs.extend(utc);
 
 export type DateFormat = 'short' | 'medium' | 'long' | 'full';
 
@@ -40,6 +42,12 @@ export class FormatService {
     };
 
     const formatString = formats[format as DateFormat] || format;
+    
+    // Para formato 'short' (apenas data), usa UTC para evitar conversão de timezone
+    if (format === 'short' && typeof date === 'string' && date.includes('T')) {
+      return dayjs.utc(date).format(formatString);
+    }
+    
     return dayjsDate.format(formatString);
   }
 

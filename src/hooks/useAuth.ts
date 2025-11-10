@@ -51,6 +51,13 @@ export function useMe() {
     queryFn: () => authApi.me(),
     enabled: !!StorageService.getAuthToken(),
     retry: false,
+    // Não refazer a query em erros de autenticação
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    // Manter em cache por mais tempo para evitar requests desnecessárias
+    staleTime: 10 * 60 * 1000, // 10 minutos
+    gcTime: 15 * 60 * 1000, // 15 minutos (anteriormente cacheTime)
   });
 }
 

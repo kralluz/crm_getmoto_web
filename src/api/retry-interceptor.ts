@@ -113,9 +113,21 @@ function defaultRetryCondition(error: AxiosError): boolean {
     return true; // Retry em erros de rede
   }
 
+  const status = error.response.status;
+
+  // NUNCA retentar erros de autenticação/autorização
+  if (status === 401 || status === 403) {
+    return false;
+  }
+
+  // NUNCA retentar erros do cliente (4xx)
+  if (status >= 400 && status < 500) {
+    return false;
+  }
+
   const apiError = ApiErrorHandler.handle(error);
 
-  // Usa o método shouldRetry do ApiErrorHandler
+  // Usa o método shouldRetry do ApiErrorHandler apenas para erros 5xx
   return ApiErrorHandler.shouldRetry(apiError);
 }
 

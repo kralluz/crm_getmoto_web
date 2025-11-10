@@ -2,6 +2,9 @@ import { Card } from 'antd';
 import { Line } from '@ant-design/charts';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 import type { CashFlowTransaction } from '../../types/cashflow';
 
 interface CashFlowChartProps {
@@ -15,7 +18,7 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
   // Agrupar transações por data
   const groupedData = Array.isArray(transactions) ? transactions.reduce(
     (acc, transaction) => {
-      const date = dayjs(transaction.occurred_at).format('DD/MM');
+      const date = dayjs.utc(transaction.occurred_at).format('DD/MM');
       if (!acc[date]) {
         acc[date] = { date, income: 0, expense: 0 };
       }
@@ -43,13 +46,16 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
     yField: 'value',
     seriesField: 'type',
     smooth: true,
+    height: 300,
     animation: {
       appear: {
         animation: 'path-in',
         duration: 1000,
       },
     },
-    color: ['#3f8600', '#cf1322'],
+    color: ({ type }: { type: string }) => {
+      return type === t('dashboard.income') ? '#52c41a' : '#ff4d4f';
+    },
     yAxis: {
       label: {
         formatter: (v: string) =>

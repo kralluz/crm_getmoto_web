@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { serviceOrderApi } from '../api/service-api';
 import type { 
-  CreateServiceOrderData, 
-  UpdateServiceOrderData,
+  CreateServiceOrderData,
   ServiceOrderListParams 
 } from '../types/service-order';
 
@@ -40,12 +39,19 @@ export function useCreateServiceOrder() {
   });
 }
 
-export function useUpdateServiceOrder() {
+/**
+ * Hook para cancelar ordem de serviço com estorno automático
+ * Ordens de serviço são imutáveis por design - não podem ser editadas
+ */
+export function useCancelServiceOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateServiceOrderData }) =>
-      serviceOrderApi.update(id, data),
+    mutationFn: ({ id, cancelled_by, cancellation_reason }: { 
+      id: number; 
+      cancelled_by: number; 
+      cancellation_reason: string 
+    }) => serviceOrderApi.cancel(id, { cancelled_by, cancellation_reason }),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
       queryClient.invalidateQueries({ queryKey: ['service-order', id] });
@@ -60,6 +66,10 @@ export function useDeleteServiceOrder() {
     mutationFn: (id: number) => serviceOrderApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+    },
+    onError: (error: any) => {
+      console.error('Erro ao deletar ordem de serviço:', error);
+      throw error;
     },
   });
 }
@@ -84,6 +94,6 @@ export function useServiceOrdersByCustomer(customer_name: string) {
 export const useServices = useServiceOrders;
 export const useService = useServiceOrder;
 export const useCreateService = useCreateServiceOrder;
-export const useUpdateService = useUpdateServiceOrder;
+export const useCancelService = useCancelServiceOrder;
 export const useDeleteService = useDeleteServiceOrder;
 export const useServicesByStatus = useServiceOrdersByStatus;

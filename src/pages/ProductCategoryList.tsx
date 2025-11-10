@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useProductCategories, useDeleteProductCategory } from '../hooks/useProductCategories';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
+import { ProductCategoryModal } from '../components/products/ProductCategoryModal';
 import type { ProductCategory } from '../types/product-category';
 import dayjs from 'dayjs';
 
@@ -32,6 +33,8 @@ export function ProductCategoryList() {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | undefined>();
 
   const { data: categories, isLoading } = useProductCategories({
     is_active: activeFilter === 'all' ? undefined : activeFilter === 'active',
@@ -50,7 +53,8 @@ export function ProductCategoryList() {
   }, [categories, searchText]);
 
   const handleEdit = (id: number) => {
-    navigate(`/categorias-produtos/${id}/editar`);
+    setEditingCategoryId(id);
+    setModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -81,7 +85,13 @@ export function ProductCategoryList() {
   };
 
   const handleCreate = () => {
-    navigate('/categorias-produtos/novo');
+    setEditingCategoryId(undefined);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingCategoryId(undefined);
   };
 
   const columns: ColumnsType<ProductCategory> = [
@@ -106,13 +116,6 @@ export function ProductCategoryList() {
           iconOnly
         />
       ),
-    },
-    {
-      title: t('vehicles.id'),
-      dataIndex: 'product_category_id',
-      key: 'product_category_id',
-      width: 80,
-      sorter: (a, b) => a.product_category_id - b.product_category_id,
     },
     {
       title: t('products.categoryName'),
@@ -161,7 +164,7 @@ export function ProductCategoryList() {
       key: 'created_at',
       width: 130,
       align: 'center',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
       sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
   ];
@@ -235,6 +238,12 @@ export function ProductCategoryList() {
           size="small"
         />
       </Card>
+
+      <ProductCategoryModal
+        open={modalOpen}
+        categoryId={editingCategoryId}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

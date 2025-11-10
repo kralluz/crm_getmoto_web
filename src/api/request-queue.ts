@@ -71,7 +71,21 @@ class RequestQueue {
       const response = await executor(item.config);
       item.resolve(response);
     } catch (error: any) {
-      // Retry logic para erros de rede ou 5xx
+      // NUNCA retentar erros de autenticação ou autorização
+      if (this.isAuthError(error)) {
+        item.reject(error);
+        this.activeRequests--;
+        return;
+      }
+
+      // NUNCA retentar erros do cliente (4xx exceto timeout)
+      if (this.isClientError(error)) {
+        item.reject(error);
+        this.activeRequests--;
+        return;
+      }
+
+      // Retry logic apenas para erros de rede ou 5xx
       const shouldRetry =
         attempt < this.retryAttempts &&
         (this.isNetworkError(error) || this.isServerError(error));
@@ -86,6 +100,22 @@ class RequestQueue {
     } finally {
       this.activeRequests--;
     }
+  }
+
+  /**
+   * Verifica se é um erro de autenticação/autorização (401, 403)
+   */
+  private isAuthError(error: any): boolean {
+    const status = error.response?.status;
+    return status === 401 || status === 403;
+  }
+
+  /**
+   * Verifica se é um erro do cliente (4xx)
+   */
+  private isClientError(error: any): boolean {
+    const status = error.response?.status;
+    return status && status >= 400 && status < 500;
   }
 
   /**

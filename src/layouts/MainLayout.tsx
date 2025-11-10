@@ -44,11 +44,17 @@ export function MainLayout() {
   const getOpenKeys = () => {
     const path = location.pathname.split('/')[1];
 
-    if (path === 'produtos' || path === 'categorias-produtos' || path === 'estoque') {
-      return ['produtos-submenu'];
+    if (path === 'dashboard') {
+      return ['dashboard-submenu'];
     }
     if (path === 'servicos' || path === 'categorias-servicos') {
       return ['servicos-submenu'];
+    }
+    if (path === 'despesas') {
+      return ['despesas-submenu'];
+    }
+    if (path === 'produtos' || path === 'categorias-produtos' || path === 'estoque') {
+      return ['produtos-submenu'];
     }
 
     return [];
@@ -75,7 +81,7 @@ export function MainLayout() {
       />
       <Layout
         style={{
-          marginLeft: collapsed ? 80 : 200,
+          marginLeft: collapsed ? 80 : 260,
           transition: 'margin-left 0.2s',
         }}
       >

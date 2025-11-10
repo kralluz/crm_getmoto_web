@@ -5,6 +5,19 @@ import { QueryProvider } from './providers/QueryProvider';
 import { ErrorBoundary } from './components/errors';
 import { useThemeStore } from './store/theme-store';
 import { router } from './routes';
+import { setNotificationInstance } from './services/notification.service';
+import { useEffect } from 'react';
+
+function AppContent() {
+  const { notification } = AntdApp.useApp();
+
+  useEffect(() => {
+    // Inicializa a instância de notificação para uso em toda a aplicação
+    setNotificationInstance(notification);
+  }, [notification]);
+
+  return <RouterProvider router={router} />;
+}
 
 function App() {
   const { mode } = useThemeStore();
@@ -19,7 +32,7 @@ function App() {
           }}
         >
           <AntdApp>
-            <RouterProvider router={router} />
+            <AppContent />
           </AntdApp>
         </ConfigProvider>
       </QueryProvider>

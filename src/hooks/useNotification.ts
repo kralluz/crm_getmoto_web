@@ -5,16 +5,12 @@
 
 import { useCallback } from 'react';
 import { NotificationService } from '../services';
-import type { NotificationOptions, ToastOptions } from '../services/notification.service';
+import type { NotificationOptions } from '../services/notification.service';
 
 /**
  * Hook para notificações
  */
 export function useNotification() {
-  const toast = useCallback((options: ToastOptions) => {
-    NotificationService.toast(options);
-  }, []);
-
   const notify = useCallback((options: NotificationOptions) => {
     NotificationService.notify(options);
   }, []);
@@ -35,22 +31,6 @@ export function useNotification() {
     NotificationService.info(message, description);
   }, []);
 
-  const successToast = useCallback((message: string) => {
-    NotificationService.successToast(message);
-  }, []);
-
-  const errorToast = useCallback((message: string) => {
-    NotificationService.errorToast(message);
-  }, []);
-
-  const warningToast = useCallback((message: string) => {
-    NotificationService.warningToast(message);
-  }, []);
-
-  const infoToast = useCallback((message: string) => {
-    NotificationService.infoToast(message);
-  }, []);
-
   const close = useCallback((key: string) => {
     NotificationService.close(key);
   }, []);
@@ -66,13 +46,6 @@ export function useNotification() {
     error,
     warning,
     info,
-
-    // Toasts
-    toast,
-    successToast,
-    errorToast,
-    warningToast,
-    infoToast,
 
     // Controles
     close,

@@ -1,5 +1,6 @@
 import { customAxiosInstance } from './axios-instance';
 import type { Motorcycle, CreateMotorcycleData, UpdateMotorcycleData } from '../types/motorcycle';
+import type { VehicleStats } from '../types/vehicle';
 
 const BASE_URL = '/api/vehicles';
 
@@ -15,6 +16,13 @@ export const motorcycleApi = {
   async getById(id: number | string) {
     return customAxiosInstance<Motorcycle>({
       url: `${BASE_URL}/${id}`,
+      method: 'GET',
+    });
+  },
+
+  async getStats(id: number | string) {
+    return customAxiosInstance<VehicleStats>({
+      url: `${BASE_URL}/${id}/stats`,
       method: 'GET',
     });
   },
@@ -39,6 +47,22 @@ export const motorcycleApi = {
     return customAxiosInstance<{ message: string }>({
       url: `${BASE_URL}/${id}`,
       method: 'DELETE',
+    });
+  },
+
+  async deactivate(id: number | string) {
+    return customAxiosInstance<Motorcycle>({
+      url: `${BASE_URL}/${id}`,
+      method: 'PUT',
+      data: { is_active: false },
+    });
+  },
+
+  async activate(id: number | string) {
+    return customAxiosInstance<Motorcycle>({
+      url: `${BASE_URL}/${id}`,
+      method: 'PUT',
+      data: { is_active: true },
     });
   },
 };

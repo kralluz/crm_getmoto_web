@@ -111,14 +111,6 @@ export function ServiceOrdersReport() {
 
   const columns: ColumnsType<ServiceOrder> = [
     {
-      title: 'OS #',
-      dataIndex: 'service_order_id',
-      key: 'service_order_id',
-      align: 'center',
-      render: (id) => `#${id}`,
-      sorter: (a, b) => Number(a.service_order_id) - Number(b.service_order_id),
-    },
-    {
       title: 'Data',
       dataIndex: 'created_at',
       key: 'created_at',

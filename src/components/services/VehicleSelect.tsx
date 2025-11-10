@@ -96,11 +96,12 @@ export function VehicleSelect({ value, onChange, onVehicleCreated, ...props }: V
         confirmLoading={isCreating}
         width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        {isModalOpen && (
+          <Form
+            form={form}
+            layout="vertical"
+            style={{ marginTop: 16 }}
+          >
           <Form.Item
             label="Placa"
             name="plate"
@@ -147,6 +148,7 @@ export function VehicleSelect({ value, onChange, onVehicleCreated, ...props }: V
             <Input placeholder="Ex: Preta, Vermelha, Azul" />
           </Form.Item>
         </Form>
+        )}
       </Modal>
     </>
   );

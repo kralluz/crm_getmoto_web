@@ -46,7 +46,7 @@ export function ClientDetail() {
                 <Title level={2} style={{ margin: 0 }}>
                   {client.name}
                 </Title>
-                <Text type="secondary">Cliente desde {dayjs(client.createdAt).format('DD/MM/YYYY')}</Text>
+                <Text type="secondary">Cliente desde {dayjs.utc(client.createdAt).format('DD/MM/YYYY')}</Text>
               </div>
             </Space>
           </div>

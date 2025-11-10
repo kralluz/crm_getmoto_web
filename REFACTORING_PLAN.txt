@@ -1,0 +1,586 @@
+================================================================================
+PLANO DE REFATORAÇÃO: SISTEMA DE RASTREABILIDADE FINANCEIRA COMPLETA
+================================================================================
+
+DATA: 2025-11-08
+OBJETIVO: Eliminar transações órfãs e garantir rastreabilidade total de todas
+          as operações financeiras e de estoque.
+
+================================================================================
+PROBLEMAS IDENTIFICADOS
+================================================================================
+
+1. Formulário de Transação Manual existe e permite criar entradas de cashflow
+   sem origem (órfãs)
+2. Desintegração: Posso adicionar produto à OS (afeta estoque+cashflow) E
+   criar transação manual separada
+3. Duplicação: Mesma venda pode ser registrada 2x (uma na OS, outra manual)
+4. Falta de rastreabilidade: Transações manuais não têm service_order_id,
+   service_product_id, etc.
+5. Inconsistência: Cancelar OS reverte cashflow da OS, mas não reverte
+   transações manuais relacionadas
+
+================================================================================
+FONTES DE MOVIMENTAÇÃO FINANCEIRA (ARQUITETURA CORRETA)
+================================================================================
+
+┌─────────────────────────────────────────────┐
+│        FONTES DE MOVIMENTAÇÃO FINANCEIRA     │
+├─────────────────────────────────────────────┤
+│ 1. Venda de Serviço (OS)                    │
+│    → Cria: cash_flow (entrada)              │
+│    → Origem: service_realized_id            │
+│                                              │
+│ 2. Venda de Produto (OS)                    │
+│    → Cria: cash_flow (entrada)              │
+│    → Reduz: products.quantity               │
+│    → Cria: stock_move (EXIT)                │
+│    → Origem: service_product_id             │
+│                                              │
+│ 3. Cancelamento de OS                       │
+│    → Cria: cash_flow (saída/negativo)       │
+│    → Devolve: products.quantity             │
+│    → Cria: stock_move (ADJUSTMENT)          │
+│    → Flag: is_reversal = true               │
+│                                              │
+│ 4. Ajuste de Estoque                        │
+│    → Cria: stock_move (ADJUSTMENT)          │
+│    → Atualiza: products.quantity            │
+│    → Motivo: quebra, validade, correção     │
+│    → NÃO afeta cashflow                     │
+│                                              │
+│ 5. Compra de Estoque (NOVA - não existe!)  │
+│    → Cria: cash_flow (saída)                │
+│    → Aumenta: products.quantity             │
+│    → Cria: stock_move (ENTRY)               │
+│    → Origem: purchase_order_id              │
+│                                              │
+│ 6. Despesas Operacionais                    │
+│    → Cria: cash_flow (saída)                │
+│    → Origem: expense_id                     │
+│    → Categorias: salário, aluguel, etc.     │
+└─────────────────────────────────────────────┘
+
+================================================================================
+MUDANÇAS NO BANCO DE DADOS (BACKEND)
+================================================================================
+
+ARQUIVO: /home/usuario/Documentos/GitHub/crm_getmoto_api/prisma/schema.prisma
+
+[ADICIONAR] Tabela purchase_order
+-----------------------------------
+model purchase_order {
+  purchase_order_id BigInt   @id @default(autoincrement())
+  supplier_name     String
+  total_amount      Decimal  @db.Decimal(12, 2)
+  purchase_date     DateTime
+  notes             String?
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now())
+
+  stock_moves       stock_move[]
+  cash_flow         cash_flow[]
+}
+
+[ADICIONAR] Tabela expense
+-----------------------------------
+model expense {
+  expense_id     BigInt   @id @default(autoincrement())
+  category       String   // 'salary', 'rent', 'utilities', 'maintenance', etc.
+  description    String
+  amount         Decimal  @db.Decimal(12, 2)
+  expense_date   DateTime
+  is_active      Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+
+  cash_flow      cash_flow[]
+}
+
+[MODIFICAR] Tabela cash_flow
+-----------------------------------
+Adicionar campos:
+  purchase_order_id BigInt?
+  expense_id        BigInt?
+
+Adicionar relações:
+  purchase_order purchase_order? @relation(fields: [purchase_order_id], references: [purchase_order_id])
+  expense        expense?        @relation(fields: [expense_id], references: [expense_id])
+
+[MODIFICAR] Tabela stock_move
+-----------------------------------
+Adicionar campo (se não existir):
+  purchase_order_id BigInt?
+
+Adicionar relação:
+  purchase_order purchase_order? @relation(fields: [purchase_order_id], references: [purchase_order_id])
+
+================================================================================
+ENDPOINTS DO BACKEND
+================================================================================
+
+[CRIAR] /api/purchase-orders
+-----------------------------------
+- POST   /api/purchase-orders        - Criar ordem de compra
+- GET    /api/purchase-orders        - Listar ordens de compra
+- GET    /api/purchase-orders/:id    - Obter ordem de compra
+- PUT    /api/purchase-orders/:id    - Atualizar ordem de compra
+- DELETE /api/purchase-orders/:id    - Soft delete
+- POST   /api/purchase-orders/:id/cancel - Cancelar e reverter
+
+Lógica do POST:
+1. Criar purchase_order
+2. Para cada produto:
+   - Aumentar products.quantity
+   - Criar stock_move (tipo ENTRY)
+   - Criar cash_flow (direction: saida, purchase_order_id)
+
+[CRIAR] /api/expenses
+-----------------------------------
+- POST   /api/expenses        - Criar despesa
+- GET    /api/expenses        - Listar despesas
+- GET    /api/expenses/:id    - Obter despesa
+- PUT    /api/expenses/:id    - Atualizar despesa
+- DELETE /api/expenses/:id    - Soft delete
+- POST   /api/expenses/:id/cancel - Cancelar e reverter
+
+Lógica do POST:
+1. Criar expense
+2. Criar cash_flow (direction: saida, expense_id)
+
+[CRIAR] /api/stock-adjustments
+-----------------------------------
+- POST   /api/stock-adjustments        - Criar ajuste de estoque
+- GET    /api/stock-adjustments        - Listar ajustes
+- GET    /api/stock-adjustments/:id    - Obter ajuste
+- DELETE /api/stock-adjustments/:id    - Soft delete
+
+Lógica do POST:
+1. Atualizar products.quantity (+ ou -)
+2. Criar stock_move (tipo ADJUSTMENT)
+3. NÃO criar cash_flow (ajuste não é transação financeira)
+
+[MODIFICAR] /api/cashflow
+-----------------------------------
+- Remover endpoint POST /api/cashflow (não pode mais criar manualmente!)
+- Manter GET /api/cashflow (para listar)
+- Adicionar query params para filtrar por origem:
+  ?source_type=service_order|purchase_order|expense
+  ?source_id=123
+
+================================================================================
+ARQUIVOS DO FRONTEND A CRIAR
+================================================================================
+
+[CRIAR] /src/components/common/PurchaseOrderModal.tsx
+-----------------------------------
+Campos:
+- supplier_name (string, obrigatório)
+- purchase_date (date, obrigatório)
+- products (array de { product_id, quantity, unit_price })
+- notes (string, opcional)
+
+Validações:
+- Pelo menos 1 produto
+- Quantidade > 0
+- Preço unitário > 0
+
+Cálculo automático:
+- total_amount = soma de (quantity * unit_price)
+
+[CRIAR] /src/components/common/ExpenseModal.tsx
+-----------------------------------
+Campos:
+- category (select, obrigatório)
+  Opções: salary, rent, utilities, maintenance, taxes, supplies, other
+- description (textarea, obrigatório)
+- amount (currency, obrigatório)
+- expense_date (date, obrigatório)
+
+Validações:
+- amount > 0
+- description mínimo 5 caracteres
+
+[CRIAR] /src/components/common/StockAdjustmentModal.tsx
+-----------------------------------
+Campos:
+- product_id (select, obrigatório)
+- adjustment_type (radio: 'increase' | 'decrease')
+- quantity (number, obrigatório)
+- reason (select, obrigatório)
+  Opções: breakage, expiration, inventory_correction, theft, other
+- notes (textarea, obrigatório se reason=other)
+
+Validações:
+- quantity > 0
+- Se decrease, verificar se há estoque suficiente
+
+[CRIAR] /src/types/purchase-order.ts
+-----------------------------------
+export interface PurchaseOrder {
+  purchase_order_id: number | string;
+  supplier_name: string;
+  total_amount: number;
+  purchase_date: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatePurchaseOrderData {
+  supplier_name: string;
+  purchase_date: string;
+  products: Array<{
+    product_id: number;
+    quantity: number;
+    unit_price: number;
+  }>;
+  notes?: string;
+}
+
+[CRIAR] /src/types/expense.ts
+-----------------------------------
+export type ExpenseCategory =
+  | 'salary'
+  | 'rent'
+  | 'utilities'
+  | 'maintenance'
+  | 'taxes'
+  | 'supplies'
+  | 'other';
+
+export interface Expense {
+  expense_id: number | string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  expense_date: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateExpenseData {
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  expense_date: string;
+}
+
+[CRIAR] /src/types/stock-adjustment.ts
+-----------------------------------
+export type AdjustmentType = 'increase' | 'decrease';
+export type AdjustmentReason =
+  | 'breakage'
+  | 'expiration'
+  | 'inventory_correction'
+  | 'theft'
+  | 'other';
+
+export interface CreateStockAdjustmentData {
+  product_id: number;
+  adjustment_type: AdjustmentType;
+  quantity: number;
+  reason: AdjustmentReason;
+  notes?: string;
+}
+
+[CRIAR] /src/api/purchase-order-api.ts
+-----------------------------------
+Implementar métodos:
+- create(data: CreatePurchaseOrderData)
+- getAll(params?)
+- getById(id)
+- update(id, data)
+- delete(id)
+- cancel(id)
+
+[CRIAR] /src/api/expense-api.ts
+-----------------------------------
+Implementar métodos:
+- create(data: CreateExpenseData)
+- getAll(params?)
+- getById(id)
+- update(id, data)
+- delete(id)
+- cancel(id)
+
+[CRIAR] /src/api/stock-adjustment-api.ts
+-----------------------------------
+Implementar métodos:
+- create(data: CreateStockAdjustmentData)
+- getAll(params?)
+- getById(id)
+- delete(id)
+
+[CRIAR] /src/hooks/usePurchaseOrders.ts
+-----------------------------------
+- usePurchaseOrders()
+- usePurchaseOrder(id)
+- useCreatePurchaseOrder()
+- useUpdatePurchaseOrder()
+- useDeletePurchaseOrder()
+- useCancelPurchaseOrder()
+
+[CRIAR] /src/hooks/useExpenses.ts
+-----------------------------------
+- useExpenses()
+- useExpense(id)
+- useCreateExpense()
+- useUpdateExpense()
+- useDeleteExpense()
+- useCancelExpense()
+
+[CRIAR] /src/hooks/useStockAdjustments.ts
+-----------------------------------
+- useStockAdjustments()
+- useStockAdjustment(id)
+- useCreateStockAdjustment()
+- useDeleteStockAdjustment()
+
+================================================================================
+ARQUIVOS DO FRONTEND A MODIFICAR
+================================================================================
+
+[MODIFICAR] /src/pages/MovimentacoesList.tsx
+-----------------------------------
+- REMOVER botão "Nova Transação" que abre TransactionModal
+- ADICIONAR botão "Nova Compra" que abre PurchaseOrderModal
+- ADICIONAR botão "Nova Despesa" que abre ExpenseModal
+- Modificar tabela para mostrar coluna "Origem":
+  - Se service_order_id: "Ordem de Serviço #123"
+  - Se purchase_order_id: "Compra #456"
+  - Se expense_id: "Despesa: Categoria"
+  - Se órfã (nenhum ID): "⚠️ Sem origem" (transações antigas)
+
+[MODIFICAR] /src/pages/ProductList.tsx
+-----------------------------------
+- ADICIONAR botão "Ajuste de Estoque" que abre StockAdjustmentModal
+- Mostrar histórico de movimentações ao expandir produto
+
+[MODIFICAR] /src/types/cashflow.ts
+-----------------------------------
+Adicionar campos à interface CashFlowTransaction:
+  purchase_order_id?: number | null;
+  expense_id?: number | null;
+
+Adicionar função helper:
+export const getTransactionSource = (transaction: CashFlowTransaction) => {
+  if (transaction.service_order_id) return 'service_order';
+  if (transaction.purchase_order_id) return 'purchase_order';
+  if (transaction.expense_id) return 'expense';
+  if (transaction.service_realized_id) return 'service_realized';
+  if (transaction.service_product_id) return 'service_product';
+  return 'orphan';
+};
+
+[MODIFICAR] /src/api/cashflow-api.ts
+-----------------------------------
+- REMOVER método createTransaction (não pode mais criar manualmente!)
+- Manter métodos de leitura (getSummary, getTransactions, etc.)
+
+[MODIFICAR] /src/hooks/useCashFlow.ts
+-----------------------------------
+- REMOVER hook useCreateTransaction
+- Manter hooks de leitura
+
+================================================================================
+ARQUIVOS DO FRONTEND A REMOVER
+================================================================================
+
+[REMOVER] /src/components/common/TransactionModal.tsx
+-----------------------------------
+Motivo: Cria transações órfãs sem rastreabilidade
+
+Impacto: MovimentacoesList.tsx precisa ser atualizado para não importar
+
+================================================================================
+TRADUÇÕES (i18n)
+================================================================================
+
+[ADICIONAR] pt-BR.json
+-----------------------------------
+"purchaseOrder": {
+  "title": "Nova Compra de Estoque",
+  "supplier": "Fornecedor",
+  "purchaseDate": "Data da Compra",
+  "products": "Produtos",
+  "addProduct": "Adicionar Produto",
+  "product": "Produto",
+  "quantity": "Quantidade",
+  "unitPrice": "Preço Unitário",
+  "totalAmount": "Valor Total",
+  "notes": "Observações",
+  "submit": "Registrar Compra",
+  "cancel": "Cancelar",
+  "successMessage": "Compra registrada com sucesso!",
+  "errorMessage": "Erro ao registrar compra"
+},
+"expense": {
+  "title": "Nova Despesa",
+  "category": "Categoria",
+  "description": "Descrição",
+  "amount": "Valor",
+  "expenseDate": "Data da Despesa",
+  "categories": {
+    "salary": "Salários",
+    "rent": "Aluguel",
+    "utilities": "Contas (água, luz, internet)",
+    "maintenance": "Manutenção",
+    "taxes": "Impostos",
+    "supplies": "Materiais de Escritório",
+    "other": "Outros"
+  },
+  "submit": "Registrar Despesa",
+  "cancel": "Cancelar",
+  "successMessage": "Despesa registrada com sucesso!",
+  "errorMessage": "Erro ao registrar despesa"
+},
+"stockAdjustment": {
+  "title": "Ajuste de Estoque",
+  "product": "Produto",
+  "adjustmentType": "Tipo de Ajuste",
+  "increase": "Aumentar Estoque",
+  "decrease": "Reduzir Estoque",
+  "quantity": "Quantidade",
+  "reason": "Motivo",
+  "reasons": {
+    "breakage": "Quebra",
+    "expiration": "Validade Vencida",
+    "inventory_correction": "Correção de Inventário",
+    "theft": "Roubo/Perda",
+    "other": "Outro"
+  },
+  "notes": "Observações",
+  "submit": "Aplicar Ajuste",
+  "cancel": "Cancelar",
+  "successMessage": "Ajuste aplicado com sucesso!",
+  "errorMessage": "Erro ao aplicar ajuste",
+  "insufficientStock": "Estoque insuficiente para redução"
+},
+"cashflow": {
+  "source": "Origem",
+  "sources": {
+    "service_order": "Ordem de Serviço",
+    "purchase_order": "Compra de Estoque",
+    "expense": "Despesa",
+    "orphan": "⚠️ Sem origem (legado)"
+  }
+}
+
+[ADICIONAR] en.json e es.json
+-----------------------------------
+Traduzir todos os termos acima
+
+================================================================================
+ORDEM DE IMPLEMENTAÇÃO
+================================================================================
+
+FASE 1: BACKEND - SCHEMA E MIGRATIONS
+--------------------------------------
+1. ✅ Modificar schema.prisma
+2. ✅ Criar migration
+3. ✅ Aplicar migration no banco
+4. ✅ Gerar Prisma Client
+
+FASE 2: BACKEND - SERVICES
+--------------------------------------
+5. ✅ Criar /src/services/purchase-order.service.ts
+6. ✅ Criar /src/services/expense.service.ts
+7. ✅ Criar /src/services/stock-adjustment.service.ts
+8. ✅ Modificar /src/services/cashflow.service.ts (remover create manual)
+
+FASE 3: BACKEND - ROUTES
+--------------------------------------
+9. ✅ Criar /src/routes/purchase-order.routes.ts
+10. ✅ Criar /src/routes/expense.routes.ts
+11. ✅ Criar /src/routes/stock-adjustment.routes.ts
+12. ✅ Modificar /src/routes/cashflow.routes.ts (remover POST)
+13. ✅ Registrar rotas em /src/index.ts
+
+FASE 4: BACKEND - DEPLOY
+--------------------------------------
+14. ✅ npm run build
+15. ✅ npm run deploy
+
+FASE 5: FRONTEND - TYPES E API
+--------------------------------------
+16. ✅ Criar /src/types/purchase-order.ts
+17. ✅ Criar /src/types/expense.ts
+18. ✅ Criar /src/types/stock-adjustment.ts
+19. ✅ Modificar /src/types/cashflow.ts
+20. ✅ Criar /src/api/purchase-order-api.ts
+21. ✅ Criar /src/api/expense-api.ts
+22. ✅ Criar /src/api/stock-adjustment-api.ts
+23. ✅ Modificar /src/api/cashflow-api.ts
+
+FASE 6: FRONTEND - HOOKS
+--------------------------------------
+24. ✅ Criar /src/hooks/usePurchaseOrders.ts
+25. ✅ Criar /src/hooks/useExpenses.ts
+26. ✅ Criar /src/hooks/useStockAdjustments.ts
+27. ✅ Modificar /src/hooks/useCashFlow.ts
+
+FASE 7: FRONTEND - COMPONENTES
+--------------------------------------
+28. ✅ Criar /src/components/common/PurchaseOrderModal.tsx
+29. ✅ Criar /src/components/common/ExpenseModal.tsx
+30. ✅ Criar /src/components/common/StockAdjustmentModal.tsx
+31. ✅ Remover /src/components/common/TransactionModal.tsx
+
+FASE 8: FRONTEND - PÁGINAS
+--------------------------------------
+32. ✅ Modificar /src/pages/MovimentacoesList.tsx
+33. ✅ Modificar /src/pages/ProductList.tsx
+
+FASE 9: FRONTEND - I18N
+--------------------------------------
+34. ✅ Adicionar traduções em /public/locales/pt-BR/translation.json
+35. ✅ Adicionar traduções em /public/locales/en/translation.json
+36. ✅ Adicionar traduções em /public/locales/es/translation.json
+
+FASE 10: FRONTEND - DEPLOY
+--------------------------------------
+37. ✅ vercel --prod
+
+FASE 11: TESTES
+--------------------------------------
+38. ✅ Testar criação de compra de estoque
+39. ✅ Testar criação de despesa
+40. ✅ Testar ajuste de estoque
+41. ✅ Verificar que não é possível criar transação manual
+42. ✅ Verificar coluna "Origem" em movimentações
+43. ✅ Testar cancelamento de compra (deve reverter estoque e cashflow)
+44. ✅ Testar cancelamento de despesa (deve reverter cashflow)
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+1. Todas as operações de compra/despesa devem usar transações do Prisma ($transaction)
+   para garantir atomicidade
+
+2. Cancelamentos devem criar entradas reversas (valores negativos) ao invés de deletar,
+   para manter histórico completo
+
+3. A coluna "Origem" em movimentações é CRÍTICA para rastreabilidade - deve sempre
+   mostrar de onde veio a transação
+
+4. Transações órfãs antigas (sem origem) devem ser marcadas visualmente como "⚠️ Sem origem"
+
+5. O formulário de TransactionModal deve ser completamente removido - não deve haver
+   forma de criar transações manuais sem origem
+
+6. Ajustes de estoque NÃO criam cashflow (não são transações financeiras), apenas
+   movimentam estoque com justificativa
+
+7. Todas as tabelas novas devem ter soft delete (is_active) para auditoria
+
+8. Todos os endpoints de cancelamento devem verificar se a operação já foi cancelada
+   antes de processar
+
+================================================================================
+FIM DO DOCUMENTO
+================================================================================

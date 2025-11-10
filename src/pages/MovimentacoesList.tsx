@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Table, Card, Input, Tag, Space, Select, Button, DatePicker } from 'antd';
-import { SearchOutlined, PlusOutlined, FilterOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilterOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
@@ -8,6 +8,7 @@ import { useCashFlowTransactions, useDeleteTransaction } from '../hooks/useCashF
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
 import type { CashFlowTransaction, CashFlowDirection } from '../types/cashflow';
+import { getTransactionSource } from '../types/cashflow';
 import { useFormat } from '../hooks/useFormat';
 import dayjs from 'dayjs';
 
@@ -27,7 +28,6 @@ export function MovimentacoesList() {
   });
   const { mutate: deleteTransaction } = useDeleteTransaction();
 
-  // Filtrar transações localmente
   const filteredTransactions = useMemo(() => {
     if (!Array.isArray(transactions)) return [];
 
@@ -47,10 +47,6 @@ export function MovimentacoesList() {
 
   const handleDelete = async (id: number | string) => {
     deleteTransaction(String(id));
-  };
-
-  const handleCreate = () => {
-    navigate('/transacao');
   };
 
   const handleDateRangeChange = (dates: any) => {
@@ -84,18 +80,11 @@ export function MovimentacoesList() {
       ),
     },
     {
-      title: 'ID',
-      dataIndex: 'cash_flow_id',
-      key: 'cash_flow_id',
-      width: 80,
-      sorter: (a, b) => Number(a.cash_flow_id) - Number(b.cash_flow_id),
-    },
-    {
       title: t('cashflow.date'),
       dataIndex: 'occurred_at',
       key: 'occurred_at',
       width: 120,
-      render: (date: string) => formatDate(date),
+      render: (date: string) => formatDate(date, 'short'),
       sorter: (a, b) => dayjs(a.occurred_at).unix() - dayjs(b.occurred_at).unix(),
     },
     {
@@ -120,6 +109,55 @@ export function MovimentacoesList() {
         { text: t('cashflow.expense'), value: 'saida' },
       ],
       onFilter: (value, record) => record.direction === value,
+    },
+    {
+      title: t('cashflow.source'),
+      key: 'source',
+      width: 150,
+      render: (_, record) => {
+        const source = getTransactionSource(record);
+        const sourceLabels = {
+          service_order: t('cashflow.sources.service_order'),
+          service_realized: t('cashflow.sources.service_realized'),
+          service_product: t('cashflow.sources.service_product'),
+          purchase_order: t('cashflow.sources.purchase_order'),
+          expense: t('cashflow.sources.expense'),
+          orphan: t('cashflow.sources.orphan'),
+        };
+
+        const sourceColors = {
+          service_order: 'blue',
+          service_realized: 'cyan',
+          service_product: 'geekblue',
+          purchase_order: 'purple',
+          expense: 'magenta',
+          orphan: 'orange',
+        };
+
+        return (
+          <Tag color={sourceColors[source]}>
+            {sourceLabels[source]}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: 'OS',
+      key: 'service_order_id',
+      width: 80,
+      align: 'center',
+      render: (_, record) => {
+        if (!record.service_order_id) return '-';
+        return (
+          <Button
+            type="link"
+            size="small"
+            onClick={() => navigate(`/servicos/${record.service_order_id}`)}
+          >
+            #{record.service_order_id}
+          </Button>
+        );
+      },
     },
     {
       title: t('cashflow.description'),
@@ -149,7 +187,6 @@ export function MovimentacoesList() {
     },
   ];
 
-  // Calcular totais
   const totals = useMemo(() => {
     if (!Array.isArray(filteredTransactions)) {
       return { income: 0, expense: 0, balance: 0 };
@@ -173,24 +210,14 @@ export function MovimentacoesList() {
   return (
     <div>
       <PageHeader
-        title="Movimentações Financeiras"
-        subtitle="Visualize e gerencie todas as transações do sistema"
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-            size="large"
-          >
-            Nova Transação
-          </Button>
-        }
+        title={t('cashflow.movementsList')}
+        subtitle={t('cashflow.movementsListSubtitle')}
       />
 
       <Card style={{ marginBottom: 16 }}>
         <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Input
-            placeholder="Buscar por descrição..."
+            placeholder={t('cashflow.searchMovements')}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -226,29 +253,28 @@ export function MovimentacoesList() {
                 setDateRange(undefined);
               }}
             >
-              Limpar Filtros
+              {t('common.clearFilters')}
             </Button>
           )}
         </Space>
       </Card>
 
-      {/* Card com resumo dos totais */}
       <Card style={{ marginBottom: 16 }}>
         <Space size="large" style={{ width: '100%', justifyContent: 'space-around' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>Total de Entradas</div>
+            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.totalIncome')}</div>
             <div style={{ color: '#52c41a', fontSize: 24, fontWeight: 600 }}>
               {formatCurrency(totals.income)}
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>Total de Saídas</div>
+            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.totalExpense')}</div>
             <div style={{ color: '#ff4d4f', fontSize: 24, fontWeight: 600 }}>
               {formatCurrency(totals.expense)}
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>Saldo</div>
+            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.balanceLabel')}</div>
             <div style={{
               color: totals.balance >= 0 ? '#52c41a' : '#ff4d4f',
               fontSize: 24,
@@ -269,7 +295,7 @@ export function MovimentacoesList() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} movimentações`,
+            showTotal: (total) => t('cashflow.totalMovements', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
           }}
           size="small"

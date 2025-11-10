@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, Tooltip } from 'antd';
-import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert } from 'antd';
+import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined, SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useProducts, useDeleteProduct } from '../hooks/useProducts';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
+import { ProductModal } from '../components/products/ProductModal';
+import { StockMovementModal } from '../components/products/StockMovementModal';
 import type { Product } from '../types/product';
 import { useFormat } from '../hooks/useFormat';
 import { parseDecimal } from '../utils';
@@ -18,6 +20,10 @@ export function ProductList() {
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [lowStockFilter, setLowStockFilter] = useState<'all' | 'low'>('all');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [stockMovementModalOpen, setStockMovementModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [editingProductId, setEditingProductId] = useState<number | undefined>();
 
   const { data: products, isLoading} = useProducts({
     active: activeFilter === 'all' ? undefined : activeFilter === 'active',
@@ -54,7 +60,8 @@ export function ProductList() {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/produtos/${id}/editar`);
+    setEditingProductId(id);
+    setModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -62,7 +69,27 @@ export function ProductList() {
   };
 
   const handleCreate = () => {
-    navigate('/produtos/novo');
+    setEditingProductId(undefined);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingProductId(undefined);
+  };
+
+  const handleOpenStockMovement = () => {
+    // Abre modal com lista de produtos para selecionar
+    // Ou podemos abrir um modal intermediário de seleção
+    if (filteredProducts && filteredProducts.length > 0) {
+      setSelectedProduct(filteredProducts[0]);
+      setStockMovementModalOpen(true);
+    }
+  };
+
+  const handleStockMovementSuccess = () => {
+    setStockMovementModalOpen(false);
+    setSelectedProduct(null);
   };
 
   const columns: ColumnsType<Product> = [
@@ -83,13 +110,6 @@ export function ProductList() {
           iconOnly
         />
       ),
-    },
-    {
-      title: 'ID',
-      dataIndex: 'product_id',
-      key: 'product_id',
-      width: 80,
-      sorter: (a, b) => a.product_id - b.product_id,
     },
     {
       title: t('products.product'),
@@ -159,19 +179,31 @@ export function ProductList() {
       title: t('products.stockColumn'),
       dataIndex: 'quantity',
       key: 'quantity',
-      width: 120,
+      width: 150,
       align: 'center',
       render: (value: any, record) => {
         const qty = parseDecimal(value);
         const alertQty = parseDecimal(record.quantity_alert);
         const isLowStock = qty <= alertQty;
         return (
-          <Tooltip title={isLowStock ? `${t('products.minStockLabel')}: ${alertQty.toFixed(1)}` : ''}>
-            <span style={{ color: isLowStock ? '#ff4d4f' : undefined, fontWeight: isLowStock ? 600 : 400 }}>
-              {isLowStock && <WarningOutlined style={{ marginRight: 4 }} />}
-              {qty.toFixed(1)}
-            </span>
-          </Tooltip>
+          <Space>
+            <Tooltip title={isLowStock ? `${t('products.minStockLabel')}: ${alertQty.toFixed(1)}` : ''}>
+              <span style={{ color: isLowStock ? '#ff4d4f' : undefined, fontWeight: isLowStock ? 600 : 400 }}>
+                {isLowStock && <WarningOutlined style={{ marginRight: 4 }} />}
+                {qty.toFixed(1)}
+              </span>
+            </Tooltip>
+            <Button
+              type="link"
+              size="small"
+              icon={<SwapOutlined />}
+              onClick={() => {
+                setSelectedProduct(record);
+                setStockMovementModalOpen(true);
+              }}
+              title={t('inventory.stockMovement') || 'Movimentar'}
+            />
+          </Space>
         );
       },
       sorter: (a, b) => parseDecimal(a.quantity) - parseDecimal(b.quantity),
@@ -201,14 +233,25 @@ export function ProductList() {
         title={t('products.title')}
         subtitle={t('products.productListSubtitle')}
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-            size="large"
-          >
-            {t('products.newProduct')}
-          </Button>
+          <Space>
+            <Button
+              type="default"
+              icon={<SwapOutlined />}
+              onClick={handleOpenStockMovement}
+              size="large"
+              disabled={!filteredProducts || filteredProducts.length === 0}
+            >
+              {t('stockAdjustment.title')}
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreate}
+              size="large"
+            >
+              {t('products.newProduct')}
+            </Button>
+          </Space>
         }
       />
 
@@ -261,6 +304,19 @@ export function ProductList() {
         </Space>
       </Card>
 
+      <Alert
+        message={
+          <Space>
+            <InfoCircleOutlined />
+            {t('products.stockManagementInfo')}
+          </Space>
+        }
+        description={t('products.stockManagementDescription')}
+        type="info"
+        showIcon={false}
+        style={{ marginBottom: 16 }}
+      />
+
       <Card>
         <Table
           columns={columns}
@@ -277,6 +333,24 @@ export function ProductList() {
           scroll={{ x: 1200 }}
         />
       </Card>
+
+      <ProductModal
+        open={modalOpen}
+        productId={editingProductId}
+        onClose={handleCloseModal}
+      />
+
+      {selectedProduct && (
+        <StockMovementModal
+          product={selectedProduct}
+          open={stockMovementModalOpen}
+          onCancel={() => {
+            setStockMovementModalOpen(false);
+            setSelectedProduct(null);
+          }}
+          onSuccess={handleStockMovementSuccess}
+        />
+      )}
     </div>
   );
 }

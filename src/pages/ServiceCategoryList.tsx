@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { useServiceCategories, useDeleteServiceCategory } from '../hooks/useServiceCategories';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
+import { ServiceCategoryModal } from '../components/services/ServiceCategoryModal';
 import type { ServiceCategory } from '../types/service-category';
 import { useFormat } from '../hooks/useFormat';
 import { parseDecimal } from '../utils';
@@ -35,6 +36,8 @@ export function ServiceCategoryList() {
   const { formatCurrency } = useFormat();
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | undefined>();
 
   const { data: categories, isLoading } = useServiceCategories({
     is_active: activeFilter,
@@ -53,7 +56,8 @@ export function ServiceCategoryList() {
   }, [categories, searchText]);
 
   const handleEdit = (id: number) => {
-    navigate(`/categorias-servicos/${id}/editar`);
+    setEditingCategoryId(id);
+    setModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -73,7 +77,13 @@ export function ServiceCategoryList() {
   };
 
   const handleCreate = () => {
-    navigate('/categorias-servicos/novo');
+    setEditingCategoryId(undefined);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingCategoryId(undefined);
   };
 
   const columns: ColumnsType<ServiceCategory> = [
@@ -145,7 +155,7 @@ export function ServiceCategoryList() {
       key: 'created_at',
       width: 130,
       align: 'center',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
       sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
   ];
@@ -219,6 +229,12 @@ export function ServiceCategoryList() {
           size="small"
         />
       </Card>
+
+      <ServiceCategoryModal
+        open={modalOpen}
+        categoryId={editingCategoryId}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

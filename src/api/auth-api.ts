@@ -4,28 +4,47 @@ import type { User } from '../types/user';
 
 const BASE_URL = '/api/auth';
 
+/**
+ * Normaliza resposta do backend convertendo user_id para id
+ */
+const normalizeAuthResponse = (response: any): AuthResponse => {
+  if (response.user && response.user.user_id) {
+    response.user.id = String(response.user.user_id);
+  }
+  return response;
+};
+
 export const authApi = {
   async login(credentials: LoginCredentials) {
-    return customAxiosInstance<AuthResponse>({
+    const response = await customAxiosInstance<any>({
       url: `${BASE_URL}/login`,
       method: 'POST',
       data: credentials,
     });
+    return normalizeAuthResponse(response);
   },
 
   async register(data: RegisterData) {
-    return customAxiosInstance<AuthResponse>({
+    const response = await customAxiosInstance<any>({
       url: `${BASE_URL}/register`,
       method: 'POST',
       data,
     });
+    return normalizeAuthResponse(response);
   },
 
   async me() {
-    return customAxiosInstance<User>({
+    const response = await customAxiosInstance<any>({
       url: `${BASE_URL}/me`,
       method: 'GET',
     });
+    
+    // Normaliza user_id para id
+    if (response.user_id) {
+      response.id = String(response.user_id);
+    }
+    
+    return response as User;
   },
 
   async logout() {

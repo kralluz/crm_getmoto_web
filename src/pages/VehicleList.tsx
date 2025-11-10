@@ -8,7 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { useVehicles, useDeleteVehicle } from '../hooks/useMotorcycles';
+import { useVehicles, useDeactivateVehicle, useActivateVehicle } from '../hooks/useMotorcycles';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
 import type { Motorcycle } from '../types/motorcycle';
@@ -23,7 +23,8 @@ export function VehicleList() {
   const { data: vehicles, isLoading } = useVehicles({
     is_active: activeFilter,
   });
-  const { mutate: deleteVehicle } = useDeleteVehicle();
+  const { mutate: deactivateVehicle } = useDeactivateVehicle();
+  const { mutate: activateVehicle } = useActivateVehicle();
 
   const filteredVehicles = useMemo(() => {
     if (!Array.isArray(vehicles)) return [];
@@ -44,8 +45,12 @@ export function VehicleList() {
     navigate(`/veiculos/${id}/editar`);
   };
 
-  const handleDelete = async (id: number) => {
-    deleteVehicle(id);
+  const handleToggleActive = async (id: number, isActive: boolean) => {
+    if (isActive) {
+      deactivateVehicle(id);
+    } else {
+      activateVehicle(id);
+    }
   };
 
   const handleView = (id: number) => {
@@ -67,24 +72,20 @@ export function VehicleList() {
         <ActionButtons
           onView={() => handleView(record.vehicle_id)}
           onEdit={() => handleEdit(record.vehicle_id)}
-          onDelete={() => handleDelete(record.vehicle_id)}
+          onDelete={() => handleToggleActive(record.vehicle_id, record.is_active)}
           showView
           showEdit
           showDelete
-          deleteTitle={t('vehicles.deleteVehicle')}
-          deleteDescription={t('vehicles.deleteVehicleConfirm', {
-            plate: record.plate,
-          })}
+          deleteTitle={record.is_active ? t('vehicles.deactivateVehicle') : t('vehicles.activateVehicle')}
+          deleteDescription={record.is_active 
+            ? t('vehicles.deactivateVehicleConfirm', { plate: record.plate })
+            : t('vehicles.activateVehicleConfirm', { plate: record.plate })
+          }
+          deleteButtonType={record.is_active ? 'text' : 'text'}
+          deleteDanger={record.is_active}
           iconOnly
         />
       ),
-    },
-    {
-      title: t('vehicles.id'),
-      dataIndex: 'vehicle_id',
-      key: 'vehicle_id',
-      width: 80,
-      sorter: (a, b) => a.vehicle_id - b.vehicle_id,
     },
     {
       title: t('vehicles.plate'),
@@ -168,7 +169,7 @@ export function VehicleList() {
       key: 'created_at',
       width: 130,
       align: 'center',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
       sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
   ];

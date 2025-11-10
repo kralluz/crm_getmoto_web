@@ -22,6 +22,7 @@ import { LoadingOverlay } from '../components/common/LoadingOverlay';
 import { PageHeader } from '../components/common/PageHeader';
 import { cashFlowApi } from '../api/cashflow-api';
 import { useQuery } from '@tanstack/react-query';
+import { getTransactionSource } from '../types/cashflow';
 
 const { Text } = Typography;
 
@@ -49,27 +50,68 @@ export function MovimentacaoDetail() {
   if (!transaction) {
     return (
       <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/movimentacoes')}>
-          Voltar
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard')}>
+          {t('common.back')}
         </Button>
         <Card style={{ marginTop: 16 }}>
-          <Alert message="Movimentação não encontrada" type="error" />
+          <Alert message={t('cashflow.movementNotFound')} type="error" />
         </Card>
       </div>
     );
   }
 
   const handleBack = () => {
-    navigate('/movimentacoes');
+    navigate('/dashboard');
   };
 
   const isIncome = transaction.direction === 'entrada';
+  const source = getTransactionSource(transaction);
+
+  // Determinar origem e link de navegação
+  const getSourceInfo = () => {
+    switch (source) {
+      case 'service_order':
+        return {
+          label: t('cashflow.sources.service_order'),
+          id: transaction.service_order_id,
+          path: `/servicos/${transaction.service_order_id}`,
+        };
+      case 'purchase_order':
+        return {
+          label: t('cashflow.sources.purchase_order'),
+          id: transaction.purchase_order_id,
+          path: `/compras/${transaction.purchase_order_id}`,
+        };
+      case 'expense':
+        return {
+          label: t('cashflow.sources.expense'),
+          id: transaction.expense_id,
+          path: `/despesas/${transaction.expense_id}`,
+        };
+      case 'service_realized':
+        return {
+          label: t('cashflow.sources.service_realized'),
+          id: transaction.service_realized_id,
+          path: `/servicos/${transaction.service_order_id}`, // Vai para a ordem de serviço
+        };
+      case 'service_product':
+        return {
+          label: t('cashflow.sources.service_product'),
+          id: transaction.service_product_id,
+          path: `/servicos/${transaction.service_order_id}`, // Vai para a ordem de serviço
+        };
+      default:
+        return null;
+    }
+  };
+
+  const sourceInfo = getSourceInfo();
 
   return (
     <div>
       <PageHeader
-        title="Detalhes da Movimentação"
-        subtitle={`ID: ${transaction.cash_flow_id}`}
+        title={t('cashflow.movementDetails')}
+        subtitle={`#${transaction.cash_flow_id}`}
         onBack={handleBack}
       />
 
@@ -78,7 +120,7 @@ export function MovimentacaoDetail() {
         <Col xs={24} sm={8}>
           <Card>
             <Statistic
-              title="Valor"
+              title={t('cashflow.value')}
               value={transaction.amount}
               precision={2}
               prefix="£"
@@ -110,12 +152,8 @@ export function MovimentacaoDetail() {
       </Row>
 
       {/* Card com informações detalhadas */}
-      <Card title="Informações Gerais" style={{ marginBottom: 16 }}>
+      <Card title={t('cashflow.generalInfo')} style={{ marginBottom: 16 }}>
         <Descriptions column={{ xs: 1, sm: 2 }} bordered>
-          <Descriptions.Item label="ID">
-            <Text copyable>{String(transaction.cash_flow_id)}</Text>
-          </Descriptions.Item>
-
           <Descriptions.Item label={t('cashflow.type')}>
             <Tag
               color={isIncome ? 'green' : 'red'}
@@ -143,36 +181,52 @@ export function MovimentacaoDetail() {
             </Tag>
           </Descriptions.Item>
 
-          <Descriptions.Item label="Data da Movimentação" span={2}>
+          <Descriptions.Item label={t('cashflow.movementDate')}>
             {formatDate(transaction.occurred_at)}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Observações" span={2}>
+          <Descriptions.Item label={t('cashflow.observations')} span={2}>
             {transaction.note || '-'}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Criado em">
+          <Descriptions.Item label={t('common.createdAt')}>
             {formatDateTime(transaction.created_at)}
           </Descriptions.Item>
 
-          <Descriptions.Item label="Atualizado em">
+          <Descriptions.Item label={t('common.updatedAt')}>
             {formatDateTime(transaction.updated_at)}
           </Descriptions.Item>
 
-          {transaction.service_order_id && (
-            <Descriptions.Item label="ID da Ordem de Serviço" span={2}>
-              <Text copyable>{String(transaction.service_order_id)}</Text>
+          {/* Exibir origem da transação com link de navegação */}
+          {sourceInfo && (
+            <Descriptions.Item label={t('cashflow.source')} span={2}>
+              <Space>
+                <Tag color="blue">{sourceInfo.label}</Tag>
+                <Text strong>#{String(sourceInfo.id)}</Text>
+                <Button 
+                  type="primary" 
+                  size="small"
+                  onClick={() => navigate(sourceInfo.path)}
+                >
+                  {t('common.view')} {sourceInfo.label}
+                </Button>
+              </Space>
+            </Descriptions.Item>
+          )}
+
+          {/* Alerta se for transação órfã (não deveria existir) */}
+          {source === 'orphan' && (
+            <Descriptions.Item span={2}>
+              <Alert
+                message={t('cashflow.orphanWarning')}
+                description={t('cashflow.orphanWarningDescription')}
+                type="warning"
+                showIcon
+              />
             </Descriptions.Item>
           )}
         </Descriptions>
       </Card>
-
-      {/* Ações */}
-      <Space>
-        <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
-          Voltar
-        </Button>
-      </Space>
     </div>
   );
 }

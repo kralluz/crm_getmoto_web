@@ -11,6 +11,7 @@ export interface ServiceProduct {
   service_order_id: number;
   product_id: number;
   product_qtd: number;
+  unit_price: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -27,6 +28,7 @@ export interface ServiceRealized {
   service_order_id: number;
   service_id: number;
   service_qtd: number;
+  unit_price: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -45,7 +47,7 @@ export interface Vehicle {
 export interface CashFlow {
   cash_flow_id: number;
   amount: number;
-  direction: 'in' | 'out';
+  direction: 'entrada' | 'saida';
   occurred_at: string;
   note: string;
 }
@@ -57,14 +59,21 @@ export interface ServiceOrder {
   vehicle_id?: number;
   customer_name?: string;
   service_description?: string;
-  diagnosis?: string;
   status: ServiceOrderStatus;
   finalized_at?: string;
-  estimated_labor_cost?: number;
+  discount_percent?: number;
+  discount_amount?: number;
   notes?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Cancellation fields
+  cancelled_at?: string;
+  cancelled_by?: number;
+  cancellation_reason?: string;
+  // Optional fields that may not be in use
+  estimated_labor_cost?: number;
+  diagnosis?: string;
   service?: ServiceCategory;
   vehicles?: Vehicle;
   service_products?: ServiceProduct[];
@@ -78,10 +87,21 @@ export interface CreateServiceOrderData {
   vehicle_id?: number;
   customer_name?: string;
   service_description?: string;
-  diagnosis?: string;
   status?: ServiceOrderStatus;
-  estimated_labor_cost?: number;
+  discount_percent?: number;
+  discount_amount?: number;
   notes?: string;
+  // Novos campos para criação completa
+  products?: Array<{
+    product_id: number;
+    product_qtd: number;
+    unit_price?: number; // Opcional - se não fornecido, usa sell_price do produto
+  }>;
+  services?: Array<{
+    service_id: number;
+    service_qtd: number;
+    unit_price?: number; // Opcional - se não fornecido, usa service_cost do serviço
+  }>;
 }
 
 export interface UpdateServiceOrderData extends Partial<CreateServiceOrderData> {

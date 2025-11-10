@@ -15,6 +15,8 @@ interface ActionButtonsProps {
   deleteDescription?: string;
   size?: 'small' | 'middle' | 'large';
   iconOnly?: boolean;
+  deleteButtonType?: 'text' | 'link' | 'default' | 'primary' | 'dashed';
+  deleteDanger?: boolean;
 }
 
 export function ActionButtons({
@@ -29,6 +31,8 @@ export function ActionButtons({
   deleteDescription,
   size = 'small',
   iconOnly = false,
+  deleteButtonType = 'text',
+  deleteDanger = true,
 }: ActionButtonsProps) {
   const { t } = useTranslation();
 
@@ -70,6 +74,8 @@ export function ActionButtons({
           description={deleteDescription}
           buttonSize={size}
           iconOnly={iconOnly}
+          buttonType={deleteButtonType}
+          danger={deleteDanger}
         />
       )}
     </Space>

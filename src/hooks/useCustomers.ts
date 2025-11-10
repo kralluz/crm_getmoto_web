@@ -6,6 +6,9 @@ export function useCustomers(params?: { active?: boolean; search?: string }) {
   return useQuery({
     queryKey: ['customers', params],
     queryFn: () => customerApi.getAll(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes - considera dados frescos por 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutes - mantém em cache por 10 minutos
+    refetchOnWindowFocus: false, // Não recarrega quando a janela ganha foco
   });
 }
 

@@ -10,8 +10,7 @@ import {
   Form,
   Input,
   Select,
-  Switch,
-  message
+  Switch
 } from 'antd';
 import {
   PlusOutlined,
@@ -25,12 +24,14 @@ import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useChangePasswor
 import type { User, UserRole, CreateUserInput, UpdateUserInput } from '../../types/user';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { NotificationService } from '../../services/notification.service';
 
 const { confirm } = Modal;
 
 export function UsersSettings() {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
@@ -58,6 +59,11 @@ export function UsersSettings() {
   };
 
   const handleCreate = () => {
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmCreate = () => {
+    setIsConfirmModalOpen(false);
     setEditingUser(null);
     form.resetFields();
     setIsModalOpen(true);
@@ -85,10 +91,10 @@ export function UsersSettings() {
       onOk() {
         deleteUser(user.id, {
           onSuccess: () => {
-            message.success(t('users.userDeletedSuccess'));
+            NotificationService.success(t('users.userDeletedSuccess'));
           },
           onError: (error: any) => {
-            message.error(error?.response?.data?.message || t('users.userDeleteError'));
+            NotificationService.error(error?.response?.data?.message || t('users.userDeleteError'));
           },
         });
       },
@@ -108,13 +114,13 @@ export function UsersSettings() {
           { id: passwordUserId, data: { newPassword: values.password, confirmPassword: values.confirmPassword } },
           {
             onSuccess: () => {
-              message.success(t('users.passwordChangedSuccess'));
+              NotificationService.success(t('users.passwordChangedSuccess'));
               setIsPasswordModalOpen(false);
               passwordForm.resetFields();
               setPasswordUserId(null);
             },
             onError: (error: any) => {
-              message.error(error?.response?.data?.message || t('users.passwordChangeError'));
+              NotificationService.error(error?.response?.data?.message || t('users.passwordChangeError'));
             },
           }
         );
@@ -137,13 +143,13 @@ export function UsersSettings() {
           { id: editingUser.id, data: updateData },
           {
             onSuccess: () => {
-              message.success(t('users.userUpdatedSuccess'));
+              NotificationService.success(t('users.userUpdatedSuccess'));
               setIsModalOpen(false);
               form.resetFields();
               setEditingUser(null);
             },
             onError: (error: any) => {
-              message.error(error?.response?.data?.message || t('users.userUpdateError'));
+              NotificationService.error(error?.response?.data?.message || t('users.userUpdateError'));
             },
           }
         );
@@ -158,12 +164,12 @@ export function UsersSettings() {
 
         createUser(createData, {
           onSuccess: () => {
-            message.success(t('users.userCreatedSuccess'));
+            NotificationService.success(t('users.userCreatedSuccess'));
             setIsModalOpen(false);
             form.resetFields();
           },
           onError: (error: any) => {
-            message.error(error?.response?.data?.message || t('users.userCreateError'));
+            NotificationService.error(error?.response?.data?.message || t('users.userCreateError'));
           },
         });
       }
@@ -242,12 +248,12 @@ export function UsersSettings() {
       ),
     },
     {
-      title: t('users.createdDate'),
+      title: t('users.createdAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 130,
       align: 'center',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
       sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
     },
   ];
@@ -293,11 +299,12 @@ export function UsersSettings() {
         confirmLoading={isCreating || isUpdating}
         width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        {isModalOpen && (
+          <Form
+            form={form}
+            layout="vertical"
+            style={{ marginTop: 16 }}
+          >
           <Form.Item
             label={t('users.name')}
             name="name"
@@ -356,6 +363,7 @@ export function UsersSettings() {
             </Form.Item>
           )}
         </Form>
+        )}
       </Modal>
 
       {/* Modal de Alterar Senha */}
@@ -372,11 +380,12 @@ export function UsersSettings() {
         cancelText={t('users.cancel')}
         confirmLoading={isChangingPassword}
       >
-        <Form
-          form={passwordForm}
-          layout="vertical"
-          style={{ marginTop: 16 }}
-        >
+        {isPasswordModalOpen && (
+          <Form
+            form={passwordForm}
+            layout="vertical"
+            style={{ marginTop: 16 }}
+          >
           <Form.Item
             label={t('users.newPassword')}
             name="password"
@@ -407,6 +416,38 @@ export function UsersSettings() {
             <Input.Password placeholder={t('users.confirmPasswordPlaceholder')} />
           </Form.Item>
         </Form>
+        )}
+      </Modal>
+
+      {/* Modal de Confirmação para Criar Usuário */}
+      <Modal
+        title={t('users.newUser')}
+        open={isConfirmModalOpen}
+        onOk={handleConfirmCreate}
+        onCancel={() => setIsConfirmModalOpen(false)}
+        okText={t('common.confirm')}
+        cancelText={t('users.cancel')}
+        width={600}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <div style={{ 
+            padding: '16px', 
+            backgroundColor: '#fff7e6', 
+            border: '1px solid #ffd666',
+            borderRadius: '6px'
+          }}>
+            <Space direction="vertical" size="small">
+              <strong style={{ color: '#d48806' }}>⚠️ Atenção sobre Permissões</strong>
+              <p style={{ margin: 0, color: '#595959' }}>
+                Todos os usuários do sistema possuem acesso completo às informações e funcionalidades. 
+                Qualquer usuário poderá visualizar, criar, editar e excluir dados em todos os módulos do sistema.
+              </p>
+            </Space>
+          </div>
+          <p style={{ margin: 0, color: '#595959' }}>
+            Deseja prosseguir com a criação do novo usuário?
+          </p>
+        </Space>
       </Modal>
     </>
   );

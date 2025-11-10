@@ -23,12 +23,43 @@ export interface Product {
  */
 export interface LowStockReportData {
   products: Product[];
+  translations?: {
+    title: string;
+    subtitle: string;
+    summary: string;
+    totalProducts: string;
+    estimatedValue: string;
+    productsSection: string;
+    productsInfo: string;
+    noProducts: string;
+    tableHeaders: {
+      product: string;
+      category: string;
+      status: string;
+      current: string;
+      minimum: string;
+      toBuy: string;
+      unitPrice: string;
+      total: string;
+    };
+    statusLabels: {
+      depleted: string;
+      critical: string;
+      attention: string;
+    };
+    legend: string;
+    legendItems: {
+      depleted: string;
+      critical: string;
+      attention: string;
+    };
+  };
 }
 
 /**
  * Cria seção de resumo
  */
-function createSummarySection(products: Product[]): Content {
+function createSummarySection(products: Product[], t: LowStockReportData['translations']): Content {
   const totalProducts = products.length;
   const totalEstimatedCost = products.reduce((sum, product) => {
     const currentQty = parseDecimal(product.quantity);
@@ -39,17 +70,17 @@ function createSummarySection(products: Product[]): Content {
   }, 0);
 
   return [
-    { text: 'Resumo', style: 'subheader' },
+    { text: t?.summary || 'Resumo', style: 'subheader' },
     {
       table: {
         widths: ['*', '40%'],
         body: [
           [
-            { text: 'Total de Produtos em Falta:', style: 'label', alignment: 'right' },
+            { text: t?.totalProducts || 'Total de Produtos em Falta:', style: 'label', alignment: 'right' },
             { text: totalProducts.toString(), style: 'value', alignment: 'right', bold: true },
           ],
           [
-            { text: 'Valor Estimado para Reposição:', style: 'totalLabel', alignment: 'right', fillColor: '#fff7e6' },
+            { text: t?.estimatedValue || 'Valor Estimado para Reposição:', style: 'totalLabel', alignment: 'right', fillColor: '#fff7e6' },
             {
               text: formatCurrency(totalEstimatedCost),
               style: 'totalValue',
@@ -75,12 +106,12 @@ function createSummarySection(products: Product[]): Content {
 /**
  * Cria seção de produtos em falta
  */
-function createProductsSection(products: Product[]): Content {
+function createProductsSection(products: Product[], t: LowStockReportData['translations']): Content {
   if (products.length === 0) {
     return [
-      { text: 'Produtos com Estoque Baixo', style: 'subheader' },
+      { text: t?.productsSection || 'Produtos com Estoque Baixo', style: 'subheader' },
       {
-        text: 'Nenhum produto com estoque abaixo do mínimo! 🎉',
+        text: t?.noProducts || 'Nenhum produto com estoque abaixo do mínimo! 🎉',
         style: 'info',
         italics: true,
         color: '#52c41a',
@@ -101,15 +132,15 @@ function createProductsSection(products: Product[]): Content {
     // Calcular nível de criticidade
     const criticality = currentQty / minQty;
     let statusColor = '#ff4d4f'; // vermelho (crítico)
-    let statusText = 'CRÍTICO';
+    let statusText = t?.statusLabels?.critical || 'CRÍTICO';
 
     if (criticality > 0.5) {
       statusColor = '#ff9800'; // laranja (atenção)
-      statusText = 'ATENÇÃO';
+      statusText = t?.statusLabels?.attention || 'ATENÇÃO';
     }
     if (currentQty === 0) {
       statusColor = '#8b0000'; // vermelho escuro (zerado)
-      statusText = 'ZERADO';
+      statusText = t?.statusLabels?.depleted || 'ZERADO';
     }
 
     return [
@@ -143,22 +174,22 @@ function createProductsSection(products: Product[]): Content {
   });
 
   return [
-    { text: 'Produtos com Estoque Baixo', style: 'subheader' },
-    { text: '⚠️ Produtos que precisam de reposição urgente', style: 'info', italics: true, margin: [0, 0, 0, 10] },
+    { text: t?.productsSection || 'Produtos com Estoque Baixo', style: 'subheader' },
+    { text: t?.productsInfo || '⚠️ Produtos que precisam de reposição urgente', style: 'info', italics: true, margin: [0, 0, 0, 10] },
     {
       table: {
         headerRows: 1,
         widths: ['*', '12%', '10%', '8%', '8%', '10%', '12%', '12%'],
         body: [
           [
-            { text: 'Produto', style: 'tableHeader', fontSize: 9 },
-            { text: 'Categoria', style: 'tableHeader', fontSize: 9 },
-            { text: 'Status', style: 'tableHeader', fontSize: 9 },
-            { text: 'Atual', style: 'tableHeader', fontSize: 9 },
-            { text: 'Mínimo', style: 'tableHeader', fontSize: 9 },
-            { text: 'Comprar', style: 'tableHeader', fontSize: 9 },
-            { text: 'Preço Un.', style: 'tableHeader', fontSize: 9 },
-            { text: 'Total', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.product || 'Produto', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.category || 'Categoria', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.status || 'Status', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.current || 'Atual', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.minimum || 'Mínimo', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.toBuy || 'Comprar', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.unitPrice || 'Preço Un.', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.total || 'Total', style: 'tableHeader', fontSize: 9 },
           ],
           ...rows,
         ],
@@ -181,18 +212,18 @@ function createProductsSection(products: Product[]): Content {
 /**
  * Cria seção de legenda
  */
-function createLegendSection(): Content {
+function createLegendSection(t: LowStockReportData['translations']): Content {
   return [
     {
       text: '',
       margin: [0, 15, 0, 5] as [number, number, number, number],
     },
-    { text: 'Legenda de Status:', style: 'label', fontSize: 9 },
+    { text: t?.legend || 'Legenda de Status:', style: 'label', fontSize: 9 },
     {
       ul: [
-        { text: 'ZERADO: Estoque completamente esgotado', color: '#8b0000', fontSize: 8 },
-        { text: 'CRÍTICO: Estoque abaixo de 50% do mínimo', color: '#ff4d4f', fontSize: 8 },
-        { text: 'ATENÇÃO: Estoque entre 50% e 100% do mínimo', color: '#ff9800', fontSize: 8 },
+        { text: t?.legendItems?.depleted || 'ZERADO: Estoque completamente esgotado', color: '#8b0000', fontSize: 8 },
+        { text: t?.legendItems?.critical || 'CRÍTICO: Estoque abaixo de 50% do mínimo', color: '#ff4d4f', fontSize: 8 },
+        { text: t?.legendItems?.attention || 'ATENÇÃO: Estoque entre 50% e 100% do mínimo', color: '#ff9800', fontSize: 8 },
       ],
       margin: [0, 5, 0, 0] as [number, number, number, number],
     },
@@ -203,21 +234,21 @@ function createLegendSection(): Content {
  * Gera o relatório de Alerta de Estoque Baixo em PDF
  */
 export function generateLowStockReport(data: LowStockReportData): void {
-  const { products } = data;
+  const { products, translations: t } = data;
 
   const content: Content = [
-    ...(createSummarySection(products) as any[]),
-    ...(createProductsSection(products) as any[]),
-    ...(createLegendSection() as any[]),
+    ...(createSummarySection(products, t) as any[]),
+    ...(createProductsSection(products, t) as any[]),
+    ...(createLegendSection(t) as any[]),
   ];
 
   generatePdf(content, `alerta_estoque_${new Date().getTime()}.pdf`, {
     header: {
-      title: 'Alerta de Estoque Baixo',
-      subtitle: `${products.length} produto(s) necessitando reposição`,
+      title: t?.title || 'Alerta de Estoque Baixo',
+      subtitle: t?.subtitle || `${products.length} produto(s) necessitando reposição`,
     },
     info: {
-      title: 'Alerta de Estoque Baixo',
+      title: t?.title || 'Alerta de Estoque Baixo',
       subject: 'Controle de Estoque - CRM GetMoto',
       keywords: 'estoque, alerta, reposição, produtos',
     },

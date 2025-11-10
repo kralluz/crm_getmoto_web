@@ -31,7 +31,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         alignItems: 'center',
         height: '100vh'
       }}>
-        <Spin size="large" tip="Verificando autenticação..." />
+        <Spin size="large" />
       </div>
     );
   }

@@ -1,20 +1,12 @@
 {
-  "openapi": "3.0.0",
+  "swagger": "2.0",
   "info": {
     "title": "CRM API GetMoto",
     "version": "1.0.0",
     "description": "API para gestão de oficina de motos - Sistema de CRM completo"
   },
-  "servers": [
-    {
-      "url": "http://localhost:3000",
-      "description": "Development server"
-    },
-    {
-      "url": "https://api-crm-getmoto.example.com",
-      "description": "Production server"
-    }
-  ],
+  "host": "localhost:3000",
+  "basePath": "/",
   "tags": [
     {
       "name": "Auth",
@@ -47,3163 +39,488 @@
     {
       "name": "CashFlow",
       "description": "Gerenciamento de fluxo de caixa"
-    },
-    {
-      "name": "Search",
-      "description": "Busca unificada no sistema"
     }
   ],
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "JWT Authorization header usando o esquema Bearer"
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "securityDefinitions": {
+    "bearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT Authorization header usando o esquema Bearer. Exemplo: \"Bearer {token}\""
+    }
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/register": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
       }
     },
-    "schemas": {
-      "User": {
-        "type": "object",
-        "properties": {
-          "user_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "nullable": true
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "ADMIN",
-              "MANAGER",
-              "MECHANIC",
-              "ATTENDANT"
-            ],
-            "nullable": true
-          },
-          "position": {
-            "type": "string",
-            "nullable": true
-          },
-          "is_active": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
+    "/login": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
           }
         }
-      },
-      "Product": {
-        "type": "object",
-        "properties": {
-          "product_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "name": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "barcode": {
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "brand": {
-            "type": "string",
-            "nullable": true
-          },
-          "cost_price_cents": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sale_price_cents": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "stock_quantity": {
-            "type": "integer"
-          },
-          "min_stock": {
-            "type": "integer"
-          },
-          "max_stock": {
-            "type": "integer",
-            "nullable": true
-          },
-          "unit": {
-            "type": "string"
-          },
-          "category_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "is_active": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ProductCategory": {
-        "type": "object",
-        "properties": {
-          "product_category_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "product_category_name": {
-            "type": "string"
-          },
-          "is_active": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ProductCategoryWithStats": {
-        "allOf": [
+      }
+    },
+    "/me": {
+      "get": {
+        "description": "",
+        "parameters": [
           {
-            "$ref": "#/components/schemas/ProductCategory"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "product_count": {
-                "type": "integer"
-              }
-            }
-          }
-        ]
-      },
-      "Service": {
-        "type": "object",
-        "properties": {
-          "service_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "service_name": {
+            "name": "authorization",
+            "in": "header",
             "type": "string"
-          },
-          "service_cost": {
-            "type": "number",
-            "format": "float"
-          },
-          "is_active": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/refresh": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/logout-all": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/profile": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
           }
         }
       },
-      "ServiceWithStats": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Service"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "service_order_count": {
-                "type": "integer"
-              }
-            }
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
           }
-        ]
-      },
-      "Vehicle": {
-        "type": "object",
-        "properties": {
-          "vehicle_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "customer_id": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "brand": {
-            "type": "string",
-            "nullable": true
-          },
-          "model": {
-            "type": "string",
-            "nullable": true
-          },
-          "year": {
-            "type": "integer",
-            "nullable": true
-          },
-          "license_plate": {
-            "type": "string",
-            "nullable": true
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
-          },
-          "is_active": {
-            "type": "boolean"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
+        }
+      }
+    },
+    "/{id}": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
           }
         }
       },
-      "CashFlow": {
-        "type": "object",
-        "properties": {
-          "transaction_id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "INCOME",
-              "EXPENSE"
-            ]
-          },
-          "category": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
             "type": "string"
-          },
-          "amount_cents": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
           }
         }
       },
-      "SearchResult": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "product",
-              "service",
-              "vehicle",
-              "serviceOrder"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "subtitle": {
-            "type": "string",
-            "nullable": true
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": true,
-            "nullable": true
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
           }
-        },
-        "required": [
-          "id",
-          "type",
-          "title"
-        ]
+        }
+      }
+    },
+    "/{id}/password": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/{id}/cancel": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/stock/movements": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      },
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/summary": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/summary/categories": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/{id}/stats": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
       }
     }
   },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
-  "paths": {
-    "/api/auth/register": {
-      "post": {
-        "summary": "Registrar novo usuário",
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "email",
-                  "password"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 100
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 6
-                  },
-                  "role": {
-                    "type": "string",
-                    "enum": [
-                      "ADMIN",
-                      "MANAGER",
-                      "MECHANIC",
-                      "ATTENDANT"
-                    ],
-                    "default": "ATTENDANT"
-                  },
-                  "active": {
-                    "type": "boolean",
-                    "default": true
-                  }
-                }
-              }
-            }
-          }
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "uuid"
         },
-        "responses": {
-          "201": {
-            "description": "Usuário criado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    },
-                    "token": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "409": {
-            "description": "Email já cadastrado"
-          }
-        }
-      }
-    },
-    "/api/auth/login": {
-      "post": {
-        "summary": "Fazer login",
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "email",
-                  "password"
-                ],
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
+        "name": {
+          "type": "string",
+          "example": "John Doe"
         },
-        "responses": {
-          "200": {
-            "description": "Login realizado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "user": {
-                      "$ref": "#/components/schemas/User"
-                    },
-                    "token": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Credenciais inválidas"
-          }
-        }
-      }
-    },
-    "/api/auth/me": {
-      "get": {
-        "summary": "Obter dados do usuário autenticado",
-        "tags": [
-          "Auth"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Dados do usuário",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Usuário não encontrado"
-          }
-        }
-      }
-    },
-    "/api/auth/refresh": {
-      "post": {
-        "summary": "Renovar access token usando refresh token",
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "refreshToken"
-                ],
-                "properties": {
-                  "refreshToken": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
+        "email": {
+          "type": "string",
+          "example": "john@example.com"
         },
-        "responses": {
-          "200": {
-            "description": "Tokens renovados com sucesso"
-          },
-          "400": {
-            "description": "Refresh token não fornecido"
-          },
-          "401": {
-            "description": "Refresh token inválido ou expirado"
-          }
-        }
-      }
-    },
-    "/api/auth/logout": {
-      "post": {
-        "summary": "Fazer logout (invalidar refresh token)",
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "refreshToken"
-                ],
-                "properties": {
-                  "refreshToken": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
+        "role": {
+          "type": "string",
+          "example": "ADMIN"
         },
-        "responses": {
-          "200": {
-            "description": "Logout realizado com sucesso"
-          },
-          "400": {
-            "description": "Refresh token não fornecido"
-          }
-        }
-      }
-    },
-    "/api/auth/logout-all": {
-      "post": {
-        "summary": "Fazer logout de todas as sessões",
-        "tags": [
-          "Auth"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Logout de todas as sessões realizado com sucesso"
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      }
-    },
-    "/api/auth/profile": {
-      "put": {
-        "summary": "Atualizar dados do próprio perfil (nome e cargo apenas)",
-        "tags": [
-          "Auth"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 255
-                  },
-                  "position": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 100
-                  }
-                }
-              }
-            }
-          }
+        "active": {
+          "type": "boolean",
+          "example": true
         },
-        "responses": {
-          "200": {
-            "description": "Perfil atualizado com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      }
-    },
-    "/api/users": {
-      "get": {
-        "summary": "Listar todos os usuários",
-        "description": "Retorna lista de todos os usuários do sistema (sem senha)",
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de usuários",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/User"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      },
-      "post": {
-        "summary": "Criar novo usuário",
-        "description": "Cria um novo usuário no sistema (apenas ADMIN e MANAGER)",
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "email",
-                  "password",
-                  "role"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 100
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 6
-                  },
-                  "role": {
-                    "type": "string",
-                    "enum": [
-                      "ADMIN",
-                      "MANAGER",
-                      "MECHANIC",
-                      "ATTENDANT"
-                    ]
-                  },
-                  "position": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
+        "createdAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
         },
-        "responses": {
-          "201": {
-            "description": "Usuário criado com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "409": {
-            "description": "Email já em uso"
-          }
+        "updatedAt": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
         }
       }
     },
-    "/api/users/{id}": {
-      "get": {
-        "summary": "Buscar usuário por ID",
-        "description": "Retorna dados de um usuário específico",
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do usuário"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Dados do usuário",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Usuário não encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Atualizar usuário",
-        "description": "Atualiza dados de um usuário (apenas ADMIN e MANAGER)",
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do usuário"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 100
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 6
-                  },
-                  "role": {
-                    "type": "string",
-                    "enum": [
-                      "ADMIN",
-                      "MANAGER",
-                      "MECHANIC",
-                      "ATTENDANT"
-                    ]
-                  },
-                  "active": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
+    "Service": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "uuid"
         },
-        "responses": {
-          "200": {
-            "description": "Usuário atualizado com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Usuário não encontrado"
-          },
-          "409": {
-            "description": "Email já em uso"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Deletar usuário",
-        "description": "Remove um usuário do sistema (apenas ADMIN)",
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do usuário"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Usuário deletado com sucesso"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Usuário não encontrado"
-          }
-        }
-      }
-    },
-    "/api/users/{id}/password": {
-      "put": {
-        "summary": "Alterar senha do usuário",
-        "description": "Altera a senha de um usuário (apenas ADMIN e MANAGER)",
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do usuário"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "newPassword"
-                ],
-                "properties": {
-                  "newPassword": {
-                    "type": "string",
-                    "minLength": 6,
-                    "description": "Nova senha do usuário"
-                  },
-                  "confirmPassword": {
-                    "type": "string",
-                    "minLength": 6,
-                    "description": "Confirmação da nova senha"
-                  }
-                }
-              }
-            }
-          }
+        "customer_name": {
+          "type": "string",
+          "example": "Maria Santos"
         },
-        "responses": {
-          "200": {
-            "description": "Senha alterada com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Usuário não encontrado"
-          }
-        }
-      }
-    },
-    "/api/services": {
-      "post": {
-        "summary": "Criar nova ordem de serviço",
-        "description": "Registra uma nova ordem de serviço para uma moto",
-        "tags": [
-          "Services"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "customerId",
-                  "motorcycleId",
-                  "userId",
-                  "description"
-                ],
-                "properties": {
-                  "customerId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "motorcycleId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "userId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Mecânico responsável"
-                  },
-                  "description": {
-                    "type": "string",
-                    "minLength": 5
-                  },
-                  "diagnosis": {
-                    "type": "string"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "PENDING",
-                      "IN_PROGRESS",
-                      "COMPLETED",
-                      "CANCELLED",
-                      "WAITING_PARTS"
-                    ],
-                    "default": "PENDING"
-                  },
-                  "startDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "estimatedEndDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "endDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "laborCost": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "totalCost": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "notes": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
+        "vehicle_id": {
+          "type": "number",
+          "example": 123
         },
-        "responses": {
-          "201": {
-            "description": "Serviço criado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Service"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      },
-      "get": {
-        "summary": "Listar ordens de serviço",
-        "description": "Retorna lista de serviços com filtros opcionais",
-        "tags": [
-          "Services"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "status",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "PENDING",
-                "IN_PROGRESS",
-                "COMPLETED",
-                "CANCELLED",
-                "WAITING_PARTS"
-              ]
-            },
-            "description": "Filtrar por status"
-          },
-          {
-            "in": "query",
-            "name": "customer_name",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filtrar por nome do cliente (busca parcial)"
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data inicial (filtro por data de criação)"
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data final (filtro por data de criação)"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de serviços",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Service"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      }
-    },
-    "/api/services/{id}": {
-      "get": {
-        "summary": "Buscar serviço por ID",
-        "description": "Retorna dados detalhados de uma ordem de serviço",
-        "tags": [
-          "Services"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Dados do serviço",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Service"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Serviço não encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Atualizar ordem de serviço",
-        "description": "Atualiza dados de uma ordem de serviço existente",
-        "tags": [
-          "Services"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "description": {
-                    "type": "string"
-                  },
-                  "diagnosis": {
-                    "type": "string"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "PENDING",
-                      "IN_PROGRESS",
-                      "COMPLETED",
-                      "CANCELLED",
-                      "WAITING_PARTS"
-                    ]
-                  },
-                  "estimatedEndDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "endDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "laborCost": {
-                    "type": "number"
-                  },
-                  "totalCost": {
-                    "type": "number"
-                  },
-                  "notes": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
+        "professional_name": {
+          "type": "string",
+          "example": "João Silva"
         },
-        "responses": {
-          "200": {
-            "description": "Serviço atualizado com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Serviço não encontrado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Deletar ordem de serviço",
-        "description": "Remove uma ordem de serviço do sistema",
-        "tags": [
-          "Services"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Serviço deletado com sucesso"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Serviço não encontrado"
-          }
-        }
-      }
-    },
-    "/api/services/{id}/cancel": {
-      "post": {
-        "summary": "Cancelar ordem de serviço",
-        "description": "Cancela uma ordem de serviço e estorna automaticamente o fluxo de caixa e estoque",
-        "tags": [
-          "Services"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da ordem de serviço"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "cancelled_by"
-                ],
-                "properties": {
-                  "cancelled_by": {
-                    "type": "string",
-                    "description": "ID do usuário que está cancelando"
-                  },
-                  "cancellation_reason": {
-                    "type": "string",
-                    "description": "Motivo do cancelamento",
-                    "example": "Cliente solicitou cancelamento"
-                  }
-                }
-              }
-            }
-          }
+        "description": {
+          "type": "string",
+          "example": "Troca de óleo e filtro"
         },
-        "responses": {
-          "200": {
-            "description": "Ordem cancelada com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "service_order_id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "cancelled"
-                          ]
-                        },
-                        "cancelled_at": {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        "cancelled_by": {
-                          "type": "string"
-                        },
-                        "cancellation_reason": {
-                          "type": "string"
-                        },
-                        "cancellation_summary": {
-                          "type": "object",
-                          "properties": {
-                            "cash_flow_reversed": {
-                              "type": "number",
-                              "description": "Quantidade de lançamentos de caixa estornados"
-                            },
-                            "stock_returned": {
-                              "type": "number",
-                              "description": "Quantidade de produtos devolvidos ao estoque"
-                            },
-                            "total_products_returned": {
-                              "type": "number",
-                              "description": "Quantidade total de unidades devolvidas"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Ordem já cancelada ou finalizada"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Ordem não encontrada"
-          }
-        }
-      }
-    },
-    "/api/products": {
-      "post": {
-        "summary": "Criar novo produto",
-        "description": "Cadastra um novo produto no estoque",
-        "tags": [
-          "Products"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "costPrice",
-                  "salePrice"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 200
-                  },
-                  "description": {
-                    "type": "string",
-                    "maxLength": 1000
-                  },
-                  "brand": {
-                    "type": "string",
-                    "maxLength": 100
-                  },
-                  "code": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "description": "Código interno do produto"
-                  },
-                  "barcode": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "description": "Código de barras"
-                  },
-                  "category": {
-                    "type": "string",
-                    "maxLength": 100
-                  },
-                  "costPrice": {
-                    "type": "number",
-                    "minimum": 0,
-                    "description": "Preço de custo"
-                  },
-                  "salePrice": {
-                    "type": "number",
-                    "minimum": 0,
-                    "description": "Preço de venda (deve ser >= preço de custo)"
-                  },
-                  "stockQuantity": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "default": 0
-                  },
-                  "minStock": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "default": 0,
-                    "description": "Estoque mínimo"
-                  },
-                  "maxStock": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Estoque máximo"
-                  },
-                  "unit": {
-                    "type": "string",
-                    "maxLength": 10,
-                    "default": "UN",
-                    "description": "Unidade de medida (UN, KG, L, etc)"
-                  },
-                  "active": {
-                    "type": "boolean",
-                    "default": true
-                  }
-                }
-              }
-            }
-          }
+        "status": {
+          "type": "string",
+          "example": "IN_PROGRESS"
         },
-        "responses": {
-          "201": {
-            "description": "Produto criado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "409": {
-            "description": "Código ou código de barras já cadastrado"
-          }
-        }
-      },
-      "get": {
-        "summary": "Listar produtos",
-        "description": "Obtém lista de produtos com filtros opcionais",
-        "tags": [
-          "Products"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "active",
-            "schema": {
-              "type": "boolean"
-            },
-            "description": "Filtrar por status ativo/inativo"
-          },
-          {
-            "in": "query",
-            "name": "lowStock",
-            "schema": {
-              "type": "boolean"
-            },
-            "description": "Filtrar produtos com estoque baixo (quantidade <= estoque mínimo)"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de produtos",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
+        "estimated_labor_cost": {
+          "type": "number",
+          "example": 100
         }
       }
     },
-    "/api/products/{id}": {
-      "get": {
-        "summary": "Buscar produto por ID",
-        "description": "Retorna dados detalhados de um produto",
-        "tags": [
-          "Products"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do produto"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Dados do produto",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Produto não encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Atualizar produto",
-        "description": "Atualiza dados de um produto existente",
-        "tags": [
-          "Products"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do produto"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "brand": {
-                    "type": "string"
-                  },
-                  "code": {
-                    "type": "string"
-                  },
-                  "barcode": {
-                    "type": "string"
-                  },
-                  "category": {
-                    "type": "string"
-                  },
-                  "costPrice": {
-                    "type": "number"
-                  },
-                  "salePrice": {
-                    "type": "number"
-                  },
-                  "stockQuantity": {
-                    "type": "integer"
-                  },
-                  "minStock": {
-                    "type": "integer"
-                  },
-                  "maxStock": {
-                    "type": "integer"
-                  },
-                  "unit": {
-                    "type": "string"
-                  },
-                  "active": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
+    "Product": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "uuid"
         },
-        "responses": {
-          "200": {
-            "description": "Produto atualizado com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Produto não encontrado"
-          },
-          "409": {
-            "description": "Código ou código de barras já em uso"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Deletar produto",
-        "description": "Remove um produto do sistema (soft delete)",
-        "tags": [
-          "Products"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do produto"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Produto deletado com sucesso"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Produto não encontrado"
-          }
-        }
-      }
-    },
-    "/api/products/stock/movements": {
-      "post": {
-        "summary": "Adicionar movimentação de estoque",
-        "description": "Registra entrada, saída ou ajuste de estoque (apenas ADMIN e MANAGER)",
-        "tags": [
-          "Products"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "productId",
-                  "type",
-                  "quantity"
-                ],
-                "properties": {
-                  "productId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "ENTRY",
-                      "EXIT",
-                      "ADJUSTMENT"
-                    ],
-                    "description": "ENTRY (entrada), EXIT (saída), ADJUSTMENT (ajuste)"
-                  },
-                  "quantity": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "unitPrice": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "totalPrice": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "reason": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "description": "Motivo da movimentação"
-                  },
-                  "reference": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "description": "Referência (número NF, ordem de serviço, etc)"
-                  },
-                  "date": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              }
-            }
-          }
+        "name": {
+          "type": "string",
+          "example": "Óleo Motul 10W40"
         },
-        "responses": {
-          "201": {
-            "description": "Movimentação registrada com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos ou estoque insuficiente"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Produto não encontrado"
-          }
-        }
-      },
-      "get": {
-        "summary": "Listar movimentações de estoque",
-        "description": "Retorna histórico de movimentações com filtros opcionais",
-        "tags": [
-          "Products"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "productId",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Filtrar por produto"
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data inicial"
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data final"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de movimentações"
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      }
-    },
-    "/api/cashflow": {
-      "post": {
-        "summary": "Criar registro de fluxo de caixa",
-        "description": "Adiciona uma nova entrada ou saída no fluxo de caixa (apenas ADMIN e MANAGER)",
-        "tags": [
-          "CashFlow"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "userId",
-                  "type",
-                  "category",
-                  "amount",
-                  "description"
-                ],
-                "properties": {
-                  "paymentId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID do pagamento relacionado (opcional)"
-                  },
-                  "userId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID do usuário que registrou"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "INCOME",
-                      "EXPENSE"
-                    ],
-                    "description": "INCOME (entrada) ou EXPENSE (saída)"
-                  },
-                  "category": {
-                    "type": "string",
-                    "minLength": 3,
-                    "description": "Categoria da transação (ex. Serviço, Venda, Compra, Salário)"
-                  },
-                  "amount": {
-                    "type": "number",
-                    "minimum": 0,
-                    "description": "Valor da transação"
-                  },
-                  "description": {
-                    "type": "string",
-                    "minLength": 5,
-                    "description": "Descrição detalhada"
-                  },
-                  "date": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Data da transação"
-                  }
-                }
-              }
-            }
-          }
+        "code": {
+          "type": "string",
+          "example": "OIL001"
         },
-        "responses": {
-          "201": {
-            "description": "Registro criado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CashFlow"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          }
-        }
-      },
-      "get": {
-        "summary": "Listar registros de fluxo de caixa",
-        "description": "Retorna lista de transações com filtros opcionais",
-        "tags": [
-          "CashFlow"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "type",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "INCOME",
-                "EXPENSE"
-              ]
-            },
-            "description": "Filtrar por tipo de transação"
-          },
-          {
-            "in": "query",
-            "name": "category",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filtrar por categoria"
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data inicial"
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data final"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de registros",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CashFlow"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      }
-    },
-    "/api/cashflow/summary": {
-      "get": {
-        "summary": "Resumo financeiro",
-        "description": "Retorna resumo geral do fluxo de caixa (total de entradas, saídas e saldo)",
-        "tags": [
-          "CashFlow"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data inicial para filtro"
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data final para filtro"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Resumo financeiro",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "totalIncome": {
-                      "type": "number",
-                      "description": "Total de entradas"
-                    },
-                    "totalExpense": {
-                      "type": "number",
-                      "description": "Total de saídas"
-                    },
-                    "balance": {
-                      "type": "number",
-                      "description": "Saldo (entradas - saídas)"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      }
-    },
-    "/api/cashflow/summary/categories": {
-      "get": {
-        "summary": "Resumo por categorias",
-        "description": "Retorna resumo agrupado por categoria",
-        "tags": [
-          "CashFlow"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data inicial para filtro"
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Data final para filtro"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Resumo por categorias",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "category": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "INCOME",
-                          "EXPENSE"
-                        ]
-                      },
-                      "total": {
-                        "type": "number"
-                      },
-                      "count": {
-                        "type": "integer"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
-        }
-      }
-    },
-    "/api/cashflow/{id}": {
-      "get": {
-        "summary": "Buscar registro por ID",
-        "description": "Retorna dados detalhados de um registro de fluxo de caixa",
-        "tags": [
-          "CashFlow"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do registro"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Dados do registro"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "404": {
-            "description": "Registro não encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Atualizar registro",
-        "description": "Atualiza dados de um registro de fluxo de caixa (apenas ADMIN e MANAGER)",
-        "tags": [
-          "CashFlow"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do registro"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "paymentId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "userId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "INCOME",
-                      "EXPENSE"
-                    ]
-                  },
-                  "category": {
-                    "type": "string"
-                  },
-                  "amount": {
-                    "type": "number"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "date": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              }
-            }
-          }
+        "barcode": {
+          "type": "string",
+          "example": "7891234567890"
         },
-        "responses": {
-          "200": {
-            "description": "Registro atualizado com sucesso"
-          },
-          "400": {
-            "description": "Dados inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Registro não encontrado"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Deletar registro",
-        "description": "Remove um registro de fluxo de caixa (apenas ADMIN)",
-        "tags": [
-          "CashFlow"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "ID do registro"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Registro deletado com sucesso"
-          },
-          "401": {
-            "description": "Não autenticado"
-          },
-          "403": {
-            "description": "Sem permissão"
-          },
-          "404": {
-            "description": "Registro não encontrado"
-          }
-        }
-      }
-    },
-    "/api/service-categories": {
-      "post": {
-        "summary": "Criar nova categoria de serviço",
-        "description": "Cadastra uma nova categoria de serviço",
-        "tags": [
-          "Service Categories"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "service_category_name",
-                  "service_cost"
-                ],
-                "properties": {
-                  "service_category_name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 255
-                  },
-                  "service_cost": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "is_active": {
-                    "type": "boolean",
-                    "default": true
-                  }
-                }
-              }
-            }
-          }
+        "costPrice": {
+          "type": "number",
+          "example": 50
         },
-        "responses": {
-          "201": {
-            "description": "Categoria criada com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Service"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Categoria já existe"
-          }
-        }
-      },
-      "get": {
-        "summary": "Listar todas as categorias de serviços",
-        "description": "Retorna lista de categorias de serviços",
-        "tags": [
-          "Service Categories"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "is_active",
-            "schema": {
-              "type": "boolean"
-            },
-            "description": "Filtrar por status ativo/inativo"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de categorias",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Service"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/service-categories/{id}": {
-      "get": {
-        "summary": "Buscar categoria por ID",
-        "description": "Retorna uma categoria específica",
-        "tags": [
-          "Service Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Categoria encontrada",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Service"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          }
-        }
-      },
-      "put": {
-        "summary": "Atualizar categoria de serviço",
-        "description": "Atualiza os dados de uma categoria",
-        "tags": [
-          "Service Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "service_category_name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 255
-                  },
-                  "service_cost": {
-                    "type": "number",
-                    "minimum": 0
-                  },
-                  "is_active": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
+        "salePrice": {
+          "type": "number",
+          "example": 80
         },
-        "responses": {
-          "200": {
-            "description": "Categoria atualizada",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Service"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          },
-          "409": {
-            "description": "Nome já existe"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Deletar categoria de serviço",
-        "description": "Desativa uma categoria (soft delete)",
-        "tags": [
-          "Service Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Categoria deletada"
-          },
-          "400": {
-            "description": "Categoria possui serviços vinculados"
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          }
-        }
-      }
-    },
-    "/api/service-categories/{id}/stats": {
-      "get": {
-        "summary": "Buscar categoria com estatísticas",
-        "description": "Retorna categoria com estatísticas de serviços",
-        "tags": [
-          "Service Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Categoria com estatísticas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServiceWithStats"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          }
-        }
-      }
-    },
-    "/api/product-categories": {
-      "post": {
-        "summary": "Criar nova categoria de produto",
-        "description": "Cadastra uma nova categoria de produto",
-        "tags": [
-          "Product Categories"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "product_category_name"
-                ],
-                "properties": {
-                  "product_category_name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 255
-                  },
-                  "is_active": {
-                    "type": "boolean",
-                    "default": true
-                  }
-                }
-              }
-            }
-          }
+        "stockQuantity": {
+          "type": "number",
+          "example": 25
         },
-        "responses": {
-          "201": {
-            "description": "Categoria criada com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductCategory"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Categoria já existe"
-          }
-        }
-      },
-      "get": {
-        "summary": "Listar todas as categorias de produtos",
-        "description": "Retorna lista de categorias de produtos",
-        "tags": [
-          "Product Categories"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "is_active",
-            "schema": {
-              "type": "boolean"
-            },
-            "description": "Filtrar por status ativo/inativo"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de categorias",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProductCategory"
-                  }
-                }
-              }
-            }
-          }
+        "minStock": {
+          "type": "number",
+          "example": 5
         }
       }
     },
-    "/api/product-categories/{id}": {
-      "get": {
-        "summary": "Buscar categoria por ID",
-        "description": "Retorna uma categoria específica",
-        "tags": [
-          "Product Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Categoria encontrada",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductCategory"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          }
-        }
-      },
-      "put": {
-        "summary": "Atualizar categoria de produto",
-        "description": "Atualiza os dados de uma categoria",
-        "tags": [
-          "Product Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "product_category_name": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 255
-                  },
-                  "is_active": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
+    "ProductCategory": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 1
         },
-        "responses": {
-          "200": {
-            "description": "Categoria atualizada",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductCategory"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          },
-          "409": {
-            "description": "Nome já existe"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Deletar categoria de produto",
-        "description": "Desativa uma categoria (soft delete)",
-        "tags": [
-          "Product Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Categoria deletada"
-          },
-          "400": {
-            "description": "Categoria possui produtos vinculados"
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          }
-        }
-      }
-    },
-    "/api/product-categories/{id}/stats": {
-      "get": {
-        "summary": "Buscar categoria com estatísticas",
-        "description": "Retorna categoria com estatísticas de produtos",
-        "tags": [
-          "Product Categories"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID da categoria"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Categoria com estatísticas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductCategoryWithStats"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Categoria não encontrada"
-          }
-        }
-      }
-    },
-    "/api/vehicles": {
-      "post": {
-        "summary": "Criar novo veículo",
-        "description": "Cadastra um novo veículo (moto) no sistema",
-        "tags": [
-          "Vehicles"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "plate"
-                ],
-                "properties": {
-                  "brand": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 100
-                  },
-                  "model": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 100
-                  },
-                  "color": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 50
-                  },
-                  "plate": {
-                    "type": "string",
-                    "minLength": 7,
-                    "maxLength": 10
-                  },
-                  "year": {
-                    "type": "integer",
-                    "minimum": 1900
-                  },
-                  "is_active": {
-                    "type": "boolean",
-                    "default": true
-                  }
-                }
-              }
-            }
-          }
+        "name": {
+          "type": "string",
+          "example": "Óleos e Lubrificantes"
         },
-        "responses": {
-          "201": {
-            "description": "Veículo criado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vehicle"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Veículo já existe"
-          }
-        }
-      },
-      "get": {
-        "summary": "Listar todos os veículos",
-        "description": "Retorna lista de veículos com filtros opcionais",
-        "tags": [
-          "Vehicles"
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "is_active",
-            "schema": {
-              "type": "boolean"
-            },
-            "description": "Filtrar por status ativo/inativo"
-          },
-          {
-            "in": "query",
-            "name": "search",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Buscar por placa, marca ou modelo"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de veículos",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Vehicle"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/vehicles/{id}": {
-      "get": {
-        "summary": "Buscar veículo por ID",
-        "description": "Retorna um veículo específico com suas ordens de serviço",
-        "tags": [
-          "Vehicles"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID do veículo"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Veículo encontrado"
-          },
-          "404": {
-            "description": "Veículo não encontrado"
-          }
-        }
-      },
-      "put": {
-        "summary": "Atualizar veículo",
-        "description": "Atualiza os dados de um veículo",
-        "tags": [
-          "Vehicles"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID do veículo"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "brand": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 100
-                  },
-                  "model": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 100
-                  },
-                  "color": {
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 50
-                  },
-                  "plate": {
-                    "type": "string",
-                    "minLength": 7,
-                    "maxLength": 10
-                  },
-                  "year": {
-                    "type": "integer",
-                    "minimum": 1900
-                  },
-                  "is_active": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
+        "description": {
+          "type": "string",
+          "example": "Produtos para lubrificação"
         },
-        "responses": {
-          "200": {
-            "description": "Veículo atualizado"
-          },
-          "404": {
-            "description": "Veículo não encontrado"
-          },
-          "409": {
-            "description": "Placa já existe"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Deletar veículo",
-        "description": "Desativa um veículo (soft delete)",
-        "tags": [
-          "Vehicles"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "ID do veículo"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Veículo deletado"
-          },
-          "400": {
-            "description": "Veículo possui ordens de serviço vinculadas"
-          },
-          "404": {
-            "description": "Veículo não encontrado"
-          }
+        "is_active": {
+          "type": "boolean",
+          "example": true
+        },
+        "created_at": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        },
+        "updated_at": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
         }
       }
     },
-    "/api/search": {
-      "get": {
-        "summary": "Busca unificada no sistema",
-        "description": "Busca por produtos, serviços, veículos e ordens de serviço",
-        "tags": [
-          "Search"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "q",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 100
-            },
-            "description": "Termo de busca"
-          },
-          {
-            "in": "query",
-            "name": "types",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Tipos separados por vírgula (product,service,vehicle,serviceOrder)"
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20
-            },
-            "description": "Limite de resultados por tipo"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Resultados da busca",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "query": {
-                          "type": "string"
-                        },
-                        "total": {
-                          "type": "integer"
-                        },
-                        "results": {
-                          "type": "object",
-                          "properties": {
-                            "products": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/SearchResult"
-                              }
-                            },
-                            "services": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/SearchResult"
-                              }
-                            },
-                            "vehicles": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/SearchResult"
-                              }
-                            },
-                            "serviceOrders": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/SearchResult"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Parâmetros inválidos"
-          },
-          "401": {
-            "description": "Não autenticado"
-          }
+    "ServiceCategory": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "Manutenção Preventiva"
+        },
+        "description": {
+          "type": "string",
+          "example": "Serviços de manutenção preventiva"
+        },
+        "is_active": {
+          "type": "boolean",
+          "example": true
+        },
+        "created_at": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        },
+        "updated_at": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        }
+      }
+    },
+    "Vehicle": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 1
+        },
+        "customer_id": {
+          "type": "number",
+          "example": 123
+        },
+        "brand": {
+          "type": "string",
+          "example": "Honda"
+        },
+        "model": {
+          "type": "string",
+          "example": "CG 160"
+        },
+        "year": {
+          "type": "number",
+          "example": 2023
+        },
+        "license_plate": {
+          "type": "string",
+          "example": "ABC-1234"
+        },
+        "color": {
+          "type": "string",
+          "example": "Vermelho"
+        },
+        "is_active": {
+          "type": "boolean",
+          "example": true
+        },
+        "created_at": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        },
+        "updated_at": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
+        }
+      }
+    },
+    "CashFlow": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "uuid"
+        },
+        "type": {
+          "type": "string",
+          "example": "INCOME"
+        },
+        "category": {
+          "type": "string",
+          "example": "Serviços"
+        },
+        "amount": {
+          "type": "number",
+          "example": 250
+        },
+        "description": {
+          "type": "string",
+          "example": "Pagamento de serviço #123"
+        },
+        "date": {
+          "type": "string",
+          "example": "2024-01-01T00:00:00.000Z"
         }
       }
     }

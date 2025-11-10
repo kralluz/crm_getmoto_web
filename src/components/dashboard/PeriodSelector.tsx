@@ -1,5 +1,6 @@
-import { Select, DatePicker, Space, Card } from 'antd';
-import { CalendarOutlined } from '@ant-design/icons';
+import { DatePicker, Space, Card, Dropdown, Button, Row, Col } from 'antd';
+import type { MenuProps } from 'antd';
+import { CalendarOutlined, DownOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs, { Dayjs } from 'dayjs';
 import { useState } from 'react';
@@ -23,11 +24,14 @@ export type PeriodType =
 
 interface PeriodSelectorProps {
   onPeriodChange: (startDate: string, endDate: string) => void;
+  onGenerateReport?: () => void;
+  reportLoading?: boolean;
+  reportDisabled?: boolean;
 }
 
-export function PeriodSelector({ onPeriodChange }: PeriodSelectorProps) {
+export function PeriodSelector({ onPeriodChange, onGenerateReport, reportLoading, reportDisabled }: PeriodSelectorProps) {
   const { t } = useTranslation();
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('last30days');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('thisMonth');
   const [customDates, setCustomDates] = useState<[Dayjs, Dayjs] | null>(null);
 
   const calculateDates = (period: PeriodType): [string, string] => {
@@ -144,28 +148,144 @@ export function PeriodSelector({ onPeriodChange }: PeriodSelectorProps) {
     { value: 'custom', label: t('dashboard.periods.custom') },
   ];
 
+  const getLabelForPeriod = (period: PeriodType): string => {
+    const option = periodOptions.find(opt => opt.value === period);
+    return option ? option.label : '';
+  };
+
+  const menuItems: MenuProps['items'] = [
+    {
+      key: 'thisMonth',
+      label: t('dashboard.periods.thisMonth'),
+      onClick: () => handlePeriodChange('thisMonth'),
+    },
+    {
+      key: 'lastMonth',
+      label: t('dashboard.periods.lastMonth'),
+      onClick: () => handlePeriodChange('lastMonth'),
+    },
+    {
+      key: 'last30days',
+      label: t('dashboard.periods.last30days'),
+      onClick: () => handlePeriodChange('last30days'),
+    },
+    {
+      key: 'custom',
+      label: t('dashboard.periods.custom'),
+      onClick: () => handlePeriodChange('custom'),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'more',
+      label: t('dashboard.periods.moreOptions'),
+      children: [
+        {
+          key: 'last7days',
+          label: t('dashboard.periods.last7days'),
+          onClick: () => handlePeriodChange('last7days'),
+        },
+        {
+          key: 'last15days',
+          label: t('dashboard.periods.last15days'),
+          onClick: () => handlePeriodChange('last15days'),
+        },
+        {
+          key: 'thisQuarter',
+          label: t('dashboard.periods.thisQuarter'),
+          onClick: () => handlePeriodChange('thisQuarter'),
+        },
+        {
+          key: 'lastQuarter',
+          label: t('dashboard.periods.lastQuarter'),
+          onClick: () => handlePeriodChange('lastQuarter'),
+        },
+        {
+          key: 'thisSemester',
+          label: t('dashboard.periods.thisSemester'),
+          onClick: () => handlePeriodChange('thisSemester'),
+        },
+        {
+          key: 'lastSemester',
+          label: t('dashboard.periods.lastSemester'),
+          onClick: () => handlePeriodChange('lastSemester'),
+        },
+        {
+          key: 'thisYear',
+          label: t('dashboard.periods.thisYear'),
+          onClick: () => handlePeriodChange('thisYear'),
+        },
+        {
+          key: 'lastYear',
+          label: t('dashboard.periods.lastYear'),
+          onClick: () => handlePeriodChange('lastYear'),
+        },
+      ],
+    },
+  ];
+
   return (
     <Card style={{ marginBottom: 24 }}>
-      <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
-        <Space>
-          <CalendarOutlined style={{ fontSize: 18 }} />
-          <span style={{ fontWeight: 500 }}>{t('dashboard.selectPeriod')}:</span>
-        </Space>
-        <Select
-          value={selectedPeriod}
-          onChange={handlePeriodChange}
-          options={periodOptions}
-          style={{ minWidth: 200 }}
-        />
-        {selectedPeriod === 'custom' && (
-          <RangePicker
-            value={customDates}
-            onChange={handleCustomDateChange as any}
-            format="DD/MM/YYYY"
-            placeholder={[t('common.dateStart'), t('common.dateEnd')]}
-          />
+      <Row gutter={[16, 16]} align="middle">
+        <Col flex="auto">
+          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            <Space>
+              <CalendarOutlined style={{ fontSize: 18 }} />
+              <span style={{ fontWeight: 500 }}>{t('dashboard.selectPeriod')}:</span>
+            </Space>
+            <Space size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
+              <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+                <div
+                  style={{
+                    minWidth: 200,
+                    padding: '4px 11px',
+                    border: '1px solid #d9d9d9',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: '#fff',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#4096ff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#d9d9d9';
+                  }}
+                >
+                  <span>{getLabelForPeriod(selectedPeriod)}</span>
+                  <DownOutlined style={{ color: '#00000073', fontSize: 12 }} />
+                </div>
+              </Dropdown>
+              {selectedPeriod === 'custom' && (
+                <RangePicker
+                  value={customDates}
+                  onChange={handleCustomDateChange as any}
+                  format="DD/MM/YYYY"
+                  placeholder={[t('common.dateStart'), t('common.dateEnd')]}
+                />
+              )}
+            </Space>
+          </Space>
+        </Col>
+        {onGenerateReport && (
+          <Col>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              size="large"
+              onClick={onGenerateReport}
+              loading={reportLoading}
+              disabled={reportDisabled}
+            >
+              {t('dashboard.generateReport')}
+            </Button>
+          </Col>
         )}
-      </Space>
+      </Row>
     </Card>
   );
 }

@@ -4,13 +4,30 @@
  */
 
 /**
+ * Validação de variáveis de ambiente obrigatórias
+ */
+const getRequiredEnvVar = (key: string): string => {
+  const value = import.meta.env[key];
+  if (!value) {
+    const errorMessage = `❌ Variável de ambiente obrigatória não configurada: ${key}`;
+    console.error(errorMessage);
+    // Exibe alerta visual no navegador
+    if (typeof window !== 'undefined') {
+      alert(`Erro de Configuração:\n\n${errorMessage}\n\nPor favor, configure a variável de ambiente ${key} no arquivo .env`);
+    }
+    throw new Error(errorMessage);
+  }
+  return value;
+};
+
+/**
  * Configuração da API
  */
 export const apiConfig = {
-  // baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'https://api-crm-getmoto-api.i5mfns.easypanel.host/',
+  baseUrl: getRequiredEnvVar('VITE_API_BASE_URL'),
   timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
-  retryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
+  // Reduzir número de retries para evitar spam
+  retryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 1,
   retryDelay: Number(import.meta.env.VITE_API_RETRY_DELAY) || 1000,
   concurrentLimit: Number(import.meta.env.VITE_API_CONCURRENT_LIMIT) || 5,
 } as const;

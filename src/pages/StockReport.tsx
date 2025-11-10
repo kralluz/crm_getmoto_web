@@ -86,9 +86,9 @@ export function StockReport() {
   }, [stockMoves]);
 
   const moveTypeLabels: Record<string, { label: string; color: string }> = {
-    ENTRY: { label: 'Entrada', color: 'green' },
-    EXIT: { label: 'Saída', color: 'red' },
-    ADJUSTMENT: { label: 'Ajuste', color: 'orange' },
+    ENTRY: { label: t('inventory.entry'), color: 'green' },
+    EXIT: { label: t('inventory.exit'), color: 'red' },
+    ADJUSTMENT: { label: t('inventory.adjustment'), color: 'orange' },
   };
 
   const handleGenerateLowStockPdf = () => {
@@ -99,7 +99,40 @@ export function StockReport() {
       const lowStockProducts = products.filter(p =>
         parseDecimal(p.quantity) <= parseDecimal(p.quantity_alert)
       );
-      generateLowStockReport({ products: lowStockProducts });
+      generateLowStockReport({
+        products: lowStockProducts,
+        translations: {
+          title: t('inventory.lowStockAlert'),
+          subtitle: t('inventory.lowStockSubtitle', { count: lowStockProducts.length }),
+          summary: t('inventory.summary'),
+          totalProducts: t('inventory.totalLowStock'),
+          estimatedValue: t('inventory.estimatedReplenishment'),
+          productsSection: t('inventory.lowStockProducts'),
+          productsInfo: t('inventory.urgentReplenishment'),
+          noProducts: t('inventory.noLowStockProducts'),
+          tableHeaders: {
+            product: t('inventory.product'),
+            category: t('inventory.category'),
+            status: t('common.status'),
+            current: t('inventory.current'),
+            minimum: t('inventory.minimum'),
+            toBuy: t('inventory.toBuy'),
+            unitPrice: t('inventory.unitPrice'),
+            total: t('common.total'),
+          },
+          statusLabels: {
+            depleted: t('inventory.statusDepleted'),
+            critical: t('inventory.statusCritical'),
+            attention: t('inventory.statusAttention'),
+          },
+          legend: t('inventory.statusLegend'),
+          legendItems: {
+            depleted: t('inventory.legendDepleted'),
+            critical: t('inventory.legendCritical'),
+            attention: t('inventory.legendAttention'),
+          },
+        },
+      });
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
     } finally {
@@ -109,13 +142,13 @@ export function StockReport() {
 
   const productColumns: ColumnsType<Product> = [
     {
-      title: 'Produto',
+      title: t('inventory.productLabel'),
       dataIndex: 'product_name',
       key: 'product_name',
       sorter: (a, b) => a.product_name.localeCompare(b.product_name),
     },
     {
-      title: 'Categoria',
+      title: t('inventory.category'),
       dataIndex: ['product_category', 'product_category_name'],
       key: 'category',
       render: (category: string) => <Tag color="blue">{category}</Tag>,
@@ -241,7 +274,7 @@ export function StockReport() {
             loading={isPdfLoading}
             disabled={!stats || stats.lowStockProducts === 0}
           >
-            Alerta de Estoque Baixo (PDF)
+            {t('inventory.lowStockAlert')}
           </Button>
         }
       />
@@ -250,7 +283,7 @@ export function StockReport() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Total de Produtos"
+              title={t('inventory.totalProducts')}
               value={stats?.totalProducts || 0}
               prefix={<StockOutlined />}
               valueStyle={{ color: '#1890ff' }}
@@ -260,7 +293,7 @@ export function StockReport() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Estoque Baixo"
+              title={t('inventory.lowStock')}
               value={stats?.lowStockProducts || 0}
               prefix={<WarningOutlined />}
               valueStyle={{ color: '#ff4d4f' }}
@@ -270,7 +303,7 @@ export function StockReport() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Valor Total (Venda)"
+              title={t('inventory.totalSaleValue')}
               value={stats?.totalStockValue || 0}
               precision={2}
               prefix="£"
@@ -281,7 +314,7 @@ export function StockReport() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Lucro Potencial"
+              title={t('inventory.potentialProfitLabel')}
               value={stats?.profitPotential || 0}
               precision={2}
               prefix="£"
@@ -291,7 +324,7 @@ export function StockReport() {
         </Col>
       </Row>
 
-      <Card title="Inventário Completo" style={{ marginBottom: 16 }}>
+      <Card title={t('inventory.fullInventory')} style={{ marginBottom: 16 }}>
         <Table
           columns={productColumns}
           dataSource={products || []}
@@ -300,7 +333,7 @@ export function StockReport() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} produtos`,
+            showTotal: (total) => t('inventory.totalProductsCount', { total }),
           }}
           size="small"
           scroll={{ x: 1000 }}
@@ -308,11 +341,11 @@ export function StockReport() {
       </Card>
 
       <Card 
-        title="Movimentações de Estoque"
+        title={t('inventory.stockMovements')}
         extra={
           <Space>
             <Select
-              placeholder="Todos os produtos"
+              placeholder={t('inventory.allProducts')}
               style={{ width: 200 }}
               allowClear
               showSearch
@@ -343,14 +376,14 @@ export function StockReport() {
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={6}>
               <Statistic
-                title="Total de Movimentações"
+                title={t('inventory.totalMovements')}
                 value={moveStats.totalMovements}
                 prefix={<BarChartOutlined />}
               />
             </Col>
             <Col span={6}>
               <Statistic
-                title="Entradas"
+                title={t('inventory.entries')}
                 value={moveStats.totalEntries.toFixed(1)}
                 valueStyle={{ color: '#52c41a' }}
                 suffix={`(${moveStats.entriesCount})`}
@@ -358,7 +391,7 @@ export function StockReport() {
             </Col>
             <Col span={6}>
               <Statistic
-                title="Saídas"
+                title={t('inventory.exits')}
                 value={moveStats.totalExits.toFixed(1)}
                 valueStyle={{ color: '#ff4d4f' }}
                 suffix={`(${moveStats.exitsCount})`}
@@ -366,7 +399,7 @@ export function StockReport() {
             </Col>
             <Col span={6}>
               <Statistic
-                title="Ajustes"
+                title={t('inventory.adjustments')}
                 value={moveStats.adjustmentsCount}
                 valueStyle={{ color: '#fa8c16' }}
               />
@@ -382,7 +415,7 @@ export function StockReport() {
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
-            showTotal: (total) => `Total: ${total} movimentações`,
+            showTotal: (total) => t('inventory.totalMovementsCount', { total }),
           }}
           size="small"
           locale={{

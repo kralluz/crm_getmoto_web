@@ -74,8 +74,8 @@ export function UserList() {
     });
   }, [mockUsers, searchText, selectedRole, selectedStatus]);
 
-  const formatDate = (date: string | Date) => {
-    return dayjs(date).format('DD/MM/YYYY');
+  const formatDate = (date: string) => {
+    return dayjs.utc(date).format('DD/MM/YYYY');
   };
 
   const getRoleColor = (role: UserRole): string => {

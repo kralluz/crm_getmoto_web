@@ -9,11 +9,21 @@ import {
   Table,
   Spin,
   Empty,
+  Row,
+  Col,
+  Statistic,
 } from 'antd';
-import { ArrowLeftOutlined, CarOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  CarOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  EyeOutlined,
+} from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useVehicle } from '../hooks/useMotorcycles';
+import { useVehicle, useVehicleStats } from '../hooks/useMotorcycles';
+import { formatCurrency } from '../utils/format.util';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -24,7 +34,10 @@ export function VehicleDetail() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const { data: vehicle, isLoading } = useVehicle(id ? parseInt(id) : undefined);
+  const { data: vehicle, isLoading: vehicleLoading } = useVehicle(id ? parseInt(id) : undefined);
+  const { data: statsData, isLoading: statsLoading } = useVehicleStats(id ? parseInt(id) : undefined);
+
+  const isLoading = vehicleLoading || statsLoading;
 
   const handleBack = () => {
     navigate('/veiculos');
@@ -32,6 +45,33 @@ export function VehicleDetail() {
 
   const handleEdit = () => {
     navigate(`/veiculos/${id}/editar`);
+  };
+
+  const handleGenerateReport = () => {
+    if (!vehicle) return;
+    
+    // Preparar dados para o relatório
+    const reportData = {
+      vehicle: {
+        plate: vehicle.plate,
+        brand: vehicle.brand || '-',
+        model: vehicle.model || '-',
+        year: vehicle.year || '-',
+        color: vehicle.color || '-',
+      },
+      stats: statsData?.stats || {},
+      serviceOrders: vehicle.service_order || [],
+    };
+    
+    // Criar e baixar relatório em formato JSON (pode ser expandido para PDF)
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `veiculo-${vehicle.plate}-${dayjs().format('YYYY-MM-DD')}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
   };
 
   if (isLoading) {
@@ -52,30 +92,20 @@ export function VehicleDetail() {
 
   const serviceOrderColumns: ColumnsType<any> = [
     {
-      title: t('vehicles.id'),
-      dataIndex: 'service_order_id',
-      key: 'service_order_id',
-      width: 80,
-    },
-    {
-      title: t('common.status'),
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (status: string) => {
-        const statusMap: Record<string, { color: string; text: string }> = {
-          draft: { color: 'default', text: t('services.status.draft') },
-          pending: { color: 'orange', text: t('services.status.pending') },
-          in_progress: {
-            color: 'blue',
-            text: t('services.status.in_progress'),
-          },
-          completed: { color: 'green', text: t('services.status.completed') },
-          cancelled: { color: 'red', text: t('services.status.cancelled') },
-        };
-        const statusInfo = statusMap[status] || { color: 'default', text: status };
-        return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>;
-      },
+      title: t('common.actions'),
+      key: 'actions',
+      width: 100,
+      align: 'center',
+      render: (_, record) => (
+        <Button
+          type="primary"
+          icon={<EyeOutlined />}
+          size="small"
+          onClick={() => navigate(`/servicos/${record.service_order_id}`)}
+        >
+          {t('common.view')}
+        </Button>
+      ),
     },
     {
       title: t('table.description'),
@@ -89,7 +119,7 @@ export function VehicleDetail() {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 130,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
     },
     {
       title: t('services.finalizationDate'),
@@ -97,20 +127,67 @@ export function VehicleDetail() {
       key: 'finalized_at',
       width: 130,
       render: (date: string | null) =>
-        date ? dayjs(date).format('DD/MM/YYYY') : '-',
+        date ? dayjs.utc(date).format('DD/MM/YYYY') : '-',
     },
   ];
 
   return (
     <div>
-      <Space style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
           {t('common.back')}
         </Button>
-        <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
-          {t('common.edit')}
-        </Button>
-      </Space>
+        <Space>
+          <Button icon={<FileTextOutlined />} onClick={handleGenerateReport}>
+            {t('vehicles.generateReport')}
+          </Button>
+          <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
+            {t('common.edit')}
+          </Button>
+        </Space>
+      </div>
+
+      {/* Estatísticas */}
+      {statsData && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={t('vehicles.totalOrders')}
+                value={statsData.stats.totalOrders}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={t('vehicles.completedOrders')}
+                value={statsData.stats.completedOrders}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={t('vehicles.totalSpent')}
+                value={formatCurrency(statsData.stats.totalSpent)}
+                valueStyle={{ color: '#cf1322' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card>
+              <Statistic
+                title={t('vehicles.averagePerOrder')}
+                value={formatCurrency(statsData.stats.averagePerOrder)}
+                valueStyle={{ color: '#faad14' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+      )}
 
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -168,6 +245,20 @@ export function VehicleDetail() {
             <Descriptions.Item label={t('vehicles.updatedAt')}>
               {dayjs(vehicle.updated_at).format('DD/MM/YYYY HH:mm')}
             </Descriptions.Item>
+            {statsData && (
+              <>
+                <Descriptions.Item label={t('vehicles.lastService')}>
+                  {statsData.stats.lastService
+                    ? dayjs(statsData.stats.lastService).format('DD/MM/YYYY HH:mm')
+                    : '-'}
+                </Descriptions.Item>
+                <Descriptions.Item label={t('vehicles.lastFinalized')}>
+                  {statsData.stats.lastFinalized
+                    ? dayjs(statsData.stats.lastFinalized).format('DD/MM/YYYY HH:mm')
+                    : '-'}
+                </Descriptions.Item>
+              </>
+            )}
           </Descriptions>
 
           {vehicle.service_order && vehicle.service_order.length > 0 && (

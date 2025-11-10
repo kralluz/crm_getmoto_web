@@ -115,14 +115,21 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
     const apiError = ApiErrorHandler.handle(error);
 
+    // Evitar retry em rotas de autenticação
+    const isAuthRoute = originalRequest?.url?.includes('/auth/');
+    
     // Tentativa de refresh token em caso de 401
-    if (apiError.status === 401 && !originalRequest._retry) {
+    if (apiError.status === 401 && !originalRequest._retry && !isAuthRoute) {
       if (isRefreshing) {
         // Se já está refreshing, aguarda o novo token
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           subscribeTokenRefresh((newToken: string) => {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            resolve(axiosInstance(originalRequest));
+            if (newToken) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              resolve(axiosInstance(originalRequest));
+            } else {
+              reject(error);
+            }
           });
         });
       }
@@ -156,6 +163,9 @@ axiosInstance.interceptors.response.use(
 
           // Retenta a requisição original
           return axiosInstance(originalRequest);
+        } else {
+          // Sem refresh token, limpar tudo
+          throw new Error('No refresh token available');
         }
       } catch (refreshError) {
         // Se refresh falhar, limpa dados e redireciona para login
@@ -166,6 +176,9 @@ axiosInstance.interceptors.response.use(
         StorageService.clearAuthData();
         localStorage.removeItem('refresh_token');
         requestQueue.clear();
+
+        // Notifica subscribers com null para falhar as requisições pendentes
+        onTokenRefreshed('');
 
         if (!window.location.pathname.includes('/login')) {
           apiLogger.info('Redirecting to login page');
@@ -187,10 +200,11 @@ axiosInstance.interceptors.response.use(
       ApiErrorHandler.showNotification(apiError);
     }
 
-    // Tratamento especial para 401 (não autorizado) sem refresh token
-    if (ApiErrorHandler.isCritical(apiError) && !error.config?.skipErrorNotification && !localStorage.getItem('refresh_token')) {
+    // Tratamento especial para 401 (não autorizado) sem refresh token ou em rotas de auth
+    if (ApiErrorHandler.isCritical(apiError) && !error.config?._retry && (isAuthRoute || !localStorage.getItem('refresh_token'))) {
       apiLogger.warn('Unauthorized request - clearing auth data');
       StorageService.clearAuthData();
+      localStorage.removeItem('refresh_token');
       requestQueue.clear();
 
       if (!window.location.pathname.includes('/login')) {

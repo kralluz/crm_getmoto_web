@@ -3,10 +3,8 @@ import type {
   CashFlowSummary,
   CategorySummary,
   CashFlowTransaction,
-  CreateTransactionData,
   CreateCashFlowData,
 } from '../types/cashflow';
-import { mapTypeToDirection } from '../types/cashflow';
 
 export const cashFlowApi = {
   // Obter resumo financeiro
@@ -47,24 +45,12 @@ export const cashFlowApi = {
     return response;
   },
 
-  // Criar transação (converte do formato legado para o formato da API)
-  createTransaction: async (data: CreateTransactionData) => {
-    // Mapeia os dados do formato legado para o formato da API
-    const apiData: CreateCashFlowData = {
-      amount: data.amount,
-      direction: mapTypeToDirection(data.type),
-      occurred_at: data.date,
-      note: data.description,
-      is_active: true,
-    };
-
-    const response = await customAxiosInstance<CashFlowTransaction>({
-      url: '/api/cashflow',
-      method: 'POST',
-      data: apiData,
-    });
-    return response;
-  },
+  // NOTA: createTransaction foi REMOVIDO
+  // Cashflow agora é criado automaticamente através de:
+  // - Vendas em Ordens de Serviço (purchaseOrderApi.create)
+  // - Compras de Estoque (purchaseOrderApi.create)
+  // - Despesas Operacionais (expenseApi.create)
+  // Isso garante RASTREABILIDADE TOTAL de todas as transações.
 
   // Obter transação por ID
   getTransactionById: async (id: string) => {

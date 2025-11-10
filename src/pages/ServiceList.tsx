@@ -1,41 +1,28 @@
 import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Typography, Select, Button, Alert, Row, Col } from 'antd';
-import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Typography, Select, Button, Alert, Row, Col } from 'antd';
+import { SearchOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { useServiceOrders, useDeleteServiceOrder } from '../hooks/useServices';
-import { ActionButtons } from '../components/common/ActionButtons';
+import { useServiceOrders } from '../hooks/useServices';
+import { ServiceOrderModal } from '../components/services/ServiceOrderModal';
 import type { ServiceOrder, ServiceOrderStatus } from '../types/service-order';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 
-const STATUS_COLORS: Record<ServiceOrderStatus, string> = {
-  draft: 'default',
-  in_progress: 'blue',
-  completed: 'green',
-  cancelled: 'red',
-};
-
 export function ServiceList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<ServiceOrderStatus | ''>('');
-
-  const STATUS_LABELS: Record<ServiceOrderStatus, string> = {
-    draft: t('services.status.draft'),
-    in_progress: t('services.status.in_progress'),
-    completed: t('services.status.completed'),
-    cancelled: t('services.status.cancelled'),
-  };
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingServiceOrderId, setEditingServiceOrderId] = useState<number | undefined>();
 
   const { data: serviceOrders, isLoading, error } = useServiceOrders({
     status: selectedStatus || undefined,
     customer_name: searchText || undefined,
   });
-  const { mutate: deleteServiceOrder } = useDeleteServiceOrder();
 
   // Log para debug
   if (error) {
@@ -84,28 +71,21 @@ export function ServiceList() {
 
   const formatDate = (date?: string) => {
     if (!date) return '-';
-    return dayjs(date).format('DD/MM/YYYY');
-  };
-
-  const formatDateTime = (date?: string) => {
-    if (!date) return '-';
-    return dayjs(date).format('DD/MM/YYYY HH:mm');
+    return dayjs.utc(date).format('DD/MM/YYYY');
   };
 
   const handleView = (id: number) => {
     navigate(`/servicos/${id}`);
   };
 
-  const handleEdit = (id: number) => {
-    navigate(`/servicos/${id}/editar`);
-  };
-
-  const handleDelete = async (id: number) => {
-    deleteServiceOrder(id);
-  };
-
   const handleCreate = () => {
-    navigate('/servicos/novo');
+    setEditingServiceOrderId(undefined);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingServiceOrderId(undefined);
   };
 
   const calculateTotal = (order: ServiceOrder) => {
@@ -136,29 +116,18 @@ export function ServiceList() {
     {
       title: t('services.actions'),
       key: 'actions',
-      width: 120,
+      width: 180,
       align: 'center',
-      fixed: 'left',
       render: (_, record) => (
-        <ActionButtons
-          onView={() => handleView(record.service_order_id)}
-          onEdit={() => handleEdit(record.service_order_id)}
-          onDelete={() => handleDelete(record.service_order_id)}
-          showView
-          showEdit
-          showDelete
-          iconOnly
-          deleteTitle={t('services.deleteServiceOrder')}
-          deleteDescription={t('services.deleteServiceOrderConfirm', { id: record.service_order_id })}
-        />
+        <Button
+          type="primary"
+          icon={<EyeOutlined />}
+          onClick={() => handleView(record.service_order_id)}
+          size="small"
+        >
+          {t('common.view')}
+        </Button>
       ),
-    },
-    {
-      title: '#',
-      dataIndex: 'service_order_id',
-      key: 'service_order_id',
-      width: 80,
-      render: (id: number) => `#${id}`,
     },
     {
       title: t('services.customer'),
@@ -198,40 +167,12 @@ export function ServiceList() {
       render: (name: string) => name || '-',
     },
     {
-      title: t('services.status'),
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      align: 'center',
-      render: (status: ServiceOrderStatus) => (
-        <Tag color={STATUS_COLORS[status]}>
-          {STATUS_LABELS[status]}
-        </Tag>
-      ),
-    },
-    {
       title: t('services.createdIn'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 110,
       align: 'center',
       render: (date: string) => formatDate(date),
-    },
-    {
-      title: t('services.finalizedIn'),
-      dataIndex: 'finalized_at',
-      key: 'finalized_at',
-      width: 130,
-      align: 'center',
-      render: (date: string) => formatDateTime(date),
-    },
-    {
-      title: t('services.estimatedCost'),
-      dataIndex: 'estimated_labor_cost',
-      key: 'estimated_labor_cost',
-      width: 120,
-      align: 'right',
-      render: (value: any) => formatCurrency(value),
     },
     {
       title: t('services.totalEstimated'),
@@ -316,10 +257,16 @@ export function ServiceList() {
             responsive: true,
           }}
           size="small"
-          scroll={{ x: 1400 }}
+          scroll={{ x: 1300 }}
           sticky
         />
       </Card>
+
+      <ServiceOrderModal
+        open={modalOpen}
+        serviceOrderId={editingServiceOrderId}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

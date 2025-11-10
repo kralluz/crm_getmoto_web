@@ -1,8 +1,7 @@
 import { customAxiosInstance } from './axios-instance';
 import type { 
   ServiceOrder, 
-  CreateServiceOrderData, 
-  UpdateServiceOrderData,
+  CreateServiceOrderData,
   ServiceOrderListParams 
 } from '../types/service-order';
 
@@ -34,10 +33,14 @@ export const serviceOrderApi = {
     });
   },
 
-  async update(id: number, data: UpdateServiceOrderData) {
+  /**
+   * Cancela uma ordem de serviço com estorno automático
+   * Ordens de serviço são imutáveis - não podem ser editadas, apenas canceladas
+   */
+  async cancel(id: number, data: { cancelled_by: number; cancellation_reason: string }) {
     return customAxiosInstance<ServiceOrder>({
-      url: `${BASE_URL}/${id}`,
-      method: 'PUT',
+      url: `${BASE_URL}/${id}/cancel`,
+      method: 'POST',
       data,
     });
   },

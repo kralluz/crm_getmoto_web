@@ -13,6 +13,9 @@ export function useProducts(params?: ProductFilters) {
   return useQuery({
     queryKey: ['products', params],
     queryFn: () => productApi.getAll(params),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -78,6 +81,9 @@ export function useLowStockProducts() {
   return useQuery({
     queryKey: ['products', 'low-stock'],
     queryFn: () => productApi.getLowStock(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -105,5 +111,8 @@ export function useStockMoves(params?: StockMoveFilters) {
   return useQuery({
     queryKey: ['stock-moves', params],
     queryFn: () => productApi.getStockMoves(params),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
