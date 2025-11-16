@@ -157,26 +157,26 @@ export function ServiceOrderDetail() {
   // Colunas da tabela de produtos
   const productsColumns: ColumnsType<ServiceProduct> = [
     {
-      title: t('services.product'),
+      title: <span style={{ color: '#1677ff' }}>{t('services.product')}</span>,
       dataIndex: ['products', 'product_name'],
       key: 'product_name',
     },
     {
-      title: t('services.quantity'),
+      title: <span style={{ color: '#1677ff' }}>{t('services.quantity')}</span>,
       dataIndex: 'product_qtd',
       key: 'product_qtd',
       align: 'center',
       render: (qty: any) => parseDecimal(qty).toFixed(2),
     },
     {
-      title: t('services.unitPrice'),
+      title: <span style={{ color: '#1677ff' }}>{t('services.unitPrice')}</span>,
       dataIndex: ['products', 'sell_price'],
       key: 'sell_price',
       align: 'right',
       render: (price: any) => formatCurrency(price),
     },
     {
-      title: t('common.total'),
+      title: <span style={{ color: '#1677ff' }}>{t('common.total')}</span>,
       key: 'total',
       align: 'right',
       render: (_, record) => {
@@ -190,26 +190,26 @@ export function ServiceOrderDetail() {
   // Colunas da tabela de serviços realizados
   const servicesColumns: ColumnsType<ServiceRealized> = [
     {
-      title: t('services.service'),
+      title: <span style={{ color: '#1677ff' }}>{t('services.service')}</span>,
       dataIndex: ['service', 'service_name'],
       key: 'service_name',
     },
     {
-      title: t('services.quantity'),
+      title: <span style={{ color: '#1677ff' }}>{t('services.quantity')}</span>,
       dataIndex: 'service_qtd',
       key: 'service_qtd',
       align: 'center',
       render: (qty: any) => parseDecimal(qty),
     },
     {
-      title: t('services.unitPrice'),
+      title: <span style={{ color: '#1677ff' }}>{t('services.unitPrice')}</span>,
       dataIndex: ['service', 'service_cost'],
       key: 'service_cost',
       align: 'right',
       render: (cost: any) => formatCurrency(cost),
     },
     {
-      title: t('common.total'),
+      title: <span style={{ color: '#1677ff' }}>{t('common.total')}</span>,
       key: 'total',
       align: 'right',
       render: (_, record) => {
@@ -223,13 +223,13 @@ export function ServiceOrderDetail() {
   // Colunas da tabela de movimentações financeiras
   const cashFlowColumns: ColumnsType<CashFlow> = [
     {
-      title: t('common.date'),
+      title: <span style={{ color: '#1677ff' }}>{t('common.date')}</span>,
       dataIndex: 'occurred_at',
       key: 'occurred_at',
       render: (date: string) => formatDateTime(date),
     },
     {
-      title: t('cashflow.type'),
+      title: <span style={{ color: '#1677ff' }}>{t('cashflow.type')}</span>,
       dataIndex: 'direction',
       key: 'direction',
       align: 'center',
@@ -240,7 +240,7 @@ export function ServiceOrderDetail() {
       ),
     },
     {
-      title: t('cashflow.amount'),
+      title: <span style={{ color: '#1677ff' }}>{t('cashflow.amount')}</span>,
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
@@ -251,7 +251,7 @@ export function ServiceOrderDetail() {
       ),
     },
     {
-      title: t('common.observations'),
+      title: <span style={{ color: '#1677ff' }}>{t('common.observations')}</span>,
       dataIndex: 'note',
       key: 'note',
     },
@@ -320,7 +320,7 @@ export function ServiceOrderDetail() {
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
             <Space>
-              <FileTextOutlined style={{ fontSize: 32, color: serviceOrder.status === 'cancelled' ? '#ff4d4f' : '#13c2c2' }} />
+              <FileTextOutlined style={{ fontSize: 32, color: serviceOrder.status === 'cancelled' ? '#ff4d4f' : '#1677ff' }} />
               <div>
                 <Space direction="vertical" size={0}>
                   <Space>
@@ -348,7 +348,11 @@ export function ServiceOrderDetail() {
 
           <Divider />
 
-          <Descriptions bordered column={{ xs: 1, sm: 1, md: 2 }}>
+          <Descriptions 
+            bordered 
+            column={{ xs: 1, sm: 1, md: 2 }}
+            labelStyle={{ color: '#1677ff', fontWeight: 500 }}
+          >
             <Descriptions.Item label={t('services.client')}>
               <Text strong>{serviceOrder.customer_name || '-'}</Text>
             </Descriptions.Item>
@@ -406,7 +410,7 @@ export function ServiceOrderDetail() {
 
           {/* Resumo Financeiro */}
           <Card 
-            title={<><DollarOutlined /> {t('services.financialSummary')}</>}
+            title={<><DollarOutlined style={{ color: '#1677ff' }} /> {t('services.financialSummary')}</>}
             style={{ marginTop: 24 }}
           >
             <Row gutter={16}>
@@ -445,7 +449,7 @@ export function ServiceOrderDetail() {
           {/* Produtos Utilizados */}
           {serviceOrder.service_products && serviceOrder.service_products.length > 0 && (
             <Card 
-              title={<><ShoppingOutlined /> {t('services.productsSoldLabel')}</>}
+              title={<><ShoppingOutlined style={{ color: '#1677ff' }} /> {t('services.productsSoldLabel')}</>}
               style={{ marginTop: 24 }}
             >
               <Table
@@ -461,7 +465,7 @@ export function ServiceOrderDetail() {
           {/* Serviços Realizados */}
           {serviceOrder.services_realized && serviceOrder.services_realized.length > 0 && (
             <Card 
-              title={<><ToolOutlined /> {t('services.servicesRealizedLabel')}</>}
+              title={<><ToolOutlined style={{ color: '#1677ff' }} /> {t('services.servicesRealizedLabel')}</>}
               style={{ marginTop: 24 }}
             >
               <Table
@@ -477,7 +481,7 @@ export function ServiceOrderDetail() {
           {/* Movimentações Financeiras */}
           {serviceOrder.cash_flow && serviceOrder.cash_flow.length > 0 && (
             <Card 
-              title={<><DollarOutlined /> {t('services.financialMovements')}</>}
+              title={<><DollarOutlined style={{ color: '#1677ff' }} /> {t('services.financialMovements')}</>}
               style={{ marginTop: 24 }}
             >
               <Table
