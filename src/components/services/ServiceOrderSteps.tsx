@@ -17,7 +17,7 @@ import {
   Alert,
   Tooltip,
 } from 'antd';
-import { DeleteOutlined, PlusOutlined, PrinterOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { VehicleSelect } from './VehicleSelect';
 import { ServiceSelect } from './ServiceSelect';
@@ -74,7 +74,6 @@ interface ServiceOrderStepsProps {
   handleAddProduct: () => void;
   handleRemoveProduct: (key: string) => void;
   handleProductChange: (key: string, field: keyof ProductItem, value: any) => void;
-  handleGeneratePDF: () => void;
 }
 
 export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
@@ -110,7 +109,6 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
     handleAddProduct,
     handleRemoveProduct,
     handleProductChange,
-    handleGeneratePDF,
   } = props;
 
   // Debug logs preserved from original component
@@ -746,16 +744,6 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                   </Text>
                 </Row>
               </Space>
-
-              <Button
-                type="default"
-                icon={<PrinterOutlined />}
-                size="large"
-                block
-                onClick={handleGeneratePDF}
-              >
-                {t('services.printBudget')}
-              </Button>
             </Space>
           </Card>
         </div>

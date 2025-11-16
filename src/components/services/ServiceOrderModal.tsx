@@ -14,7 +14,6 @@ import { useServiceCategories } from '../../hooks/useServiceCategories';
 import { useProducts } from '../../hooks/useProducts';
 import { useVehicle } from '../../hooks/useMotorcycles';
 // Removed large inline step JSX; now contained in ServiceOrderSteps component
-import { generateBudgetPDF } from '../../utils/reports/service-order.report';
 import { ServiceOrderSteps } from './ServiceOrderSteps';
 import type { CreateServiceOrderData, UpdateServiceOrderData } from '../../types/service-order';
 
@@ -244,7 +243,7 @@ export function ServiceOrderModal({
   // Verificar se há produtos com estoque insuficiente ou esgotado
   const hasInsufficientStock = useMemo(() => {
     if (isEditing) return false;
-    
+
     return products.some((p) => {
       if (!p.product_id) return false;
       const productData = productsData?.find((pd) => pd.product_id === p.product_id);
@@ -254,69 +253,6 @@ export function ServiceOrderModal({
       return p.product_qtd > availableStock || availableStock === 0;
     });
   }, [products, productsData, isEditing]);
-
-  // Função para gerar PDF do orçamento
-  const handleGeneratePDF = async () => {
-    try {
-      const formValues = form.getFieldsValue();
-
-      // Buscar informações do veículo
-      let vehicleInfo = '';
-      if (selectedVehicle) {
-        vehicleInfo = `${selectedVehicle.plate} - ${selectedVehicle.brand} ${selectedVehicle.model}${selectedVehicle.year ? ` (${selectedVehicle.year})` : ''}${selectedVehicle.color ? ` - ${selectedVehicle.color}` : ''}`;
-      }
-
-      // Preparar dados dos serviços (inclui itens sem ID, usando nome genérico)
-      const servicesData = services.map((s, idx) => {
-        const serviceData = s.service_id
-          ? serviceCategories?.find(sc => sc.service_id === s.service_id)
-          : undefined;
-        const unitPrice = s.unit_price !== undefined
-          ? s.unit_price
-          : (serviceData ? Number(serviceData.service_cost) : 0);
-        return {
-          service_name: serviceData?.service_name || `Serviço ${idx + 1}`,
-          service_qtd: s.service_qtd,
-          unit_price: unitPrice,
-        };
-      });
-
-      // Preparar dados dos produtos (inclui itens sem ID, usando nome genérico)
-      const productsDataPDF = products.map((p, idx) => {
-        const productData = p.product_id
-          ? productsData?.find(pd => pd.product_id === p.product_id)
-          : undefined;
-        const unitPrice = p.unit_price !== undefined
-          ? p.unit_price
-          : (productData ? productData.sell_price : 0);
-        return {
-          product_name: productData?.product_name || `Produto ${idx + 1}`,
-          product_qtd: p.product_qtd,
-          unit_price: unitPrice,
-        };
-      });
-
-      await generateBudgetPDF(
-        {
-          customer_name: formValues.customer_name || 'Cliente não informado',
-          vehicle_info: vehicleInfo,
-          professional_name: formValues.professional_name,
-          service_description: formValues.service_description,
-          notes: formValues.notes,
-          services: servicesData,
-          products: productsDataPDF,
-          discount_percent: applyDiscount && discountType === 'percent' ? discountPercent : undefined,
-          discount_amount: applyDiscount && discountType === 'amount' ? discountAmount : undefined,
-        },
-        t
-      );
-
-      NotificationService.success(t('services.pdfGeneratedSuccess'));
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      NotificationService.error(t('services.pdfGenerationError'));
-    }
-  };
 
   const handleSubmit = async () => {
     try {
@@ -579,7 +515,6 @@ export function ServiceOrderModal({
           handleAddProduct={handleAddProduct}
           handleRemoveProduct={handleRemoveProduct}
           handleProductChange={handleProductChange}
-          handleGeneratePDF={handleGeneratePDF}
         />
       </Form>
     </Modal>
