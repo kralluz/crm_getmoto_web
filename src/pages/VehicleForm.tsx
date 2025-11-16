@@ -105,18 +105,14 @@ export function VehicleForm() {
                     message: t('vehicles.plateRequiredError'),
                   },
                   {
-                    min: 7,
-                    message: t('vehicles.plateMinLengthError'),
-                  },
-                  {
-                    max: 10,
+                    max: 12,
                     message: t('vehicles.plateMaxLengthError'),
                   },
                 ]}
               >
                 <Input
                   placeholder={t('vehicles.platePlaceholder')}
-                  maxLength={10}
+                  maxLength={12}
                   style={{ textTransform: 'uppercase' }}
                 />
               </Form.Item>

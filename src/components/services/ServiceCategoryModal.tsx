@@ -141,7 +141,7 @@ export function ServiceCategoryModal({ open, categoryId, onClose }: ServiceCateg
           ]}
         >
           <CurrencyInput
-            placeholder="R$ 0,00"
+            placeholder="£ 0.00"
             style={{ width: '100%' }}
           />
         </Form.Item>

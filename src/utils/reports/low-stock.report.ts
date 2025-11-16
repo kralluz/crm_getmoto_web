@@ -1,6 +1,12 @@
 import type { Content } from 'pdfmake/interfaces';
 import { formatCurrency, parseDecimal } from '../format.util';
-import { generatePdf } from '../pdf.util';
+import { defaultDocumentConfig, defaultStyles, createGetMotoHeader, COMPANY_INFO } from '../pdf.util';
+import { loadLogoAsBase64 } from '../logo-base64';
+import pdfMakeOriginal from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+
+const pdfMake = pdfMakeOriginal as any;
+pdfMake.vfs = pdfFonts;
 
 /**
  * Interface para produto
@@ -70,36 +76,35 @@ function createSummarySection(products: Product[], t: LowStockReportData['transl
   }, 0);
 
   return [
-    { text: t?.summary || 'Resumo', style: 'subheader' },
+    { text: t?.summary || 'Summary', style: 'subheader' },
     {
       table: {
         widths: ['*', '40%'],
         body: [
           [
-            { text: t?.totalProducts || 'Total de Produtos em Falta:', style: 'label', alignment: 'right' },
-            { text: totalProducts.toString(), style: 'value', alignment: 'right', bold: true },
+            { text: t?.totalProducts || 'Total Products Low Stock:', style: 'label', alignment: 'right', border: [true, true, true, true] },
+            { text: totalProducts.toString(), style: 'value', alignment: 'right', bold: true, border: [true, true, true, true] },
           ],
           [
-            { text: t?.estimatedValue || 'Valor Estimado para Reposição:', style: 'totalLabel', alignment: 'right', fillColor: '#fff7e6' },
+            { text: t?.estimatedValue || 'Estimated Replenishment Value:', style: 'totalLabel', alignment: 'right', border: [true, true, true, true] },
             {
               text: formatCurrency(totalEstimatedCost),
               style: 'totalValue',
               alignment: 'right',
-              fillColor: '#fff7e6',
-              color: '#ff9800',
               bold: true,
+              border: [true, true, true, true],
             },
           ],
         ],
       },
       layout: {
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
       },
       margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any,
+    },
   ];
 }
 
@@ -109,12 +114,10 @@ function createSummarySection(products: Product[], t: LowStockReportData['transl
 function createProductsSection(products: Product[], t: LowStockReportData['translations']): Content {
   if (products.length === 0) {
     return [
-      { text: t?.productsSection || 'Produtos com Estoque Baixo', style: 'subheader' },
+      { text: t?.productsSection || 'Low Stock Products', style: 'subheader' },
       {
-        text: t?.noProducts || 'Nenhum produto com estoque abaixo do mínimo! 🎉',
+        text: t?.noProducts || 'No products below minimum stock!',
         style: 'info',
-        italics: true,
-        color: '#52c41a',
         bold: true,
         alignment: 'center',
         margin: [0, 20, 0, 20] as [number, number, number, number],
@@ -130,82 +133,77 @@ function createProductsSection(products: Product[], t: LowStockReportData['trans
     const estimatedCost = qtyToBuy * buyPrice;
 
     // Calcular nível de criticidade
-    const criticality = currentQty / minQty;
-    let statusColor = '#ff4d4f'; // vermelho (crítico)
-    let statusText = t?.statusLabels?.critical || 'CRÍTICO';
+    let statusText = t?.statusLabels?.attention || 'ATTENTION';
+    const attentionThreshold = minQty * 1.5; // 150% do mínimo
 
-    if (criticality > 0.5) {
-      statusColor = '#ff9800'; // laranja (atenção)
-      statusText = t?.statusLabels?.attention || 'ATENÇÃO';
-    }
     if (currentQty === 0) {
-      statusColor = '#8b0000'; // vermelho escuro (zerado)
-      statusText = t?.statusLabels?.depleted || 'ZERADO';
+      statusText = t?.statusLabels?.depleted || 'DEPLETED';
+    } else if (currentQty <= minQty) {
+      statusText = t?.statusLabels?.critical || 'CRITICAL';
+    } else if (currentQty <= attentionThreshold) {
+      statusText = t?.statusLabels?.attention || 'ATTENTION';
     }
 
     return [
-      { text: product.product_name, style: 'tableCell' },
+      { text: product.product_name, style: 'tableCell', border: [true, true, true, true] },
       {
         text: product.product_category?.product_category_name || '-',
         style: 'tableCell',
         alignment: 'center',
         fontSize: 8,
+        border: [true, true, true, true],
       },
       {
         text: statusText,
         style: 'tableCell',
         alignment: 'center',
-        color: statusColor,
         bold: true,
         fontSize: 8,
+        border: [true, true, true, true],
       },
-      { text: currentQty.toFixed(2), style: 'tableCell', alignment: 'center' },
-      { text: minQty.toFixed(2), style: 'tableCell', alignment: 'center' },
+      { text: currentQty.toFixed(2), style: 'tableCell', alignment: 'center', border: [true, true, true, true] },
+      { text: minQty.toFixed(2), style: 'tableCell', alignment: 'center', border: [true, true, true, true] },
       {
         text: qtyToBuy.toFixed(2),
         style: 'tableCell',
         alignment: 'center',
         bold: true,
-        color: '#ff4d4f',
+        border: [true, true, true, true],
       },
-      { text: formatCurrency(buyPrice), style: 'tableCell', alignment: 'right', fontSize: 8 },
-      { text: formatCurrency(estimatedCost), style: 'tableCell', alignment: 'right', bold: true },
+      { text: formatCurrency(buyPrice), style: 'tableCell', alignment: 'right', fontSize: 8, border: [true, true, true, true] },
+      { text: formatCurrency(estimatedCost), style: 'tableCell', alignment: 'right', bold: true, border: [true, true, true, true] },
     ];
   });
 
   return [
-    { text: t?.productsSection || 'Produtos com Estoque Baixo', style: 'subheader' },
-    { text: t?.productsInfo || '⚠️ Produtos que precisam de reposição urgente', style: 'info', italics: true, margin: [0, 0, 0, 10] },
+    { text: t?.productsSection || 'Low Stock Products', style: 'subheader' },
+    { text: t?.productsInfo || 'Products requiring urgent replenishment', style: 'info', margin: [0, 0, 0, 10] as [number, number, number, number] },
+    // @ts-expect-error - pdfmake type compatibility issue
     {
       table: {
         headerRows: 1,
         widths: ['*', '12%', '10%', '8%', '8%', '10%', '12%', '12%'],
         body: [
           [
-            { text: t?.tableHeaders?.product || 'Produto', style: 'tableHeader', fontSize: 9 },
-            { text: t?.tableHeaders?.category || 'Categoria', style: 'tableHeader', fontSize: 9 },
-            { text: t?.tableHeaders?.status || 'Status', style: 'tableHeader', fontSize: 9 },
-            { text: t?.tableHeaders?.current || 'Atual', style: 'tableHeader', fontSize: 9 },
-            { text: t?.tableHeaders?.minimum || 'Mínimo', style: 'tableHeader', fontSize: 9 },
-            { text: t?.tableHeaders?.toBuy || 'Comprar', style: 'tableHeader', fontSize: 9 },
-            { text: t?.tableHeaders?.unitPrice || 'Preço Un.', style: 'tableHeader', fontSize: 9 },
-            { text: t?.tableHeaders?.total || 'Total', style: 'tableHeader', fontSize: 9 },
+            { text: t?.tableHeaders?.product || 'Product', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: t?.tableHeaders?.category || 'Category', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: t?.tableHeaders?.status || 'Status', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: t?.tableHeaders?.current || 'Current', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: t?.tableHeaders?.minimum || 'Minimum', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: t?.tableHeaders?.toBuy || 'To Buy', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: t?.tableHeaders?.unitPrice || 'Unit Price', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: t?.tableHeaders?.total || 'Total', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
           ],
           ...rows,
         ],
       },
       layout: {
-        fillColor: (rowIndex: number) => {
-          if (rowIndex === 0) return '#1890ff';
-          if (rowIndex % 2 === 0) return '#f0f0f0';
-          return null;
-        },
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
       },
-    } as any,
+    },
   ];
 }
 
@@ -218,12 +216,12 @@ function createLegendSection(t: LowStockReportData['translations']): Content {
       text: '',
       margin: [0, 15, 0, 5] as [number, number, number, number],
     },
-    { text: t?.legend || 'Legenda de Status:', style: 'label', fontSize: 9 },
+    { text: t?.legend || 'Status Legend:', style: 'label', fontSize: 9 },
     {
       ul: [
-        { text: t?.legendItems?.depleted || 'ZERADO: Estoque completamente esgotado', color: '#8b0000', fontSize: 8 },
-        { text: t?.legendItems?.critical || 'CRÍTICO: Estoque abaixo de 50% do mínimo', color: '#ff4d4f', fontSize: 8 },
-        { text: t?.legendItems?.attention || 'ATENÇÃO: Estoque entre 50% e 100% do mínimo', color: '#ff9800', fontSize: 8 },
+        { text: t?.legendItems?.depleted || 'DEPLETED: Stock completely depleted', fontSize: 8 },
+        { text: t?.legendItems?.critical || 'CRITICAL: Stock below 50% of minimum', fontSize: 8 },
+        { text: t?.legendItems?.attention || 'ATTENTION: Stock between 50% and 100% of minimum', fontSize: 8 },
       ],
       margin: [0, 5, 0, 0] as [number, number, number, number],
     },
@@ -233,25 +231,149 @@ function createLegendSection(t: LowStockReportData['translations']): Content {
 /**
  * Gera o relatório de Alerta de Estoque Baixo em PDF
  */
-export function generateLowStockReport(data: LowStockReportData): void {
+export async function generateLowStockReport(data: LowStockReportData): Promise<void> {
   const { products, translations: t } = data;
 
+  // Carregar logo
+  const logoBase64 = await loadLogoAsBase64();
+
   const content: Content = [
+    createGetMotoHeader(logoBase64),
+    { text: t?.title || 'Low Stock Alert', style: 'header', alignment: 'center', margin: [0, 0, 0, 20] as [number, number, number, number] },
     ...(createSummarySection(products, t) as any[]),
     ...(createProductsSection(products, t) as any[]),
     ...(createLegendSection(t) as any[]),
   ];
 
-  generatePdf(content, `alerta_estoque_${new Date().getTime()}.pdf`, {
-    header: {
-      title: t?.title || 'Alerta de Estoque Baixo',
-      subtitle: t?.subtitle || `${products.length} produto(s) necessitando reposição`,
+  // Adicionar rodapé como parte do conteúdo
+  content.push({
+    table: {
+      widths: ['*'],
+      body: [
+        [
+          {
+            columns: [
+              {
+                text: 'If you have any questions concerning this report, Please contact us.',
+                fontSize: 8,
+                width: '*',
+              },
+              {
+                text: '                    ',
+                fontSize: 8,
+                width: 'auto',
+              },
+              {
+                text: 'Thank you for your business!',
+                fontSize: 8,
+                width: 'auto',
+              },
+            ],
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+        [
+          {
+            text: `Company Registration No. ${COMPANY_INFO.registration.number}`,
+            alignment: 'center',
+            bold: true,
+            fontSize: 8,
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+        [
+          {
+            text: `Bank Details. ${COMPANY_INFO.bank.name} Sort Code ${COMPANY_INFO.bank.sortCode}. Account No ${COMPANY_INFO.bank.accountNo}`,
+            alignment: 'center',
+            fontSize: 8,
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+      ],
+    },
+    layout: {
+      hLineWidth: () => 1,
+      vLineWidth: () => 1,
+      hLineColor: () => '#000000',
+      vLineColor: () => '#000000',
+    },
+    margin: [0, 0, 0, 10] as [number, number, number, number],
+  });
+
+  // Data do relatório
+  content.push({
+    columns: [
+      {
+        text: `REPORT DATE ${new Date().toLocaleDateString('en-GB')}`,
+        bold: true,
+        fontSize: 9,
+        width: '100%',
+        alignment: 'center',
+      },
+    ],
+    margin: [0, 0, 0, 0] as [number, number, number, number],
+  });
+
+  const docDefinition: any = {
+    ...defaultDocumentConfig,
+    pageOrientation: 'portrait',
+    content,
+    styles: defaultStyles,
+    background: (currentPage: number, pageSize: any) => {
+      return {
+        canvas: [
+          // Borda esquerda
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda direita
+          {
+            type: 'line',
+            x1: pageSize.width - 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda superior
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda inferior
+          {
+            type: 'line',
+            x1: 40,
+            y1: pageSize.height - 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+        ],
+      };
     },
     info: {
-      title: t?.title || 'Alerta de Estoque Baixo',
-      subject: 'Controle de Estoque - CRM GetMoto',
-      keywords: 'estoque, alerta, reposição, produtos',
+      title: t?.title || 'Low Stock Alert',
+      author: COMPANY_INFO.name,
+      subject: 'Stock Control - GetMoto',
+      keywords: 'stock, alert, replenishment, products',
+      creator: COMPANY_INFO.name,
+      producer: 'pdfmake',
     },
-    pageOrientation: 'landscape', // Paisagem para mais colunas
-  });
+  };
+
+  pdfMake.createPdf(docDefinition).download(`low_stock_alert_${new Date().getTime()}.pdf`);
 }

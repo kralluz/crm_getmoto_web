@@ -166,6 +166,7 @@ export function ExpensesList() {
       <PageHeader
         title={t('expenses.title')}
         subtitle={t('expenses.subtitle')}
+        helpText={t('expenses.pageHelp')}
         extra={
           <Dropdown menu={{ items: newExpenseMenuItems }} placement="bottomRight">
             <Button type="primary" icon={<PlusOutlined />} size="large">

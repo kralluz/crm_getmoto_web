@@ -196,12 +196,14 @@ axiosInstance.interceptors.response.use(
     });
 
     // Exibe notificação visual do erro
-    if (!error.config?.skipErrorNotification) {
+    // Não mostra notificação para rotas de autenticação (tratado no componente)
+    const isAuthRouteForNotification = originalRequest?.url?.includes('/auth/');
+    if (!error.config?.skipErrorNotification && !isAuthRouteForNotification) {
       ApiErrorHandler.showNotification(apiError);
     }
 
     // Tratamento especial para 401 (não autorizado) sem refresh token ou em rotas de auth
-    if (ApiErrorHandler.isCritical(apiError) && !error.config?._retry && (isAuthRoute || !localStorage.getItem('refresh_token'))) {
+    if (ApiErrorHandler.isCritical(apiError) && !error.config?._retry && (isAuthRouteForNotification || !localStorage.getItem('refresh_token'))) {
       apiLogger.warn('Unauthorized request - clearing auth data');
       StorageService.clearAuthData();
       localStorage.removeItem('refresh_token');

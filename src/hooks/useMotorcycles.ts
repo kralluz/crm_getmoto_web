@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motorcycleApi } from '../api/motorcycle-api';
 import type { CreateMotorcycleData, UpdateMotorcycleData } from '../types/motorcycle';
 import { useNotification } from './useNotification';
+import { useTranslation } from 'react-i18next';
 
 export function useVehicles(params?: { is_active?: boolean; search?: string }) {
   return useQuery({
@@ -33,15 +34,31 @@ export function useVehicleStats(id: number | string | undefined) {
 export function useCreateVehicle() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useNotification();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: (data: CreateMotorcycleData) => motorcycleApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success('Veículo cadastrado com sucesso!');
+      success(t('vehicles.vehicleRegisteredSuccess'));
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Erro ao cadastrar veículo';
+      const errorMessage = error?.response?.data?.message || '';
+      const status = error?.response?.status;
+      
+      // Detecta erro de placa duplicada (409 Conflict ou mensagem contendo 'placa' e 'existe/duplicada')
+      const isDuplicatePlate = 
+        status === 409 || 
+        errorMessage.toLowerCase().includes('placa') && 
+        (errorMessage.toLowerCase().includes('existe') || 
+         errorMessage.toLowerCase().includes('duplicad') ||
+         errorMessage.toLowerCase().includes('already') ||
+         errorMessage.toLowerCase().includes('duplicate'));
+      
+      const message = isDuplicatePlate 
+        ? t('vehicles.plateDuplicateError')
+        : errorMessage || t('vehicles.vehicleRegistrationError');
+      
       showError(message);
     },
   });
@@ -50,16 +67,32 @@ export function useCreateVehicle() {
 export function useUpdateVehicle() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useNotification();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number | string; data: UpdateMotorcycleData }) =>
       motorcycleApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success('Veículo atualizado com sucesso!');
+      success(t('vehicles.vehicleUpdatedSuccess'));
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Erro ao atualizar veículo';
+      const errorMessage = error?.response?.data?.message || '';
+      const status = error?.response?.status;
+      
+      // Detecta erro de placa duplicada
+      const isDuplicatePlate = 
+        status === 409 || 
+        errorMessage.toLowerCase().includes('placa') && 
+        (errorMessage.toLowerCase().includes('existe') || 
+         errorMessage.toLowerCase().includes('duplicad') ||
+         errorMessage.toLowerCase().includes('already') ||
+         errorMessage.toLowerCase().includes('duplicate'));
+      
+      const message = isDuplicatePlate 
+        ? t('vehicles.plateDuplicateError')
+        : errorMessage || t('vehicles.vehicleUpdateError');
+      
       showError(message);
     },
   });
@@ -68,15 +101,16 @@ export function useUpdateVehicle() {
 export function useDeleteVehicle() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useNotification();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: (id: number | string) => motorcycleApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success('Veículo deletado com sucesso!');
+      success(t('vehicles.vehicleDeletedSuccess'));
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Erro ao deletar veículo';
+      const message = error?.response?.data?.message || t('vehicles.vehicleDeleteError');
       showError(message);
     },
   });
@@ -85,15 +119,16 @@ export function useDeleteVehicle() {
 export function useDeactivateVehicle() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useNotification();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: (id: number | string) => motorcycleApi.deactivate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success('Veículo desativado com sucesso!');
+      success(t('vehicles.vehicleDeactivatedSuccess'));
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Erro ao desativar veículo';
+      const message = error?.response?.data?.message || t('vehicles.vehicleDeactivationError');
       showError(message);
     },
   });
@@ -102,15 +137,16 @@ export function useDeactivateVehicle() {
 export function useActivateVehicle() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useNotification();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: (id: number | string) => motorcycleApi.activate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success('Veículo ativado com sucesso!');
+      success(t('vehicles.vehicleActivatedSuccess'));
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Erro ao ativar veículo';
+      const message = error?.response?.data?.message || t('vehicles.vehicleActivationError');
       showError(message);
     },
   });

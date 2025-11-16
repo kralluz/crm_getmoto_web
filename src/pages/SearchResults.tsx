@@ -54,7 +54,7 @@ export function SearchResults() {
 
     const basePath = routes[type];
     if (basePath) {
-      navigate(`${basePath}/${id}`);
+      navigate(`${basePath}/${id}`, { state: { fromSearch: true } });
     }
   };
 

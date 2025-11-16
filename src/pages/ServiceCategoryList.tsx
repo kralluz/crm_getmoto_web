@@ -165,6 +165,7 @@ export function ServiceCategoryList() {
       <PageHeader
         title={t('services.title')}
         subtitle={t('services.availableServices')}
+        helpText={t('services.pageHelp')}
         extra={
           <Button
             type="primary"

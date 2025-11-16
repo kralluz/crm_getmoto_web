@@ -9,7 +9,8 @@ import {
   Space, 
   Select,
   Button,
-  Tag
+  Tag,
+  Typography
 } from 'antd';
 import { 
   StockOutlined, 
@@ -28,6 +29,7 @@ import { generateLowStockReport } from '../utils/reports';
 import type { Product, StockMove } from '../types/product';
 
 const { RangePicker } = DatePicker;
+const { Text } = Typography;
 
 export function StockReport() {
   const { t } = useTranslation();
@@ -51,7 +53,12 @@ export function StockReport() {
     if (!products) return null;
 
     const totalProducts = products.length;
-    const lowStockProducts = products.filter(p => parseDecimal(p.quantity) <= parseDecimal(p.quantity_alert)).length;
+    // Contar produtos críticos (abaixo do mínimo) e em atenção (até 150% do mínimo)
+    const lowStockProducts = products.filter(p => {
+      const qty = parseDecimal(p.quantity);
+      const minQty = parseDecimal(p.quantity_alert);
+      return qty <= minQty * 1.5;
+    }).length;
     const totalStockValue = products.reduce((sum, p) => sum + (parseDecimal(p.quantity) * parseDecimal(p.sell_price)), 0);
     const totalCostValue = products.reduce((sum, p) => sum + (parseDecimal(p.quantity) * parseDecimal(p.buy_price)), 0);
 
@@ -91,15 +98,18 @@ export function StockReport() {
     ADJUSTMENT: { label: t('inventory.adjustment'), color: 'orange' },
   };
 
-  const handleGenerateLowStockPdf = () => {
+  const handleGenerateLowStockPdf = async () => {
     if (!products) return;
 
     setIsPdfLoading(true);
     try {
-      const lowStockProducts = products.filter(p =>
-        parseDecimal(p.quantity) <= parseDecimal(p.quantity_alert)
-      );
-      generateLowStockReport({
+      // Filtrar produtos com estoque até 150% do mínimo (ponto de atenção)
+      const lowStockProducts = products.filter(p => {
+        const qty = parseDecimal(p.quantity);
+        const minQty = parseDecimal(p.quantity_alert);
+        return qty <= minQty * 1.5; // Até 150% do mínimo
+      });
+      await generateLowStockReport({
         products: lowStockProducts,
         translations: {
           title: t('inventory.lowStockAlert'),
@@ -165,7 +175,7 @@ export function StockReport() {
         return (
           <span style={{ color: isLow ? '#ff4d4f' : undefined, fontWeight: isLow ? 600 : 400 }}>
             {isLow && <WarningOutlined style={{ marginRight: 4 }} />}
-            {qtyNum.toFixed(1)}
+            {qtyNum}
           </span>
         );
       },
@@ -240,9 +250,9 @@ export function StockReport() {
         const prefix = record.move_type === 'ENTRY' ? '+' :
                        record.move_type === 'EXIT' ? '-' : '';
         return (
-          <span style={{ color, fontWeight: 600 }}>
-            {prefix}{qtyNum.toFixed(1)}
-          </span>
+          <Text strong style={{ color }}>
+            {prefix}{qtyNum}
+          </Text>
         );
       },
     },
@@ -266,6 +276,7 @@ export function StockReport() {
       <PageHeader
         title={t('inventory.stockReport')}
         subtitle={t('products.subtitle')}
+        helpText={t('inventory.pageHelp')}
         extra={
           <Button
             icon={<DownloadOutlined />}

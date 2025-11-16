@@ -1,16 +1,22 @@
 import type { Content } from 'pdfmake/interfaces';
 import type { ServiceOrder } from '../../types/service-order';
-import { formatCurrency, formatDateTime, parseDecimal } from '../format.util';
-import { generatePdf } from '../pdf.util';
+import { formatCurrency, formatDate, parseDecimal } from '../format.util';
+import { defaultDocumentConfig, defaultStyles, createGetMotoHeader, createGetMotoFooter, COMPANY_INFO } from '../pdf.util';
+import { loadLogoAsBase64 } from '../logo-base64';
+import pdfMakeOriginal from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+
+const pdfMake = pdfMakeOriginal as any;
+pdfMake.vfs = pdfFonts;
 
 /**
  * Labels de status traduzidos
  */
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'Rascunho',
-  in_progress: 'Em Progresso',
-  completed: 'Concluído',
-  cancelled: 'Cancelado',
+  draft: 'Draft',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
 /**
@@ -20,8 +26,7 @@ function calculateTotals(serviceOrder: ServiceOrder) {
   const productsTotal =
     serviceOrder.service_products?.reduce((sum, product) => {
       const qty = parseDecimal(product.product_qtd);
-      // Usar unit_price se disponível, senão sell_price
-      const price = (product as any).unit_price !== undefined 
+      const price = (product as any).unit_price !== undefined
         ? parseDecimal((product as any).unit_price)
         : parseDecimal(product.products.sell_price);
       return sum + qty * price;
@@ -30,7 +35,6 @@ function calculateTotals(serviceOrder: ServiceOrder) {
   const servicesTotal =
     serviceOrder.services_realized?.reduce((sum, service) => {
       const qty = parseDecimal(service.service_qtd);
-      // Usar unit_price se disponível, senão service_cost
       const cost = (service as any).unit_price !== undefined
         ? parseDecimal((service as any).unit_price)
         : parseDecimal(service.service.service_cost);
@@ -38,307 +42,344 @@ function calculateTotals(serviceOrder: ServiceOrder) {
     }, 0) || 0;
 
   const subtotal = productsTotal + servicesTotal;
-  
-  // Calcular desconto
+
   let discountValue = 0;
   if (serviceOrder.discount_amount) {
     discountValue = parseDecimal(serviceOrder.discount_amount);
   } else if (serviceOrder.discount_percent) {
     discountValue = subtotal * (parseDecimal(serviceOrder.discount_percent) / 100);
   }
-  
+
   const total = subtotal - discountValue;
 
   return { productsTotal, servicesTotal, subtotal, discountValue, total };
 }
 
 /**
- * Cria seção de informações básicas da OS
+ * Cria seção de informações do cliente e veículo (padrão GetMoto)
  */
-function createInfoSection(serviceOrder: ServiceOrder): Content {
-  return [
-    { text: 'Informações da Ordem de Serviço', style: 'subheader' },
-    {
-      table: {
-        widths: ['25%', '75%'],
-        body: [
-          [
-            { text: 'Número da OS:', style: 'label' },
-            { text: `#${serviceOrder.service_order_id}`, style: 'value' },
-          ],
-          [
-            { text: 'Data de Criação:', style: 'label' },
-            { text: formatDateTime(serviceOrder.created_at), style: 'value' },
-          ],
-          [
-            { text: 'Status:', style: 'label' },
-            { text: STATUS_LABELS[serviceOrder.status] || serviceOrder.status, style: 'value' },
-          ],
-          [
-            { text: 'Cliente:', style: 'label' },
-            { text: serviceOrder.customer_name || '-', style: 'value' },
-          ],
-          [
-            { text: 'Profissional:', style: 'label' },
-            { text: serviceOrder.professional_name || '-', style: 'value' },
-          ],
-        ],
-      },
-      layout: 'noBorders',
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    },
-  ];
-}
-
-/**
- * Cria seção de informações do veículo
- */
-function createVehicleSection(serviceOrder: ServiceOrder): Content {
-  if (!serviceOrder.vehicles) {
-    return [];
-  }
-
+function createCustomerVehicleSection(serviceOrder: ServiceOrder): Content {
   const vehicle = serviceOrder.vehicles;
-  return [
-    { text: 'Informações do Veículo', style: 'subheader' },
-    {
-      table: {
-        widths: ['25%', '75%'],
-        body: [
-          [{ text: 'Marca/Modelo:', style: 'label' }, { text: `${vehicle.brand} ${vehicle.model}`, style: 'value' }],
-          [{ text: 'Placa:', style: 'label' }, { text: vehicle.plate, style: 'value' }],
-          [{ text: 'Ano:', style: 'label' }, { text: vehicle.year?.toString() || '-', style: 'value' }],
-          [{ text: 'Cor:', style: 'label' }, { text: vehicle.color || '-', style: 'value' }],
-        ],
+
+  return {
+    columns: [
+      // Cliente (lado esquerdo)
+      {
+        width: '35%',
+        table: {
+          widths: ['*'],
+          body: [
+            [{ text: serviceOrder.customer_name || 'N/A', style: 'label', alignment: 'center', margin: [10, 10, 10, 10] as [number, number, number, number] }],
+          ],
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#000000',
+          vLineColor: () => '#000000',
+        },
       },
-      layout: 'noBorders',
-      margin: [0, 0, 0, 15] as [number, number, number, number],
+      { width: 15, text: '' },
+      // Veículo (lado direito)
+      {
+        width: '*',
+        table: {
+          widths: ['35%', '*'],
+          body: [
+            [
+              { text: 'Registration', style: 'label', border: [true, true, false, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: vehicle?.plate || 'N/A', style: 'value', border: [false, true, true, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+            ],
+            [
+              { text: 'Make', style: 'label', border: [true, false, false, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: vehicle?.brand || 'N/A', style: 'value', border: [false, false, true, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+            ],
+            [
+              { text: 'Model', style: 'label', border: [true, false, false, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: vehicle?.model || 'N/A', style: 'value', border: [false, false, true, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+            ],
+            [
+              { text: 'Year', style: 'label', border: [true, false, false, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: vehicle?.year?.toString() || 'N/A', style: 'value', border: [false, false, true, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
+            ],
+          ],
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#000000',
+          vLineColor: () => '#000000',
+        },
+      },
+    ],
+    margin: [0, 0, 0, 20] as [number, number, number, number],
+  };
+}
+
+/**
+ * Cria tabela de itens (produtos e serviços)
+ */
+function createItemsTable(serviceOrder: ServiceOrder): Content {
+  const rows: any[] = [];
+
+  // Adicionar produtos
+  if (serviceOrder.service_products && serviceOrder.service_products.length > 0) {
+    serviceOrder.service_products.forEach((product) => {
+      const qty = parseDecimal(product.product_qtd);
+      const price = (product as any).unit_price !== undefined
+        ? parseDecimal((product as any).unit_price)
+        : parseDecimal(product.products.sell_price);
+      const total = qty * price;
+
+      rows.push([
+        { text: product.products.product_name, style: 'tableCell', border: [true, true, true, true] },
+        { text: qty.toFixed(2), style: 'tableCell', alignment: 'center', border: [true, true, true, true] },
+        { text: formatCurrency(price), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+        { text: formatCurrency(total), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+      ]);
+    });
+  }
+
+  // Adicionar serviços
+  if (serviceOrder.services_realized && serviceOrder.services_realized.length > 0) {
+    serviceOrder.services_realized.forEach((service) => {
+      const qty = parseDecimal(service.service_qtd);
+      const cost = (service as any).unit_price !== undefined
+        ? parseDecimal((service as any).unit_price)
+        : parseDecimal(service.service.service_cost);
+      const total = qty * cost;
+
+      rows.push([
+        { text: service.service.service_name, style: 'tableCell', border: [true, true, true, true] },
+        { text: qty.toFixed(0), style: 'tableCell', alignment: 'center', border: [true, true, true, true] },
+        { text: formatCurrency(cost), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+        { text: formatCurrency(total), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+      ]);
+    });
+  }
+
+  return {
+    table: {
+      headerRows: 1,
+      widths: ['*', '10%', '20%', '20%'],
+      body: [
+        [
+          { text: 'Description', style: 'tableHeader', alignment: 'left', border: [true, true, true, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+          { text: 'Qty', style: 'tableHeader', border: [false, true, false, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+          { text: 'Unit Price', style: 'tableHeader', border: [false, true, false, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+          { text: 'Amount', style: 'tableHeader', border: [true, true, true, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+        ],
+        ...rows,
+      ],
     },
-  ];
+    layout: {
+      hLineWidth: (i: number) => {
+        // Linha dupla após o cabeçalho
+        if (i === 1) return 2;
+        return 1;
+      },
+      vLineWidth: (i: number, node: any) => {
+        // Sem linhas verticais no cabeçalho (primeira linha)
+        return 1;
+      },
+      hLineColor: () => '#000000',
+      vLineColor: () => '#000000',
+      paddingLeft: (i: number) => (i === 0 ? 5 : 5),
+      paddingRight: (i: number) => (i === 0 ? 5 : 5),
+      paddingTop: (i: number) => (i === 0 ? 0 : 5),
+      paddingBottom: (i: number) => (i === 0 ? 8 : 3),
+    },
+    margin: [0, 0, 0, 20] as [number, number, number, number],
+  };
 }
 
 /**
- * Cria seção de descrição e diagnóstico
+ * Cria caixa de total
  */
-function createDescriptionSection(serviceOrder: ServiceOrder): Content {
-  const content: Content[] = [];
-
-  if (serviceOrder.service_description) {
-    content.push({ text: 'Descrição do Serviço', style: 'subheader' });
-    content.push({
-      text: serviceOrder.service_description,
-      style: 'info',
-      margin: [0, 0, 0, 10] as [number, number, number, number],
-    });
-  }
-
-  // Diagnosis field not yet in ServiceOrder type
-  // if (serviceOrder.diagnosis) {
-  //   content.push({ text: 'Diagnóstico', style: 'subheader' });
-  //   content.push({
-  //     text: serviceOrder.diagnosis,
-  //     style: 'info',
-  //     margin: [0, 0, 0, 10] as [number, number, number, number],
-  //   });
-  // }
-
-  if (serviceOrder.notes) {
-    content.push({ text: 'Observações', style: 'subheader' });
-    content.push({
-      text: serviceOrder.notes,
-      style: 'info',
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    });
-  }
-
-  return content;
-}
-
-/**
- * Cria seção de produtos utilizados
- */
-function createProductsSection(serviceOrder: ServiceOrder): Content {
-  if (!serviceOrder.service_products || serviceOrder.service_products.length === 0) {
-    return [];
-  }
-
-  const rows = serviceOrder.service_products.map((product) => {
-    const qty = parseDecimal(product.product_qtd);
-    // Usar unit_price se disponível, senão sell_price
-    const price = (product as any).unit_price !== undefined
-      ? parseDecimal((product as any).unit_price)
-      : parseDecimal(product.products.sell_price);
-    const total = qty * price;
-
-    return [
-      { text: product.products.product_name, style: 'tableCell' },
-      { text: qty.toFixed(2), style: 'tableCell', alignment: 'center' },
-      { text: formatCurrency(price), style: 'tableCell', alignment: 'right' },
-      { text: formatCurrency(total), style: 'tableCell', alignment: 'right' },
-    ];
-  });
-
-  return [
-    { text: 'Produtos Utilizados', style: 'subheader' },
-    {
-      table: {
-        headerRows: 1,
-        widths: ['*', '15%', '20%', '20%'],
-        body: [
-          [
-            { text: 'Produto', style: 'tableHeader' },
-            { text: 'Qtd', style: 'tableHeader' },
-            { text: 'Preço Unit.', style: 'tableHeader' },
-            { text: 'Total', style: 'tableHeader' },
+function createTotalBox(total: number): Content {
+  return {
+    columns: [
+      { text: '', width: '*' }, // Espaço vazio à esquerda
+      {
+        width: 'auto',
+        table: {
+          widths: [80, 100],
+          body: [
+            [
+              { text: 'Total', style: 'totalLabel', alignment: 'right', margin: [10, 5, 5, 5] as [number, number, number, number] },
+              { text: formatCurrency(total), style: 'totalValue', alignment: 'right', margin: [5, 5, 10, 5] as [number, number, number, number] },
+            ],
           ],
-          ...rows,
-        ],
+        },
+        layout: {
+          hLineWidth: () => 1,
+          vLineWidth: () => 1,
+          hLineColor: () => '#000000',
+          vLineColor: () => '#000000',
+        },
       },
-      layout: {
-        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#1890ff' : rowIndex % 2 === 0 ? '#f0f0f0' : null),
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
-      },
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any,
-  ];
+    ],
+    margin: [0, 0, 0, 20] as [number, number, number, number],
+  };
 }
 
 /**
- * Cria seção de serviços realizados
+ * Gera o relatório completo de Ordem de Serviço em PDF (padrão GetMoto Invoice)
  */
-function createServicesSection(serviceOrder: ServiceOrder): Content {
-  if (!serviceOrder.services_realized || serviceOrder.services_realized.length === 0) {
-    return [];
-  }
-
-  const rows = serviceOrder.services_realized.map((service) => {
-    const qty = parseDecimal(service.service_qtd);
-    // Usar unit_price se disponível, senão service_cost
-    const cost = (service as any).unit_price !== undefined
-      ? parseDecimal((service as any).unit_price)
-      : parseDecimal(service.service.service_cost);
-    const total = qty * cost;
-
-    return [
-      { text: service.service.service_name, style: 'tableCell' },
-      { text: qty.toFixed(0), style: 'tableCell', alignment: 'center' },
-      { text: formatCurrency(cost), style: 'tableCell', alignment: 'right' },
-      { text: formatCurrency(total), style: 'tableCell', alignment: 'right' },
-    ];
-  });
-
-  return [
-    { text: 'Serviços Realizados', style: 'subheader' },
-    {
-      table: {
-        headerRows: 1,
-        widths: ['*', '15%', '20%', '20%'],
-        body: [
-          [
-            { text: 'Serviço', style: 'tableHeader' },
-            { text: 'Qtd', style: 'tableHeader' },
-            { text: 'Preço Unit.', style: 'tableHeader' },
-            { text: 'Total', style: 'tableHeader' },
-          ],
-          ...rows,
-        ],
-      },
-      layout: {
-        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#1890ff' : rowIndex % 2 === 0 ? '#f0f0f0' : null),
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
-      },
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any,
-  ];
-}
-
-/**
- * Cria seção de resumo financeiro
- */
-function createFinancialSummary(serviceOrder: ServiceOrder): Content {
+export async function generateServiceOrderReport(serviceOrder: ServiceOrder): Promise<void> {
   const totals = calculateTotals(serviceOrder);
-  
-  const rows: any[] = [
-    [
-      { text: 'Total de Produtos:', style: 'label', alignment: 'right' },
-      { text: formatCurrency(totals.productsTotal), style: 'value', alignment: 'right' },
-    ],
-    [
-      { text: 'Total de Serviços:', style: 'label', alignment: 'right' },
-      { text: formatCurrency(totals.servicesTotal), style: 'value', alignment: 'right' },
-    ],
-    [
-      { text: 'SUBTOTAL:', style: 'label', alignment: 'right', bold: true },
-      { text: formatCurrency(totals.subtotal), style: 'value', alignment: 'right', bold: true },
-    ],
-  ];
-  
-  // Adicionar linha de desconto se houver
-  if (totals.discountValue > 0) {
-    rows.push([
-      { text: 'Desconto:', style: 'label', alignment: 'right', color: '#dc3545' },
-      { text: `- ${formatCurrency(totals.discountValue)}`, style: 'value', alignment: 'right', color: '#dc3545' },
-    ]);
-  }
-  
-  rows.push([
-    { text: 'TOTAL GERAL:', style: 'totalLabel', alignment: 'right', fillColor: '#f0f0f0' },
-    {
-      text: formatCurrency(totals.total),
-      style: 'totalValue',
-      alignment: 'right',
-      fillColor: '#f0f0f0',
-      bold: true,
-    },
-  ]);
+  const invoiceDate = formatDate(serviceOrder.created_at);
 
-  return [
-    { text: 'Resumo Financeiro', style: 'subheader' },
-    {
-      table: {
-        widths: ['*', '30%'],
-        body: rows,
-      },
-      layout: {
-        hLineWidth: (i: number, node: any) => (i === node.table.body.length - 1 ? 2 : 0.5),
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
-      },
-    } as any,
-  ];
-}
+  // Carregar logo
+  const logoBase64 = await loadLogoAsBase64();
 
-/**
- * Gera o relatório completo de Ordem de Serviço em PDF
- */
-export function generateServiceOrderReport(serviceOrder: ServiceOrder): void {
   const content: Content = [
-    ...(createInfoSection(serviceOrder) as any[]),
-    ...(createVehicleSection(serviceOrder) as any[]),
-    ...(createDescriptionSection(serviceOrder) as any[]),
-    ...(createProductsSection(serviceOrder) as any[]),
-    ...(createServicesSection(serviceOrder) as any[]),
-    ...(createFinancialSummary(serviceOrder) as any[]),
+    createGetMotoHeader(logoBase64),
+    createCustomerVehicleSection(serviceOrder),
+    createItemsTable(serviceOrder),
+    createTotalBox(totals.total),
   ];
 
-  generatePdf(content, `os_${serviceOrder.service_order_id}.pdf`, {
-    header: {
-      title: `Ordem de Serviço #${serviceOrder.service_order_id}`,
-      subtitle: STATUS_LABELS[serviceOrder.status] || serviceOrder.status,
+  // Adicionar rodapé como parte do conteúdo
+  content.push({
+    table: {
+      widths: ['*'],
+      body: [
+        // Linha 1: Mensagens de contato
+        [
+          {
+            columns: [
+              {
+                text: 'If you have any questions concerning this invoice, Please contact us.',
+                fontSize: 8,
+                width: '*',
+              },
+              {
+                text: '                    ',
+                fontSize: 8,
+                width: 'auto',
+              },
+              {
+                text: 'Thank you for your business!',
+                fontSize: 8,
+                width: 'auto',
+              },
+            ],
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+        // Linha 2: Registro da empresa
+        [
+          {
+            text: `Company Registration No. ${COMPANY_INFO.registration.number}`,
+            alignment: 'center',
+            bold: true,
+            fontSize: 8,
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+        // Linha 3: Detalhes bancários
+        [
+          {
+            text: `Bank Details. ${COMPANY_INFO.bank.name} Sort Code ${COMPANY_INFO.bank.sortCode}. Account No ${COMPANY_INFO.bank.accountNo}`,
+            alignment: 'center',
+            fontSize: 8,
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+      ],
+    },
+    layout: {
+      hLineWidth: () => 1,
+      vLineWidth: () => 1,
+      hLineColor: () => '#000000',
+      vLineColor: () => '#000000',
+    },
+    margin: [0, 0, 0, 10] as [number, number, number, number],
+  });
+
+  // Invoice number e data
+  content.push({
+    columns: [
+      {
+        text: `INVOICE ${serviceOrder.service_order_id.toString().padStart(4, '0')}`,
+        bold: true,
+        fontSize: 9,
+        width: '50%',
+      },
+      {
+        text: `DATE ${invoiceDate}`,
+        bold: true,
+        fontSize: 9,
+        width: '50%',
+        alignment: 'right',
+      },
+    ],
+    margin: [0, 0, 0, 0] as [number, number, number, number],
+  });
+
+  const docDefinition: any = {
+    ...defaultDocumentConfig,
+    pageOrientation: 'portrait',
+    content,
+    styles: defaultStyles,
+    background: (currentPage: number, pageSize: any) => {
+      return {
+        canvas: [
+          // Borda esquerda
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda direita
+          {
+            type: 'line',
+            x1: pageSize.width - 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda superior
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda inferior
+          {
+            type: 'line',
+            x1: 40,
+            y1: pageSize.height - 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+        ],
+      };
     },
     info: {
-      title: `Ordem de Serviço #${serviceOrder.service_order_id}`,
-      subject: 'Ordem de Serviço - CRM GetMoto',
-      keywords: 'ordem serviço, OS, moto, mecânica',
+      title: `Invoice ${serviceOrder.service_order_id}`,
+      author: COMPANY_INFO.name,
+      subject: 'Service Order Invoice - GetMoto',
+      keywords: 'invoice, service order, getmoto',
+      creator: COMPANY_INFO.name,
+      producer: 'pdfmake',
     },
-  });
+  };
+
+  pdfMake.createPdf(docDefinition).download(`invoice_${serviceOrder.service_order_id.toString().padStart(4, '0')}.pdf`);
 }
 
 /**
@@ -365,211 +406,219 @@ export interface BudgetData {
 }
 
 /**
- * Gera PDF de orçamento (antes de criar a OS)
+ * Gera PDF de orçamento (antes de criar a OS) - padrão GetMoto
  */
-export function generateBudgetPDF(data: BudgetData, t?: (key: string) => string): void {
-  // Sanitize nome do cliente
+export async function generateBudgetPDF(data: BudgetData, t?: (key: string) => string): Promise<void> {
   const customerName = data.customer_name && data.customer_name.trim() !== ''
     ? data.customer_name
     : 'Cliente não informado';
 
-  // Calcular totais (tratando valores possivelmente NaN)
+  // Carregar logo
+  const logoBase64 = await loadLogoAsBase64();
+
+  // Calcular totais
   const productsTotal = data.products.reduce((sum, p) => {
     const qty = Number(p.product_qtd) || 0;
     const price = Number(p.unit_price) || 0;
     return sum + qty * price;
   }, 0);
+
   const servicesTotal = data.services.reduce((sum, s) => {
     const qty = Number(s.service_qtd) || 0;
     const price = Number(s.unit_price) || 0;
     return sum + qty * price;
   }, 0);
+
   const subtotal = productsTotal + servicesTotal;
-  
+
   let discountValue = 0;
   if (data.discount_amount) {
     discountValue = data.discount_amount;
   } else if (data.discount_percent) {
     discountValue = subtotal * (data.discount_percent / 100);
   }
-  
+
   const total = subtotal - discountValue;
 
-  const content: Content = [];
-
-  // Informações básicas
-  content.push({ text: t ? t('services.customerInfo') : 'Informações do Cliente', style: 'subheader' });
-  content.push({
-    table: {
-      widths: ['25%', '75%'],
-      body: [
-        [
-          { text: t ? t('services.customer') : 'Cliente:', style: 'label' },
-          { text: customerName, style: 'value' },
-        ],
-        ...(data.vehicle_info
-          ? [[{ text: t ? t('services.vehicle') : 'Veículo:', style: 'label' }, { text: data.vehicle_info, style: 'value' }]]
-          : []),
-        ...(data.professional_name
-          ? [[{ text: t ? t('services.professional') : 'Profissional:', style: 'label' }, { text: data.professional_name, style: 'value' }]]
-          : []),
-      ],
-    },
-    layout: 'noBorders',
-    margin: [0, 0, 0, 15] as [number, number, number, number],
-  });
-
-  // Descrição
-  if (data.service_description) {
-    content.push({ text: t ? t('services.serviceDescription') : 'Descrição do Serviço', style: 'subheader' });
-    content.push({
-      text: data.service_description,
-      style: 'info',
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    });
-  }
-
-  // Serviços
-  if (data.services.length > 0) {
-    content.push({ text: t ? t('services.services') : 'Serviços', style: 'subheader' });
-    content.push({
-      table: {
-        headerRows: 1,
-        widths: ['*', '15%', '20%', '20%'],
-        body: [
-          [
-            { text: t ? t('services.service') : 'Serviço', style: 'tableHeader' },
-            { text: t ? t('services.quantity') : 'Qtd', style: 'tableHeader' },
-            { text: t ? t('services.unitPrice') : 'Preço Unit.', style: 'tableHeader' },
-            { text: t ? t('services.total') : 'Total', style: 'tableHeader' },
-          ],
-          ...data.services.map((s) => [
-            { text: s.service_name, style: 'tableCell' },
-            { text: s.service_qtd.toFixed(0), style: 'tableCell', alignment: 'center' },
-            { text: formatCurrency(s.unit_price), style: 'tableCell', alignment: 'right' },
-            { text: formatCurrency(s.service_qtd * s.unit_price), style: 'tableCell', alignment: 'right' },
-          ]),
-        ],
-      },
-      layout: {
-        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#1890ff' : rowIndex % 2 === 0 ? '#f0f0f0' : null),
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
-      },
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any);
-  }
+  // Criar linhas da tabela
+  const rows: any[] = [];
 
   // Produtos
-  if (data.products.length > 0) {
-    content.push({ text: t ? t('services.products') : 'Produtos', style: 'subheader' });
-    content.push({
+  data.products.forEach((p) => {
+    const qty = Number(p.product_qtd) || 0;
+    const price = Number(p.unit_price) || 0;
+    const itemTotal = qty * price;
+
+    rows.push([
+      { text: p.product_name, style: 'tableCell', border: [true, true, true, true] },
+      { text: qty.toFixed(2), style: 'tableCell', alignment: 'center', border: [true, true, true, true] },
+      { text: formatCurrency(price), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+      { text: formatCurrency(itemTotal), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+    ]);
+  });
+
+  // Serviços
+  data.services.forEach((s) => {
+    const qty = Number(s.service_qtd) || 0;
+    const price = Number(s.unit_price) || 0;
+    const itemTotal = qty * price;
+
+    rows.push([
+      { text: s.service_name, style: 'tableCell', border: [true, true, true, true] },
+      { text: qty.toFixed(0), style: 'tableCell', alignment: 'center', border: [true, true, true, true] },
+      { text: formatCurrency(price), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+      { text: formatCurrency(itemTotal), style: 'tableCell', alignment: 'right', border: [true, true, true, true] },
+    ]);
+  });
+
+  const content: Content = [
+    createGetMotoHeader(logoBase64),
+
+    // Cliente
+    {
       table: {
-        headerRows: 1,
-        widths: ['*', '15%', '20%', '20%'],
+        widths: ['*'],
         body: [
-          [
-            { text: t ? t('services.product') : 'Produto', style: 'tableHeader' },
-            { text: t ? t('services.quantity') : 'Qtd', style: 'tableHeader' },
-            { text: t ? t('products.unitPrice') : 'Preço Unit.', style: 'tableHeader' },
-            { text: t ? t('services.total') : 'Total', style: 'tableHeader' },
-          ],
-          ...data.products.map((p) => [
-            { text: p.product_name, style: 'tableCell' },
-            { text: p.product_qtd.toFixed(2), style: 'tableCell', alignment: 'center' },
-            { text: formatCurrency(p.unit_price), style: 'tableCell', alignment: 'right' },
-            { text: formatCurrency(p.product_qtd * p.unit_price), style: 'tableCell', alignment: 'right' },
-          ]),
+          [{ text: customerName, style: 'label', alignment: 'center', margin: [10, 10, 10, 10] as [number, number, number, number] }],
         ],
       },
       layout: {
-        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#1890ff' : rowIndex % 2 === 0 ? '#f0f0f0' : null),
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
       },
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any);
-  }
+      // @ts-expect-error - pdfmake allows width in table definition
+      width: '40%',
+      margin: [0, 0, 0, 20] as [number, number, number, number],
+    },
 
-  // Resumo financeiro
-  const summaryRows: any[] = [];
-  
-  if (data.services.length > 0) {
-    summaryRows.push([
-      { text: t ? t('services.servicesTotal') : 'Total de Serviços:', style: 'label', alignment: 'right' },
-      { text: formatCurrency(servicesTotal), style: 'value', alignment: 'right' },
-    ]);
-  }
-  
-  if (data.products.length > 0) {
-    summaryRows.push([
-      { text: t ? t('services.productsTotal') : 'Total de Produtos:', style: 'label', alignment: 'right' },
-      { text: formatCurrency(productsTotal), style: 'value', alignment: 'right' },
-    ]);
-  }
-  
-  summaryRows.push([
-    { text: t ? t('services.subtotal').toUpperCase() : 'SUBTOTAL:', style: 'label', alignment: 'right', bold: true },
-    { text: formatCurrency(subtotal), style: 'value', alignment: 'right', bold: true },
-  ]);
-  
-  if (discountValue > 0) {
-    summaryRows.push([
-      { text: t ? t('services.discount') : 'Desconto:', style: 'label', alignment: 'right', color: '#dc3545' },
-      { text: `- ${formatCurrency(discountValue)}`, style: 'value', alignment: 'right', color: '#dc3545' },
-    ]);
-  }
-  
-  summaryRows.push([
-    { text: t ? t('services.grandTotal').toUpperCase() : 'TOTAL GERAL:', style: 'totalLabel', alignment: 'right', fillColor: '#f0f0f0' },
+    // Tabela de itens
     {
-      text: formatCurrency(total),
-      style: 'totalValue',
-      alignment: 'right',
-      fillColor: '#f0f0f0',
-      bold: true,
+      table: {
+        headerRows: 1,
+        widths: ['*', '10%', '20%', '20%'],
+        body: [
+          [
+            { text: t ? t('services.description') : 'Description', style: 'tableHeader', alignment: 'left', border: [true, true, true, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+            { text: t ? t('services.quantity') : 'Qty', style: 'tableHeader', border: [false, true, false, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+            { text: t ? t('services.unitPrice') : 'Unit Price', style: 'tableHeader', border: [false, true, false, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+            { text: t ? t('services.amount') : 'Amount', style: 'tableHeader', border: [true, true, true, true], margin: [5, 8, 5, 8] as [number, number, number, number] },
+          ],
+          ...rows,
+        ],
+      },
+      layout: {
+        hLineWidth: (i: number) => {
+          // Linha dupla após o cabeçalho
+          if (i === 1) return 2;
+          return 1;
+        },
+        vLineWidth: (i: number, node: any) => {
+          // Sem linhas verticais no cabeçalho (primeira linha)
+          return 1;
+        },
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
+        paddingLeft: (i: number) => (i === 0 ? 5 : 5),
+        paddingRight: (i: number) => (i === 0 ? 5 : 5),
+        paddingTop: (i: number) => (i === 0 ? 0 : 5),
+        paddingBottom: (i: number) => (i === 0 ? 8 : 3),
+      },
+      margin: [0, 0, 0, 20] as [number, number, number, number],
     },
-  ]);
 
-  content.push({ text: t ? t('services.financialSummary') : 'Resumo Financeiro', style: 'subheader' });
-  content.push({
-    table: {
-      widths: ['*', '30%'],
-      body: summaryRows,
+    // Total
+    {
+      columns: [
+        { text: '', width: '*' }, // Espaço vazio à esquerda
+        {
+          width: 'auto',
+          table: {
+            widths: [80, 100],
+            body: [
+              [
+                { text: t ? t('services.total') : 'Total', style: 'totalLabel', alignment: 'right', margin: [10, 5, 5, 5] as [number, number, number, number] },
+                { text: formatCurrency(total), style: 'totalValue', alignment: 'right', margin: [5, 5, 10, 5] as [number, number, number, number] },
+              ],
+            ],
+          },
+          layout: {
+            hLineWidth: () => 1,
+            vLineWidth: () => 1,
+            hLineColor: () => '#000000',
+            vLineColor: () => '#000000',
+          },
+        },
+      ],
+      margin: [0, 0, 0, 20] as [number, number, number, number],
     },
-    layout: {
-      hLineWidth: (i: number, node: any) => (i === node.table.body.length - 1 ? 2 : 0.5),
-      vLineWidth: () => 0.5,
-      hLineColor: () => '#d9d9d9',
-      vLineColor: () => '#d9d9d9',
-    },
-  } as any);
+  ];
 
-  // Observações
-  if (data.notes) {
-    content.push({ text: t ? t('services.notes') : 'Observações', style: 'subheader' });
-    content.push({
-      text: data.notes,
-      style: 'info',
-      margin: [0, 0, 0, 15] as [number, number, number, number],
-    });
-  }
+  const budgetDate = formatDate(new Date());
 
-  const fileName = `${t ? t('services.budget').toLowerCase() : 'orcamento'}_${customerName.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
-  
-  generatePdf(content, fileName, {
-    header: {
-      title: t ? t('services.budget').toUpperCase() : 'ORÇAMENTO',
-      subtitle: customerName,
+  const docDefinition: any = {
+    ...defaultDocumentConfig,
+    pageOrientation: 'portrait',
+    content,
+    styles: defaultStyles,
+    footer: createGetMotoFooter('BUDGET', budgetDate),
+    background: (currentPage: number, pageSize: any) => {
+      return {
+        canvas: [
+          // Borda esquerda
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda direita
+          {
+            type: 'line',
+            x1: pageSize.width - 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda superior
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda inferior
+          {
+            type: 'line',
+            x1: 40,
+            y1: pageSize.height - 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+        ],
+      };
     },
     info: {
-      title: `${t ? t('services.budget') : 'Orçamento'} - ${customerName}`,
-      subject: 'Orçamento - CRM GetMoto',
-      keywords: 'orçamento, estimativa, moto, mecânica',
+      title: `Budget - ${customerName}`,
+      author: COMPANY_INFO.name,
+      subject: 'Budget - GetMoto',
+      keywords: 'budget, estimate, getmoto',
+      creator: COMPANY_INFO.name,
+      producer: 'pdfmake',
     },
-  });
+  };
+
+  const fileName = `budget_${customerName.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+  pdfMake.createPdf(docDefinition).download(fileName);
 }

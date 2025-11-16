@@ -78,12 +78,12 @@ export function ServiceOrdersReport() {
     };
   }, [serviceOrders]);
 
-  const handleGeneratePdf = () => {
+  const handleGeneratePdf = async () => {
     if (!serviceOrders) return;
 
     setIsPdfLoading(true);
     try {
-      generateConsolidatedServicesReport({
+      await generateConsolidatedServicesReport({
         serviceOrders,
         startDate: dateRange[0].toISOString(),
         endDate: dateRange[1].toISOString(),

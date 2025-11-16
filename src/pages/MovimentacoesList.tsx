@@ -212,6 +212,7 @@ export function MovimentacoesList() {
       <PageHeader
         title={t('cashflow.movementsList')}
         subtitle={t('cashflow.movementsListSubtitle')}
+        helpText={t('cashflow.pageHelp')}
       />
 
       <Card style={{ marginBottom: 16 }}>

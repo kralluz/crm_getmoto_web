@@ -20,27 +20,40 @@ import {
   FileTextOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useVehicle, useVehicleStats } from '../hooks/useMotorcycles';
 import { formatCurrency } from '../utils/format.util';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
+import { useState, useEffect } from 'react';
 
 const { Title, Text } = Typography;
 
 export function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+  const [cameFromSearch, setCameFromSearch] = useState(false);
 
   const { data: vehicle, isLoading: vehicleLoading } = useVehicle(id ? parseInt(id) : undefined);
   const { data: statsData, isLoading: statsLoading } = useVehicleStats(id ? parseInt(id) : undefined);
 
   const isLoading = vehicleLoading || statsLoading;
 
+  // Detectar se veio da página de busca
+  useEffect(() => {
+    const fromSearch = location.state?.fromSearch;
+    setCameFromSearch(fromSearch);
+  }, [location]);
+
   const handleBack = () => {
-    navigate('/veiculos');
+    if (cameFromSearch) {
+      navigate(-1); // Volta para a página de busca
+    } else {
+      navigate('/veiculos'); // Volta para a lista de veículos
+    }
   };
 
   const handleEdit = () => {

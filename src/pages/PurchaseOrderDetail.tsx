@@ -9,13 +9,14 @@ import {
   Alert,
 } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../hooks/useFormat';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
 import { PageHeader } from '../components/common/PageHeader';
 import { purchaseOrderApi } from '../api/purchase-order-api';
 import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 
 const { Text } = Typography;
 
@@ -33,9 +34,17 @@ export function PurchaseOrderDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { formatCurrency, formatDate, formatDateTime } = useFormat();
+  const [cameFromSearch, setCameFromSearch] = useState(false);
 
   const { data: purchaseOrder, isLoading } = usePurchaseOrder(id);
+
+  // Detectar se veio da página de busca
+  useEffect(() => {
+    const fromSearch = location.state?.fromSearch;
+    setCameFromSearch(fromSearch);
+  }, [location]);
 
   if (isLoading) {
     return <LoadingOverlay />;
@@ -46,7 +55,13 @@ export function PurchaseOrderDetail() {
       <div>
         <PageHeader
           title={t('purchaseOrder.title')}
-          onBack={() => navigate('/dashboard')}
+          onBack={() => {
+            if (cameFromSearch) {
+              navigate(-1);
+            } else {
+              navigate('/dashboard');
+            }
+          }}
         />
         <Card style={{ marginTop: 16 }}>
           <Alert message={t('purchaseOrder.notFound')} type="error" />
@@ -56,7 +71,11 @@ export function PurchaseOrderDetail() {
   }
 
   const handleBack = () => {
-    navigate('/dashboard');
+    if (cameFromSearch) {
+      navigate(-1); // Volta para a página de busca
+    } else {
+      navigate('/dashboard'); // Volta para o dashboard
+    }
   };
 
   return (

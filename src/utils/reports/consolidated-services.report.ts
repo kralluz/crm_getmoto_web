@@ -1,7 +1,13 @@
 import type { Content } from 'pdfmake/interfaces';
 import { formatCurrency, formatDate, parseDecimal } from '../format.util';
-import { generatePdf } from '../pdf.util';
+import { defaultDocumentConfig, defaultStyles, createGetMotoHeader, COMPANY_INFO } from '../pdf.util';
+import { loadLogoAsBase64 } from '../logo-base64';
 import type { ServiceOrder } from '../../types/service-order';
+import pdfMakeOriginal from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+
+const pdfMake = pdfMakeOriginal as any;
+pdfMake.vfs = pdfFonts;
 
 /**
  * Interface para dados do relatório consolidado
@@ -62,100 +68,68 @@ function createExecutiveSummary(
   const avgTicket = completedOrders.length > 0 ? totalRevenue / completedOrders.length : 0;
 
   const periodText = startDate && endDate
-    ? `Período: ${formatDate(startDate)} até ${formatDate(endDate)}`
+    ? `Period: ${formatDate(startDate)} to ${formatDate(endDate)}`
     : startDate
-    ? `A partir de: ${formatDate(startDate)}`
+    ? `From: ${formatDate(startDate)}`
     : endDate
-    ? `Até: ${formatDate(endDate)}`
-    : 'Todos os períodos';
+    ? `Until: ${formatDate(endDate)}`
+    : 'All periods';
 
   return [
-    { text: 'Resumo Executivo', style: 'subheader' },
-    { text: periodText, style: 'info', italics: true, margin: [0, 0, 0, 10] as [number, number, number, number] },
+    { text: 'Executive Summary', style: 'subheader' },
+    { text: periodText, style: 'info', margin: [0, 0, 0, 10] as [number, number, number, number] },
     {
       table: {
         widths: ['*', '*', '*', '*'],
         body: [
           [
-            { text: 'Total de OS', style: 'tableHeader', alignment: 'center' },
-            { text: 'OS Concluídas', style: 'tableHeader', alignment: 'center' },
-            { text: 'Receita Total', style: 'tableHeader', alignment: 'center' },
-            { text: 'Ticket Médio', style: 'tableHeader', alignment: 'center' },
+            { text: 'Total SO', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
+            { text: 'Completed SO', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
+            { text: 'Total Revenue', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
+            { text: 'Average Ticket', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
           ],
           [
-            { text: totalOrders.toString(), style: 'tableCell', alignment: 'center', fontSize: 14, bold: true },
-            {
-              text: completedOrders.length.toString(),
-              style: 'tableCell',
-              alignment: 'center',
-              fontSize: 14,
-              bold: true,
-              color: '#52c41a',
-            },
-            {
-              text: formatCurrency(totalRevenue),
-              style: 'tableCell',
-              alignment: 'center',
-              fontSize: 14,
-              bold: true,
-              color: '#1890ff',
-            },
-            {
-              text: formatCurrency(avgTicket),
-              style: 'tableCell',
-              alignment: 'center',
-              fontSize: 14,
-              bold: true,
-            },
+            { text: totalOrders.toString(), style: 'tableCell', alignment: 'center', fontSize: 14, bold: true, border: [true, true, true, true] },
+            { text: completedOrders.length.toString(), style: 'tableCell', alignment: 'center', fontSize: 14, bold: true, border: [true, true, true, true] },
+            { text: formatCurrency(totalRevenue), style: 'tableCell', alignment: 'center', fontSize: 14, bold: true, border: [true, true, true, true] },
+            { text: formatCurrency(avgTicket), style: 'tableCell', alignment: 'center', fontSize: 14, bold: true, border: [true, true, true, true] },
           ],
         ],
       },
       layout: {
-        fillColor: (rowIndex: number) => (rowIndex === 0 ? '#1890ff' : '#f0f0f0'),
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
       },
       margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any,
+    },
     {
       table: {
         widths: ['*', '*', '*', '*'],
         body: [
           [
-            { text: 'Status das Ordens de Serviço', style: 'tableHeader', alignment: 'center', colSpan: 4 },
-            {},
-            {},
-            {},
+            { text: 'Draft', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
+            { text: 'In Progress', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
+            { text: 'Completed', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
+            { text: 'Cancelled', style: 'tableHeader', alignment: 'center', border: [true, true, true, true] },
           ],
           [
-            { text: 'Rascunho', style: 'tableCell', alignment: 'center' },
-            { text: 'Em Andamento', style: 'tableCell', alignment: 'center' },
-            { text: 'Concluída', style: 'tableCell', alignment: 'center' },
-            { text: 'Cancelada', style: 'tableCell', alignment: 'center' },
-          ],
-          [
-            { text: ordersByStatus.draft.toString(), style: 'tableCell', alignment: 'center', fontSize: 12 },
-            { text: ordersByStatus.in_progress.toString(), style: 'tableCell', alignment: 'center', fontSize: 12, color: '#ff9800' },
-            { text: ordersByStatus.completed.toString(), style: 'tableCell', alignment: 'center', fontSize: 12, color: '#52c41a' },
-            { text: ordersByStatus.cancelled.toString(), style: 'tableCell', alignment: 'center', fontSize: 12, color: '#ff4d4f' },
+            { text: ordersByStatus.draft.toString(), style: 'tableCell', alignment: 'center', fontSize: 12, border: [true, true, true, true] },
+            { text: ordersByStatus.in_progress.toString(), style: 'tableCell', alignment: 'center', fontSize: 12, border: [true, true, true, true] },
+            { text: ordersByStatus.completed.toString(), style: 'tableCell', alignment: 'center', fontSize: 12, border: [true, true, true, true] },
+            { text: ordersByStatus.cancelled.toString(), style: 'tableCell', alignment: 'center', fontSize: 12, border: [true, true, true, true] },
           ],
         ],
       },
       layout: {
-        fillColor: (rowIndex: number) => {
-          if (rowIndex === 0) return '#1890ff';
-          if (rowIndex === 1) return '#e6f7ff';
-          return null;
-        },
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
       },
       margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any,
+    },
   ];
 }
 
@@ -165,12 +139,10 @@ function createExecutiveSummary(
 function createOrdersListSection(orders: ServiceOrder[]): Content {
   if (orders.length === 0) {
     return [
-      { text: 'Ordens de Serviço', style: 'subheader' },
+      { text: 'Service Orders', style: 'subheader' },
       {
-        text: 'Nenhuma ordem de serviço encontrada no período selecionado.',
+        text: 'No service orders found in the selected period.',
         style: 'info',
-        italics: true,
-        color: '#8c8c8c',
         alignment: 'center',
         margin: [0, 20, 0, 20] as [number, number, number, number],
       },
@@ -178,40 +150,32 @@ function createOrdersListSection(orders: ServiceOrder[]): Content {
   }
 
   const statusLabels: Record<string, string> = {
-    draft: 'Rascunho',
-    in_progress: 'Em Andamento',
-    completed: 'Concluída',
-    cancelled: 'Cancelada',
-  };
-
-  const statusColors: Record<string, string> = {
-    draft: '#8c8c8c',
-    in_progress: '#ff9800',
-    completed: '#52c41a',
-    cancelled: '#ff4d4f',
+    draft: 'Draft',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
   };
 
   const rows = orders.map((order) => {
     const totals = calculateOrderTotals(order);
     const statusText = statusLabels[order.status] || order.status;
-    const statusColor = statusColors[order.status] || '#000000';
 
     return [
-      { text: `#${order.service_order_id}`, style: 'tableCell', alignment: 'center', fontSize: 9 },
-      { text: formatDate(order.created_at), style: 'tableCell', alignment: 'center', fontSize: 8 },
-      { text: order.customer_name || '-', style: 'tableCell', fontSize: 9 },
+      { text: `#${order.service_order_id}`, style: 'tableCell', alignment: 'center', fontSize: 9, border: [true, true, true, true] },
+      { text: formatDate(order.created_at), style: 'tableCell', alignment: 'center', fontSize: 8, border: [true, true, true, true] },
+      { text: order.customer_name || '-', style: 'tableCell', fontSize: 9, border: [true, true, true, true] },
       {
         text: order.vehicles ? `${order.vehicles.brand} ${order.vehicles.model}` : '-',
         style: 'tableCell',
         fontSize: 8,
+        border: [true, true, true, true],
       },
       {
         text: statusText,
         style: 'tableCell',
         alignment: 'center',
-        color: statusColor,
-        bold: true,
         fontSize: 8,
+        border: [true, true, true, true],
       },
       {
         text: formatCurrency(totals.total),
@@ -219,46 +183,42 @@ function createOrdersListSection(orders: ServiceOrder[]): Content {
         alignment: 'right',
         fontSize: 9,
         bold: order.status === 'completed',
+        border: [true, true, true, true],
       },
     ];
   });
 
   return [
-    { text: 'Ordens de Serviço', style: 'subheader' },
+    { text: 'Service Orders', style: 'subheader' },
     {
-      text: `Total: ${orders.length} ordem(ns) de serviço`,
+      text: `Total: ${orders.length} service order(s)`,
       style: 'info',
-      italics: true,
       margin: [0, 0, 0, 10] as [number, number, number, number],
     },
+    // @ts-expect-error - pdfmake type compatibility issue
     {
       table: {
         headerRows: 1,
         widths: ['8%', '12%', '*', '20%', '12%', '15%'],
         body: [
           [
-            { text: 'OS #', style: 'tableHeader', fontSize: 9 },
-            { text: 'Data', style: 'tableHeader', fontSize: 9 },
-            { text: 'Cliente', style: 'tableHeader', fontSize: 9 },
-            { text: 'Veículo', style: 'tableHeader', fontSize: 9 },
-            { text: 'Status', style: 'tableHeader', fontSize: 9 },
-            { text: 'Valor Total', style: 'tableHeader', fontSize: 9 },
+            { text: 'SO #', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: 'Date', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: 'Customer', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: 'Vehicle', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: 'Status', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
+            { text: 'Total Value', style: 'tableHeader', fontSize: 9, border: [true, true, true, true] },
           ],
           ...rows,
         ],
       },
       layout: {
-        fillColor: (rowIndex: number) => {
-          if (rowIndex === 0) return '#1890ff';
-          if (rowIndex % 2 === 0) return '#f0f0f0';
-          return null;
-        },
-        hLineWidth: () => 0.5,
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
       },
-    } as any,
+    },
   ];
 }
 
@@ -270,12 +230,10 @@ function createFinancialAnalysis(orders: ServiceOrder[]): Content {
 
   if (completedOrders.length === 0) {
     return [
-      { text: 'Análise Financeira', style: 'subheader' },
+      { text: 'Financial Analysis', style: 'subheader' },
       {
-        text: 'Não há ordens concluídas no período para análise financeira.',
+        text: 'No completed orders in the period for financial analysis.',
         style: 'info',
-        italics: true,
-        color: '#8c8c8c',
         alignment: 'center',
         margin: [0, 20, 0, 20] as [number, number, number, number],
       },
@@ -296,84 +254,208 @@ function createFinancialAnalysis(orders: ServiceOrder[]): Content {
   const grandTotal = totalProducts + totalServices + totalLabor;
 
   return [
-    { text: 'Análise Financeira (Ordens Concluídas)', style: 'subheader' },
+    { text: 'Financial Analysis (Completed Orders)', style: 'subheader' },
     {
       table: {
         widths: ['*', '30%'],
         body: [
           [
-            { text: 'Receita com Produtos:', style: 'label', alignment: 'right' },
-            { text: formatCurrency(totalProducts), style: 'value', alignment: 'right', bold: true },
+            { text: 'Revenue from Products:', style: 'label', alignment: 'right', border: [true, true, true, true] },
+            { text: formatCurrency(totalProducts), style: 'value', alignment: 'right', bold: true, border: [true, true, true, true] },
           ],
           [
-            { text: 'Receita com Serviços:', style: 'label', alignment: 'right' },
-            { text: formatCurrency(totalServices), style: 'value', alignment: 'right', bold: true },
+            { text: 'Revenue from Services:', style: 'label', alignment: 'right', border: [true, true, true, true] },
+            { text: formatCurrency(totalServices), style: 'value', alignment: 'right', bold: true, border: [true, true, true, true] },
           ],
           [
-            { text: 'Receita com Mão de Obra:', style: 'label', alignment: 'right' },
-            { text: formatCurrency(totalLabor), style: 'value', alignment: 'right', bold: true },
+            { text: 'Revenue from Labor:', style: 'label', alignment: 'right', border: [true, true, true, true] },
+            { text: formatCurrency(totalLabor), style: 'value', alignment: 'right', bold: true, border: [true, true, true, true] },
           ],
           [
             {
-              text: 'RECEITA TOTAL:',
+              text: 'TOTAL REVENUE:',
               style: 'totalLabel',
               alignment: 'right',
-              fillColor: '#e6f7ff',
               fontSize: 12,
+              border: [true, true, true, true],
             },
             {
               text: formatCurrency(grandTotal),
               style: 'totalValue',
               alignment: 'right',
-              fillColor: '#e6f7ff',
-              color: '#1890ff',
               bold: true,
               fontSize: 14,
+              border: [true, true, true, true],
             },
           ],
         ],
       },
       layout: {
-        hLineWidth: (i: number, node: any) => (i === node.table.body.length - 1 ? 2 : 0.5),
-        vLineWidth: () => 0.5,
-        hLineColor: () => '#d9d9d9',
-        vLineColor: () => '#d9d9d9',
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
       },
       margin: [0, 0, 0, 15] as [number, number, number, number],
-    } as any,
+    },
   ];
 }
 
 /**
  * Gera o relatório consolidado de OS por período em PDF
  */
-export function generateConsolidatedServicesReport(data: ConsolidatedServicesReportData): void {
+export async function generateConsolidatedServicesReport(data: ConsolidatedServicesReportData): Promise<void> {
   const { serviceOrders, startDate, endDate } = data;
 
+  // Carregar logo
+  const logoBase64 = await loadLogoAsBase64();
+
   const content: Content = [
+    createGetMotoHeader(logoBase64),
+    { text: 'Consolidated Service Orders Report', style: 'header', alignment: 'center', margin: [0, 0, 0, 20] as [number, number, number, number] },
     ...(createExecutiveSummary(serviceOrders, startDate, endDate) as any[]),
     ...(createFinancialAnalysis(serviceOrders) as any[]),
     ...(createOrdersListSection(serviceOrders) as any[]),
   ];
 
+  // Adicionar rodapé como parte do conteúdo
+  content.push({
+    table: {
+      widths: ['*'],
+      body: [
+        [
+          {
+            columns: [
+              {
+                text: 'If you have any questions concerning this report, Please contact us.',
+                fontSize: 8,
+                width: '*',
+              },
+              {
+                text: '                    ',
+                fontSize: 8,
+                width: 'auto',
+              },
+              {
+                text: 'Thank you for your business!',
+                fontSize: 8,
+                width: 'auto',
+              },
+            ],
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+        [
+          {
+            text: `Company Registration No. ${COMPANY_INFO.registration.number}`,
+            alignment: 'center',
+            bold: true,
+            fontSize: 8,
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+        [
+          {
+            text: `Bank Details. ${COMPANY_INFO.bank.name} Sort Code ${COMPANY_INFO.bank.sortCode}. Account No ${COMPANY_INFO.bank.accountNo}`,
+            alignment: 'center',
+            fontSize: 8,
+            margin: [4, 4, 4, 4] as [number, number, number, number],
+          },
+        ],
+      ],
+    },
+    layout: {
+      hLineWidth: () => 1,
+      vLineWidth: () => 1,
+      hLineColor: () => '#000000',
+      vLineColor: () => '#000000',
+    },
+    margin: [0, 0, 0, 10] as [number, number, number, number],
+  });
+
+  // Data do relatório
+  const reportDate = formatDate(new Date());
+  content.push({
+    columns: [
+      {
+        text: `REPORT DATE ${reportDate}`,
+        bold: true,
+        fontSize: 9,
+        width: '100%',
+        alignment: 'center',
+      },
+    ],
+    margin: [0, 0, 0, 0] as [number, number, number, number],
+  });
+
   const periodSuffix = startDate && endDate
     ? `${startDate.split('T')[0]}_${endDate.split('T')[0]}`
     : startDate
-    ? `desde_${startDate.split('T')[0]}`
+    ? `from_${startDate.split('T')[0]}`
     : endDate
-    ? `ate_${endDate.split('T')[0]}`
-    : 'completo';
+    ? `until_${endDate.split('T')[0]}`
+    : 'complete';
 
-  generatePdf(content, `relatorio_consolidado_${periodSuffix}_${new Date().getTime()}.pdf`, {
-    header: {
-      title: 'Relatório Consolidado - Ordens de Serviço',
-      subtitle: `${serviceOrders.length} ordem(ns) de serviço analisada(s)`,
+  const docDefinition: any = {
+    ...defaultDocumentConfig,
+    pageOrientation: 'portrait',
+    content,
+    styles: defaultStyles,
+    background: (currentPage: number, pageSize: any) => {
+      return {
+        canvas: [
+          // Borda esquerda
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda direita
+          {
+            type: 'line',
+            x1: pageSize.width - 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda superior
+          {
+            type: 'line',
+            x1: 40,
+            y1: 40,
+            x2: pageSize.width - 40,
+            y2: 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+          // Borda inferior
+          {
+            type: 'line',
+            x1: 40,
+            y1: pageSize.height - 40,
+            x2: pageSize.width - 40,
+            y2: pageSize.height - 40,
+            lineWidth: 1,
+            lineColor: '#000000',
+          },
+        ],
+      };
     },
     info: {
-      title: 'Relatório Consolidado - Ordens de Serviço',
-      subject: 'Análise Consolidada de OS - CRM GetMoto',
-      keywords: 'ordens de serviço, consolidado, análise, período',
+      title: 'Consolidated Service Orders Report',
+      author: COMPANY_INFO.name,
+      subject: 'Consolidated Analysis - GetMoto',
+      keywords: 'service orders, consolidated, analysis, period',
+      creator: COMPANY_INFO.name,
+      producer: 'pdfmake',
     },
-    pageOrientation: 'landscape',
-  });
+  };
+
+  pdfMake.createPdf(docDefinition).download(`consolidated_report_${periodSuffix}_${new Date().getTime()}.pdf`);
 }

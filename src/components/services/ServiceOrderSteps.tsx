@@ -205,7 +205,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                         placeholder={t('services.selectService')}
                       />
                     </Col>
-                    <Col xs={8} md={4}>
+                    <Col xs={24} md={4}>
                       <Text type="secondary">{t('services.quantity')}</Text>
                       <InputNumber
                         min={1}
@@ -220,7 +220,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                         style={{ width: '100%' }}
                       />
                     </Col>
-                    <Col xs={8} md={6}>
+                    <Col xs={24} md={6}>
                       <Text type="secondary">{t('services.unitPrice')}</Text>
                       <CurrencyInput
                         value={service.unit_price !== undefined ? service.unit_price : defaultPrice}
@@ -229,10 +229,10 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                           handleServiceChange(service.key, 'unit_price', value ?? 0);
                         }}
                         style={{ width: '100%' }}
-                        placeholder="R$ 0,00"
+                        placeholder="£ 0.00"
                       />
                     </Col>
-                    <Col xs={8} md={4}>
+                    <Col xs={24} md={4}>
                       <Button
                         danger
                         icon={<DeleteOutlined />}
@@ -341,7 +341,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                         placeholder={t('services.selectProduct')}
                       />
                     </Col>
-                    <Col xs={8} md={4}>
+                    <Col xs={24} md={4}>
                       <Text type="secondary">{t('services.quantity')}</Text>
                       <InputNumber
                         min={1}
@@ -380,7 +380,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                         </div>
                       )}
                     </Col>
-                    <Col xs={8} md={6}>
+                    <Col xs={24} md={6}>
                       <Text type="secondary">{t('services.unitPrice')}</Text>
                       <CurrencyInput
                         value={product.unit_price !== undefined ? product.unit_price : defaultPrice}
@@ -389,10 +389,10 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                           handleProductChange(product.key, 'unit_price', value ?? 0);
                         }}
                         style={{ width: '100%' }}
-                        placeholder="R$ 0,00"
+                        placeholder="£ 0.00"
                       />
                     </Col>
-                    <Col xs={8} md={4}>
+                    <Col xs={24} md={4}>
                       <Button
                         danger
                         icon={<DeleteOutlined />}
@@ -542,7 +542,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                             value={discountAmount}
                             onChange={(value) => setDiscountAmount(value || 0)}
                             style={{ width: '100%' }}
-                            placeholder="R$ 0,00"
+                            placeholder="£ 0.00"
                           />
                         )}
                       </Space>

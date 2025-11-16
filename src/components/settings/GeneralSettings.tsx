@@ -64,8 +64,8 @@ export function GeneralSettings() {
               style={{ width: 200 }}
               options={[
                 { value: 'pt-BR', label: t('settings.portuguese') },
-                { value: 'en', label: t('settings.english') },
-                { value: 'es', label: t('settings.spanish') },
+                { value: 'en-GB', label: t('settings.english') },
+                { value: 'es-ES', label: t('settings.spanish') },
               ]}
             />
           </div>

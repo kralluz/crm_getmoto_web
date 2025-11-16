@@ -199,7 +199,7 @@ export function ProductModal({ open, productId, onClose }: ProductModalProps) {
             >
               <CurrencyInput
                 style={{ width: '100%' }}
-                placeholder="R$ 0,00"
+                placeholder="£ 0.00"
                 onChange={(value) => {
                   setBuyPrice(value || 0);
                   form.validateFields(['sell_price']);
@@ -220,7 +220,7 @@ export function ProductModal({ open, productId, onClose }: ProductModalProps) {
             >
               <CurrencyInput
                 style={{ width: '100%' }}
-                placeholder="R$ 0,00"
+                placeholder="£ 0.00"
                 onChange={(value) => setSellPrice(value || 0)}
               />
             </Form.Item>

@@ -83,7 +83,12 @@ export function Login() {
         {loginMutation.isError && (
           <Alert
             message="Erro ao fazer login"
-            description="Email ou senha incorretos. Verifique suas credenciais e tente novamente."
+            description={
+              (loginMutation.error as any)?.status === 401
+                ? 'Email ou senha incorretos. Verifique suas credenciais e tente novamente.'
+                : loginMutation.error?.message ||
+                  'Não foi possível fazer login. Por favor, tente novamente.'
+            }
             type="error"
             showIcon
             closable

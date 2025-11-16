@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Card, 
   Descriptions, 
@@ -19,7 +19,7 @@ import {
   WarningOutlined 
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProduct } from '../hooks/useProducts';
 import { useFormat } from '../hooks/useFormat';
@@ -35,11 +35,28 @@ export function ProductDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { formatDateTime } = useFormat();
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [cameFromSearch, setCameFromSearch] = useState(false);
   
   const productId = id ? parseInt(id) : undefined;
   const { data: product, isLoading } = useProduct(productId);
+
+  // Detectar se veio da página de busca
+  useEffect(() => {
+    const referrer = document.referrer;
+    const fromSearch = referrer.includes('/busca') || location.state?.fromSearch;
+    setCameFromSearch(fromSearch);
+  }, [location]);
+
+  const handleBack = () => {
+    if (cameFromSearch) {
+      navigate(-1); // Volta para a página de busca
+    } else {
+      navigate('/produtos'); // Volta para a lista de produtos
+    }
+  };
 
   if (isLoading) {
     return <LoadingOverlay />;
@@ -48,7 +65,7 @@ export function ProductDetail() {
   if (!product) {
     return (
       <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/produtos')}>
+        <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
           Voltar
         </Button>
         <Card style={{ marginTop: 16 }}>
@@ -57,10 +74,6 @@ export function ProductDetail() {
       </div>
     );
   }
-
-  const handleBack = () => {
-    navigate('/produtos');
-  };
 
   const handleEdit = () => {
     navigate(`/produtos/${id}/editar`);
@@ -122,7 +135,7 @@ export function ProductDetail() {
                        record.move_type === 'EXIT' ? '-' : '';
         return (
           <Text strong style={{ color }}>
-            {prefix}{qtyNum.toFixed(1)}
+            {prefix}{qtyNum}
           </Text>
         );
       },
@@ -180,7 +193,7 @@ export function ProductDetail() {
       {isLowStock && (
         <Alert
           message="Estoque Baixo"
-          description={`O estoque está abaixo do nível mínimo (${quantityAlert.toFixed(1)} unidades). Considere fazer uma reposição.`}
+          description={`O estoque está abaixo do nível mínimo (${quantityAlert} unidades). Considere fazer uma reposição.`}
           type="warning"
           icon={<WarningOutlined />}
           showIcon
@@ -195,7 +208,6 @@ export function ProductDetail() {
             <Statistic
               title="Estoque Atual"
               value={quantity}
-              precision={1}
               suffix="unidades"
               valueStyle={{ color: isLowStock ? '#ff4d4f' : '#1890ff', fontWeight: 600 }}
             />
@@ -247,7 +259,7 @@ export function ProductDetail() {
             <Tag color="blue">{product.product_category?.product_category_name}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Estoque Mínimo">
-            {quantityAlert.toFixed(1)} unidades
+            {quantityAlert} unidades
           </Descriptions.Item>
           <Descriptions.Item label="Status">
             <Tag color={product.is_active ? 'green' : 'default'}>

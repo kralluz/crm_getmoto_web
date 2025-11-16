@@ -187,10 +187,10 @@ export function ProductList() {
         const isLowStock = qty <= alertQty;
         return (
           <Space>
-            <Tooltip title={isLowStock ? `${t('products.minStockLabel')}: ${alertQty.toFixed(1)}` : ''}>
+            <Tooltip title={isLowStock ? `${t('products.minStockLabel')}: ${alertQty}` : ''}>
               <span style={{ color: isLowStock ? '#ff4d4f' : undefined, fontWeight: isLowStock ? 600 : 400 }}>
                 {isLowStock && <WarningOutlined style={{ marginRight: 4 }} />}
-                {qty.toFixed(1)}
+                {qty}
               </span>
             </Tooltip>
             <Button
@@ -232,6 +232,7 @@ export function ProductList() {
       <PageHeader
         title={t('products.title')}
         subtitle={t('products.productListSubtitle')}
+        helpText={t('products.pageHelp')}
         extra={
           <Space>
             <Button

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useServiceOrders } from '../hooks/useServices';
 import { ServiceOrderModal } from '../components/services/ServiceOrderModal';
+import { PageHeader } from '../components/common/PageHeader';
 import type { ServiceOrder, ServiceOrderStatus } from '../types/service-order';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -193,22 +194,21 @@ export function ServiceList() {
 
   return (
     <div>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[16, 16]}>
-        <Col xs={24} sm={12}>
-          <Title level={2} style={{ margin: 0 }}>{t('services.ordersList')}</Title>
-        </Col>
-        <Col xs={24} sm={12} style={{ textAlign: 'right' }}>
+      <PageHeader
+        title={t('services.ordersList')}
+        subtitle={t('services.subtitle')}
+        helpText={t('services.serviceOrdersPageHelp')}
+        extra={
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleCreate}
             size="large"
-            block={window.innerWidth < 576}
           >
             {t('services.newOrder')}
           </Button>
-        </Col>
-      </Row>
+        }
+      />
 
       <Card style={{ marginBottom: 16 }}>
         <Row gutter={[16, 16]}>

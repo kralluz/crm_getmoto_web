@@ -11,6 +11,7 @@ import { PeriodSelector } from '../components/dashboard/PeriodSelector';
 import { FinancialSummaryCards } from '../components/dashboard/FinancialSummaryCards';
 import { CashFlowChart } from '../components/dashboard/CashFlowChart';
 import { RecentTransactionsTable } from '../components/dashboard/RecentTransactionsTable';
+import { PageHeader } from '../components/common/PageHeader';
 import { useDashboardData, useDeleteTransaction } from '../hooks/useCashFlow';
 import { generateCashFlowReport } from '../utils/reports';
 import { ActionButtons } from '../components/common/ActionButtons';
@@ -51,12 +52,12 @@ export function DashboardFinanceiro() {
     setDateRange({ startDate, endDate });
   };
 
-  const handleGenerateCashFlowPdf = () => {
+  const handleGenerateCashFlowPdf = async () => {
     if (!transactions || !summary) return;
 
     setIsPdfLoading(true);
     try {
-      generateCashFlowReport({
+      await generateCashFlowReport({
         entries: transactions.map(t => ({
           cash_flow_id: typeof t.cash_flow_id === 'string' ? parseInt(t.cash_flow_id, 10) : t.cash_flow_id,
           amount: t.amount,
@@ -151,6 +152,10 @@ export function DashboardFinanceiro() {
     };
   }, [filteredTransactions]);
 
+  const isCancelled = (note: string | null) => {
+    return note?.toUpperCase().includes('ESTORNO') || false;
+  };
+
   const columns: ColumnsType<CashFlowTransaction> = [
     {
       title: t('cashflow.actions'),
@@ -175,7 +180,11 @@ export function DashboardFinanceiro() {
       dataIndex: 'occurred_at',
       key: 'occurred_at',
       width: 120,
-      render: (date: string) => formatDate(date, 'short'),
+      render: (date: string, record) => (
+        <span style={{ textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none' }}>
+          {formatDate(date, 'short')}
+        </span>
+      ),
       sorter: (a, b) => dayjs(a.occurred_at).unix() - dayjs(b.occurred_at).unix(),
     },
     {
@@ -184,12 +193,13 @@ export function DashboardFinanceiro() {
       key: 'direction',
       width: 100,
       align: 'center',
-      render: (direction: CashFlowDirection) => {
+      render: (direction: CashFlowDirection, record) => {
         const isIncome = direction === 'entrada';
         return (
           <Tag
             color={isIncome ? 'green' : 'red'}
             icon={isIncome ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+            style={{ textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none' }}
           >
             {isIncome ? t('cashflow.income') : t('cashflow.expense')}
           </Tag>
@@ -226,7 +236,10 @@ export function DashboardFinanceiro() {
         };
 
         return (
-          <Tag color={sourceColors[source]}>
+          <Tag
+            color={sourceColors[source]}
+            style={{ textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none' }}
+          >
             {sourceLabels[source]}
           </Tag>
         );
@@ -237,7 +250,11 @@ export function DashboardFinanceiro() {
       dataIndex: 'note',
       key: 'note',
       ellipsis: true,
-      render: (note: string | null) => note || '-',
+      render: (note: string | null) => (
+        <span style={{ textDecoration: isCancelled(note) ? 'line-through' : 'none' }}>
+          {note || '-'}
+        </span>
+      ),
     },
     {
       title: t('cashflow.value'),
@@ -250,7 +267,8 @@ export function DashboardFinanceiro() {
         return (
           <span style={{
             fontWeight: 600,
-            color: isIncome ? '#52c41a' : '#ff4d4f'
+            color: isIncome ? '#52c41a' : '#ff4d4f',
+            textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none'
           }}>
             {isIncome ? '+' : '-'} {formatCurrency(Math.abs(value))}
           </span>
@@ -273,11 +291,11 @@ export function DashboardFinanceiro() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <Title level={2} style={{ margin: 0 }}>{t('dashboard.title')}</Title>
-        </Col>
-      </Row>
+      <PageHeader
+        title={t('dashboard.title')}
+        subtitle={t('dashboard.subtitle')}
+        helpText={t('dashboard.pageHelp')}
+      />
 
       <Tabs
         activeKey={activeTab}

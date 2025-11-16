@@ -1,5 +1,5 @@
-import { Typography, Button, Space } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Typography, Button, Space, Tooltip } from 'antd';
+import { ArrowLeftOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 
 const { Title, Text } = Typography;
@@ -7,6 +7,7 @@ const { Title, Text } = Typography;
 export interface PageHeaderProps {
   title: string;
   subtitle?: string;
+  helpText?: string;
   onBack?: () => void;
   extra?: ReactNode;
   children?: ReactNode;
@@ -19,6 +20,7 @@ export interface PageHeaderProps {
 export function PageHeader({
   title,
   subtitle,
+  helpText,
   onBack,
   extra,
   children,
@@ -43,9 +45,23 @@ export function PageHeader({
             />
           )}
           <div>
-            <Title level={2} style={{ margin: 0 }}>
-              {title}
-            </Title>
+            <Space align="center" size="small">
+              <Title level={2} style={{ margin: 0 }}>
+                {title}
+              </Title>
+              {helpText && (
+                <Tooltip title={helpText} placement="right" overlayStyle={{ maxWidth: '400px' }}>
+                  <QuestionCircleOutlined
+                    style={{
+                      fontSize: '18px',
+                      color: '#1890ff',
+                      cursor: 'help',
+                      marginTop: '4px',
+                    }}
+                  />
+                </Tooltip>
+              )}
+            </Space>
             {subtitle && (
               <Text type="secondary" style={{ fontSize: '14px' }}>
                 {subtitle}

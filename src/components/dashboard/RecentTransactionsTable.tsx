@@ -46,12 +46,20 @@ export function RecentTransactionsTable({
     }).format(num);
   };
 
+  const isCancelled = (note: string | null) => {
+    return note?.toUpperCase().includes('ESTORNO') || false;
+  };
+
   const columns: ColumnsType<CashFlowTransaction> = [
     {
       title: t('table.date'),
       dataIndex: 'occurred_at',
       key: 'occurred_at',
-      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
+      render: (date: string, record) => (
+        <span style={{ textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none' }}>
+          {dayjs.utc(date).format('DD/MM/YYYY')}
+        </span>
+      ),
       width: 120,
     },
     {
@@ -59,15 +67,22 @@ export function RecentTransactionsTable({
       dataIndex: 'note',
       key: 'note',
       ellipsis: true,
-      render: (note: string | null) => note || '-',
+      render: (note: string | null) => (
+        <span style={{ textDecoration: isCancelled(note) ? 'line-through' : 'none' }}>
+          {note || '-'}
+        </span>
+      ),
     },
     {
       title: t('table.type'),
       dataIndex: 'direction',
       key: 'direction',
       width: 100,
-      render: (direction: string) => (
-        <Tag color={direction === 'entrada' ? 'green' : 'red'}>
+      render: (direction: string, record) => (
+        <Tag
+          color={direction === 'entrada' ? 'green' : 'red'}
+          style={{ textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none' }}
+        >
           {direction === 'entrada' ? t('dashboard.income') : t('dashboard.expense')}
         </Tag>
       ),
@@ -83,6 +98,7 @@ export function RecentTransactionsTable({
           style={{
             color: record.direction === 'entrada' ? '#3f8600' : '#cf1322',
             fontWeight: 'bold',
+            textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none',
           }}
         >
           {record.direction === 'entrada' ? '+' : '-'} {formatCurrency(value)}

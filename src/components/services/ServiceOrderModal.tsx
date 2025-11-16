@@ -256,16 +256,16 @@ export function ServiceOrderModal({
   }, [products, productsData, isEditing]);
 
   // Função para gerar PDF do orçamento
-  const handleGeneratePDF = () => {
+  const handleGeneratePDF = async () => {
     try {
       const formValues = form.getFieldsValue();
-      
+
       // Buscar informações do veículo
       let vehicleInfo = '';
       if (selectedVehicle) {
         vehicleInfo = `${selectedVehicle.plate} - ${selectedVehicle.brand} ${selectedVehicle.model}${selectedVehicle.year ? ` (${selectedVehicle.year})` : ''}${selectedVehicle.color ? ` - ${selectedVehicle.color}` : ''}`;
       }
-      
+
       // Preparar dados dos serviços (inclui itens sem ID, usando nome genérico)
       const servicesData = services.map((s, idx) => {
         const serviceData = s.service_id
@@ -280,7 +280,7 @@ export function ServiceOrderModal({
           unit_price: unitPrice,
         };
       });
-      
+
       // Preparar dados dos produtos (inclui itens sem ID, usando nome genérico)
       const productsDataPDF = products.map((p, idx) => {
         const productData = p.product_id
@@ -295,8 +295,8 @@ export function ServiceOrderModal({
           unit_price: unitPrice,
         };
       });
-      
-      generateBudgetPDF(
+
+      await generateBudgetPDF(
         {
           customer_name: formValues.customer_name || 'Cliente não informado',
           vehicle_info: vehicleInfo,
@@ -310,7 +310,7 @@ export function ServiceOrderModal({
         },
         t
       );
-      
+
       NotificationService.success(t('services.pdfGeneratedSuccess'));
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);

@@ -55,7 +55,7 @@ export function PeriodSelector({ onPeriodChange, onGenerateReport, reportLoading
         break;
       case 'thisMonth':
         startDate = today.startOf('month');
-        endDate = today.endOf('month');
+        endDate = today.endOf('day'); // Até hoje, não até o fim do mês
         break;
       case 'lastMonth':
         startDate = today.subtract(1, 'month').startOf('month');
@@ -65,7 +65,7 @@ export function PeriodSelector({ onPeriodChange, onGenerateReport, reportLoading
         {
           const quarterStartMonth = Math.floor(today.month() / 3) * 3;
           startDate = today.month(quarterStartMonth).startOf('month');
-          endDate = today.month(quarterStartMonth + 2).endOf('month');
+          endDate = today.endOf('day'); // Até hoje, não até o fim do trimestre
         }
         break;
       case 'lastQuarter':
@@ -80,11 +80,11 @@ export function PeriodSelector({ onPeriodChange, onGenerateReport, reportLoading
         if (currentMonth < 6) {
           // First semester (Jan-Jun)
           startDate = today.startOf('year');
-          endDate = today.month(5).endOf('month');
+          endDate = today.endOf('day'); // Até hoje, não até o fim do semestre
         } else {
           // Second semester (Jul-Dec)
           startDate = today.month(6).startOf('month');
-          endDate = today.endOf('year');
+          endDate = today.endOf('day'); // Até hoje, não até o fim do semestre
         }
         break;
       case 'lastSemester':
@@ -101,7 +101,7 @@ export function PeriodSelector({ onPeriodChange, onGenerateReport, reportLoading
         break;
       case 'thisYear':
         startDate = today.startOf('year');
-        endDate = today.endOf('year');
+        endDate = today.endOf('day'); // Até hoje, não até o fim do ano
         break;
       case 'lastYear':
         startDate = today.subtract(1, 'year').startOf('year');

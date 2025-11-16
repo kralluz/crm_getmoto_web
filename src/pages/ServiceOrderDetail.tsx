@@ -27,14 +27,14 @@ import {
   FilePdfOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServiceOrder, useCancelServiceOrder } from '../hooks/useServices';
 import { useAuthStore } from '../store/auth-store';
 import { NotificationService } from '../services/notification.service';
 import type { ServiceProduct, ServiceRealized, CashFlow } from '../types/service-order';
 import type { ColumnsType } from 'antd/es/table';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { generateServiceOrderReport } from '../utils/reports';
 import { formatCurrency, formatDateTime, parseDecimal } from '../utils/format.util';
 
@@ -44,6 +44,7 @@ export function ServiceOrderDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const serviceOrderId = id ? parseInt(id) : 0;
 
   const { data: serviceOrder, isLoading, error } = useServiceOrder(serviceOrderId);
@@ -52,13 +53,20 @@ export function ServiceOrderDetail() {
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelForm] = Form.useForm();
+  const [cameFromSearch, setCameFromSearch] = useState(false);
 
-  const handleGeneratePdf = () => {
+  // Detectar se veio da página de busca
+  useEffect(() => {
+    const fromSearch = location.state?.fromSearch;
+    setCameFromSearch(fromSearch);
+  }, [location]);
+
+  const handleGeneratePdf = async () => {
     if (!serviceOrder) return;
 
     setIsPdfLoading(true);
     try {
-      generateServiceOrderReport(serviceOrder);
+      await generateServiceOrderReport(serviceOrder);
     } catch (err) {
       console.error('Erro ao gerar PDF:', err);
     } finally {
@@ -67,7 +75,11 @@ export function ServiceOrderDetail() {
   };
 
   const handleBack = () => {
-    navigate('/servicos');
+    if (cameFromSearch) {
+      navigate(-1); // Volta para a página de busca
+    } else {
+      navigate('/servicos'); // Volta para a lista de serviços
+    }
   };
 
   const handleCancelOrder = () => {

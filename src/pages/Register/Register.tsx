@@ -48,7 +48,12 @@ export function Register() {
         {registerMutation.isError && (
           <Alert
             message="Erro ao criar conta"
-            description="Não foi possível criar sua conta. Verifique os dados e tente novamente."
+            description={
+              (registerMutation.error as any)?.status === 409
+                ? 'Este email já está cadastrado. Por favor, use outro email ou faça login.'
+                : registerMutation.error?.message ||
+                  'Não foi possível criar sua conta. Verifique os dados e tente novamente.'
+            }
             type="error"
             showIcon
             closable

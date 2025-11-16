@@ -122,7 +122,7 @@ export function StockMovementModal({
             <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
               <strong>{t('products.product') || 'Produto'}:</strong> {product.product_name}
               <br />
-              <strong>{t('inventory.currentStock') || 'Estoque Atual'}:</strong> {product.quantity.toFixed(1)} {t('inventory.units') || 'unidades'}
+              <strong>{t('inventory.currentStock') || 'Estoque Atual'}:</strong> {product.quantity} {t('inventory.units') || 'unidades'}
             </div>
           )}
 
@@ -139,12 +139,12 @@ export function StockMovementModal({
             </Radio.Group>
           </Form.Item>
 
-          <Form.Item
+                    <Form.Item
             label={t('inventory.quantity') || 'Quantidade'}
             name="quantity"
             rules={[
               { required: true, message: t('inventory.quantityRequired') || 'Quantidade é obrigatória' },
-              { type: 'number', min: 0.01, message: t('stockAdjustment.quantityPositive') || 'Quantidade deve ser positiva' },
+              { type: 'number', min: 1, message: t('stockAdjustment.quantityPositive') || 'Quantidade deve ser positiva' },
               {
                 validator: (_, value) => {
                   if (product && adjustmentType === 'decrease' && value > product.quantity) {
@@ -156,9 +156,8 @@ export function StockMovementModal({
             ]}
           >
             <InputNumber
-              min={0.01}
+              min={1}
               step={1}
-              precision={1}
               style={{ width: '100%' }}
               placeholder={t('stockAdjustment.quantityPlaceholder') || 'Digite a quantidade'}
             />

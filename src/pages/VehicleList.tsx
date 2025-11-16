@@ -179,6 +179,7 @@ export function VehicleList() {
       <PageHeader
         title={t('vehicles.title')}
         subtitle={t('vehicles.subtitle')}
+        helpText={t('vehicles.pageHelp')}
         extra={
           <Button
             type="primary"
