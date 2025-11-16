@@ -1,4 +1,4 @@
-# CRM GetMoto - Frontend
+# Getmoto LTD - Frontend
 
 Sistema de CRM para gestão de oficina de motos - Interface Frontend desenvolvida com React, TypeScript e Ant Design.
 

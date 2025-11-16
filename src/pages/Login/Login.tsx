@@ -76,7 +76,7 @@ export function Login() {
 
       <Card className="login-card">
         <div className="login-header">
-          <Title level={2}>CRM GetMoto</Title>
+          <Title level={2}>GetMoto LTD</Title>
           <Text type="secondary">Faça login para continuar</Text>
         </div>
 

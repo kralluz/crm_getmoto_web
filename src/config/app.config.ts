@@ -36,7 +36,7 @@ export const apiConfig = {
  * Configuração da aplicação
  */
 export const appConfig = {
-  name: import.meta.env.VITE_APP_NAME || 'CRM GetMoto',
+  name: import.meta.env.VITE_APP_NAME || 'GetMoto LTD',
   version: import.meta.env.VITE_APP_VERSION || '1.0.0',
   env: import.meta.env.VITE_APP_ENV || 'development',
   isDevelopment: import.meta.env.DEV,
