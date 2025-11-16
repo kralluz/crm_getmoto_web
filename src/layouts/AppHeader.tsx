@@ -30,7 +30,7 @@ export function AppHeader({ onSearch }: AppHeaderProps) {
       }}
     >
       <Title level={3} style={{ margin: 0 }}>
-        CRM GetMoto
+        GetMoto LTD.
       </Title>
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', maxWidth: '600px' }}>
         <GlobalSearch onSearch={onSearch} />

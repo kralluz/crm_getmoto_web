@@ -96,6 +96,7 @@ export default {
   settings: {
     title: 'Settings',
     subtitle: 'Manage system settings',
+    pageHelp: 'Configure system preferences such as theme, language and user management. Changes are saved automatically and applied immediately.',
     theme: 'Theme',
     themeDescription: 'Toggle between light and dark theme',
     currentTheme: 'Current theme',
@@ -148,7 +149,7 @@ export default {
     from: 'From',
     until: 'until',
     cashFlowReport: 'Cash Flow Report',
-    financialStatement: 'Financial Statement - CRM GetMoto',
+    financialStatement: 'Financial Statement - GetMoto LTD',
     keywords: 'cash flow, financial, income, expenses',
     periods: {
       today: 'Today',
@@ -312,6 +313,7 @@ export default {
     // Product Category
     categoryTitle: 'Product Categories',
     categorySubtitle: 'Manage product catalog categories',
+    categoryPageHelp: 'Organize your product catalog into categories. Categories make it easier to search and organize products. You can create, edit and deactivate categories as needed.',
     newCategory: 'New Category',
     editCategory: 'Edit Category',
     categoryName: 'Category Name',

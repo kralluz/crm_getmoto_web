@@ -36,6 +36,7 @@ export function Settings() {
       <PageHeader
         title={t('settings.title')}
         subtitle={t('settings.subtitle')}
+        helpText={t('settings.pageHelp')}
       />
 
       <Tabs

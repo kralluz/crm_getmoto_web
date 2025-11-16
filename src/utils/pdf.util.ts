@@ -121,7 +121,7 @@ export function createHeader(config: HeaderConfig): Content {
   const { title, subtitle, showDate = true, customInfo = [] } = config;
 
   const content: Content[] = [
-    { text: 'CRM GetMoto', style: 'header', alignment: 'center' },
+    { text: 'Getmoto LTD', style: 'header', alignment: 'center' },
     { text: title, style: 'subheader', alignment: 'center' },
   ];
 
@@ -369,10 +369,10 @@ export function generatePdf(
     info: info
       ? {
           title: info.title,
-          author: info.author || 'CRM GetMoto',
+          author: info.author || 'GetMoto LTD.',
           subject: info.subject,
           keywords: info.keywords,
-          creator: 'CRM GetMoto',
+          creator: 'GetMoto LTD.',
           producer: 'pdfmake',
         }
       : undefined,
@@ -404,10 +404,10 @@ export function openPdf(
     info: info
       ? {
           title: info.title,
-          author: info.author || 'CRM GetMoto',
+          author: info.author || 'GetMoto LTD.',
           subject: info.subject,
           keywords: info.keywords,
-          creator: 'CRM GetMoto',
+          creator: 'GetMoto LTD.',
           producer: 'pdfmake',
         }
       : undefined,
@@ -440,10 +440,10 @@ export function getPdfBlob(
       info: info
         ? {
             title: info.title,
-            author: info.author || 'CRM GetMoto',
+            author: info.author || 'GetMoto LTD.',
             subject: info.subject,
             keywords: info.keywords,
-            creator: 'CRM GetMoto',
+            creator: 'GetMoto LTD.',
             producer: 'pdfmake',
           }
         : undefined,

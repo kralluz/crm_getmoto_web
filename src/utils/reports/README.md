@@ -1,4 +1,4 @@
-# Sistema de Relatórios - CRM GetMoto
+# Sistema de Relatórios - GetMoto LTD.
 
 Sistema de geração de relatórios em PDF usando **pdfmake**, substituindo a implementação anterior baseada em html2canvas + jsPDF.
 
@@ -224,7 +224,7 @@ export function generateMeuRelatorio(data: MeuRelatorioData): void {
     },
     info: {
       title: 'Meu Relatório',
-      subject: 'Assunto - CRM GetMoto',
+      subject: 'Assunto - GetMoto LTD.',
       keywords: 'palavras, chave'
     }
   });

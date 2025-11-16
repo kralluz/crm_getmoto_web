@@ -174,6 +174,7 @@ export function ProductCategoryList() {
       <PageHeader
         title={t('products.categoryTitle')}
         subtitle={t('products.categorySubtitle')}
+        helpText={t('products.categoryPageHelp')}
         extra={
           <Button
             type="primary"

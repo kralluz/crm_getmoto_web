@@ -180,12 +180,21 @@ export function AppSidebar({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: collapsed ? 16 : 20,
-          fontWeight: 'bold',
-          color: '#1890ff',
         }}
       >
-        {collapsed ? <HomeOutlined /> : 'GetMoto'}
+        {collapsed ? (
+          <HomeOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+        ) : (
+          <img
+            src="/logo-getmoto-transparent.png"
+            alt="GetMoto LTD."
+            style={{
+              width: '100%',
+              maxWidth: '180px',
+              height: 'auto',
+            }}
+          />
+        )}
       </div>
       <Menu
         theme="light"

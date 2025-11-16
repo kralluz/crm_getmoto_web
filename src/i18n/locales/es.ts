@@ -95,6 +95,7 @@ export default {
   settings: {
     title: 'Configuración',
     subtitle: 'Administre la configuración del sistema',
+    pageHelp: 'Configure las preferencias del sistema como tema, idioma y gestión de usuarios. Los cambios se guardan automáticamente y se aplican de inmediato.',
     theme: 'Tema',
     themeDescription: 'Alternar entre tema claro y oscuro',
     currentTheme: 'Tema actual',
@@ -147,7 +148,7 @@ export default {
     from: 'Desde',
     until: 'hasta',
     cashFlowReport: 'Informe de Flujo de Caja',
-    financialStatement: 'Estado Financiero - CRM GetMoto',
+    financialStatement: 'Estado Financiero - GetMoto LTD',
     keywords: 'flujo de caja, financiero, ingresos, gastos',
     periods: {
       today: 'Hoy',
@@ -311,6 +312,7 @@ export default {
     // Product Category
     categoryTitle: 'Categorías de Productos',
     categorySubtitle: 'Administre las categorías del catálogo de productos',
+    categoryPageHelp: 'Organice su catálogo de productos en categorías. Las categorías facilitan la búsqueda y organización de productos. Puede crear, editar y desactivar categorías según sea necesario.',
     newCategory: 'Nueva Categoría',
     editCategory: 'Editar Categoría',
     categoryName: 'Nombre de la Categoría',

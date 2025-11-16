@@ -45,7 +45,7 @@ export function PageHeader({
             />
           )}
           <div>
-            <Space align="center" size="small">
+            <Space align="center" size="small" style={{ marginBottom: subtitle ? '4px' : '0' }}>
               <Title level={2} style={{ margin: 0 }}>
                 {title}
               </Title>
@@ -63,9 +63,11 @@ export function PageHeader({
               )}
             </Space>
             {subtitle && (
-              <Text type="secondary" style={{ fontSize: '14px' }}>
-                {subtitle}
-              </Text>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px', display: 'block' }}>
+                  {subtitle}
+                </Text>
+              </div>
             )}
           </div>
         </Space>
