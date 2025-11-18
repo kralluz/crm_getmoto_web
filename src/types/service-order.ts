@@ -41,6 +41,7 @@ export interface Vehicle {
   model: string;
   plate: string;
   year: number;
+  mile?: number;
   color?: string;
 }
 

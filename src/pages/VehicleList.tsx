@@ -125,6 +125,15 @@ export function VehicleList() {
       sorter: (a, b) => (a.year || 0) - (b.year || 0),
     },
     {
+      title: t('vehicles.mile'),
+      dataIndex: 'mile',
+      key: 'mile',
+      width: 120,
+      align: 'right',
+      render: (mile: number | null) => mile ? `${mile.toLocaleString('pt-BR')} km` : '-',
+      sorter: (a, b) => (a.mile || 0) - (b.mile || 0),
+    },
+    {
       title: t('vehicles.color'),
       dataIndex: 'color',
       key: 'color',

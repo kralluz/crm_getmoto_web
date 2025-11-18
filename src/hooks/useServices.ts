@@ -59,6 +59,23 @@ export function useCancelServiceOrder() {
   });
 }
 
+/**
+ * Hook para atualizar apenas as observações de uma ordem de serviço
+ * Única exceção à regra de imutabilidade
+ */
+export function useUpdateServiceOrderNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: number; notes: string | null }) => 
+      serviceOrderApi.updateNotes(id, notes),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['service-order', id] });
+    },
+  });
+}
+
 export function useDeleteServiceOrder() {
   const queryClient = useQueryClient();
 

@@ -45,6 +45,18 @@ export const serviceOrderApi = {
     });
   },
 
+  /**
+   * Atualiza apenas as observações de uma ordem de serviço
+   * Única exceção à regra de imutabilidade, pois observações são apenas informativas
+   */
+  async updateNotes(id: number, notes: string | null) {
+    return customAxiosInstance<ServiceOrder>({
+      url: `${BASE_URL}/${id}/notes`,
+      method: 'PATCH',
+      data: { notes },
+    });
+  },
+
   async delete(id: number) {
     return customAxiosInstance<void>({
       url: `${BASE_URL}/${id}`,

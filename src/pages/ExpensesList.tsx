@@ -11,6 +11,8 @@ import { ExpenseModal } from '../components/common/ExpenseModal';
 import { PurchaseOrderModal } from '../components/common/PurchaseOrderModal';
 import { useFormat } from '../hooks/useFormat';
 import dayjs from 'dayjs';
+import { useHideCancelled } from '../hooks/useHideCancelled';
+import { HideCancelledCheckbox } from '../components/common/HideCancelledCheckbox';
 
 const { RangePicker } = DatePicker;
 
@@ -24,11 +26,19 @@ export function ExpensesList() {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
 
+  // Hook para ocultar cancelamentos
+  const { hideCancelled, setHideCancelled } = useHideCancelled('expenses');
+
   const { data: expenses, isLoading } = useExpenses({
     startDate: dateRange?.[0],
     endDate: dateRange?.[1],
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
   });
+
+  // Função para verificar se despesa está cancelada
+  const isCancelledExpense = (expense: Expense) => {
+    return expense.cancelled_at !== null;
+  };
 
   const filteredExpenses = useMemo(() => {
     if (!Array.isArray(expenses)) return [];
@@ -38,9 +48,11 @@ export function ExpensesList() {
         expense.description?.toLowerCase().includes(searchText.toLowerCase()) ||
         expense.category?.toLowerCase().includes(searchText.toLowerCase());
 
-      return matchesSearch;
+      const matchesCancelled = !hideCancelled || !isCancelledExpense(expense);
+
+      return matchesSearch && matchesCancelled;
     });
-  }, [expenses, searchText]);
+  }, [expenses, searchText, hideCancelled]);
 
   // Extrair categorias únicas para o filtro
   const categories = useMemo(() => {
@@ -206,6 +218,11 @@ export function ExpensesList() {
             placeholder={[t('expenses.startDate'), t('expenses.endDate')]}
             onChange={handleDateRangeChange}
             style={{ width: 280 }}
+          />
+
+          <HideCancelledCheckbox
+            checked={hideCancelled}
+            onChange={setHideCancelled}
           />
 
           {(searchText || categoryFilter !== 'all' || dateRange) && (

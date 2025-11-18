@@ -6,6 +6,7 @@ export interface Motorcycle {
   color?: string | null;
   plate: string;
   year?: number | null;
+  mile?: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -27,6 +28,7 @@ export interface CreateMotorcycleData {
   color?: string | null;
   plate: string;
   year?: number | null;
+  mile?: number | null;
   is_active?: boolean;
 }
 
@@ -36,5 +38,6 @@ export interface UpdateMotorcycleData {
   color?: string | null;
   plate?: string;
   year?: number | null;
+  mile?: number | null;
   is_active?: boolean;
 }

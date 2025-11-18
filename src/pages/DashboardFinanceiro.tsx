@@ -18,6 +18,8 @@ import { ActionButtons } from '../components/common/ActionButtons';
 import type { CashFlowTransaction, CashFlowDirection } from '../types/cashflow';
 import { getTransactionSource } from '../types/cashflow';
 import { useFormat } from '../hooks/useFormat';
+import { useHideCancelled } from '../hooks/useHideCancelled';
+import { HideCancelledCheckbox } from '../components/common/HideCancelledCheckbox';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -31,6 +33,9 @@ export function DashboardFinanceiro() {
   const { formatCurrency, formatDate } = useFormat();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Hook para ocultar cancelamentos
+  const { hideCancelled, setHideCancelled } = useHideCancelled('dashboard');
 
   // Filtros da aba de movimentações
   const [searchText, setSearchText] = useState('');
@@ -83,6 +88,11 @@ export function DashboardFinanceiro() {
     }
   };
 
+  // Função auxiliar para verificar se transação foi cancelada/estornada
+  const isCancelled = (note: string | null) => {
+    return note?.toUpperCase().includes('ESTORNO') || false;
+  };
+
   // Filtrar transações para a aba de movimentações
   const filteredTransactions = useMemo(() => {
     if (!Array.isArray(transactions)) return [];
@@ -110,8 +120,13 @@ export function DashboardFinanceiro() {
       filtered = filtered.filter(t => t.direction === directionFilter);
     }
 
+    // Aplicar filtro de cancelados
+    if (hideCancelled) {
+      filtered = filtered.filter(t => !isCancelled(t.note ?? null));
+    }
+
     return filtered;
-  }, [transactions, searchText, directionFilter, movementDateRange]);
+  }, [transactions, searchText, directionFilter, movementDateRange, hideCancelled]);
 
   const handleView = (id: number | string) => {
     navigate(`/movimentacoes/${id}`);
@@ -151,10 +166,6 @@ export function DashboardFinanceiro() {
       balance: income - expense,
     };
   }, [filteredTransactions]);
-
-  const isCancelled = (note: string | null) => {
-    return note?.toUpperCase().includes('ESTORNO') || false;
-  };
 
   const columns: ColumnsType<CashFlowTransaction> = [
     {
@@ -375,6 +386,11 @@ export function DashboardFinanceiro() {
                       placeholder={[t('cashflow.startDate'), t('cashflow.endDate')]}
                       onChange={handleDateRangeChange}
                       style={{ width: 280 }}
+                    />
+
+                    <HideCancelledCheckbox
+                      checked={hideCancelled}
+                      onChange={setHideCancelled}
                     />
 
                     {(searchText || directionFilter !== 'all' || movementDateRange) && (

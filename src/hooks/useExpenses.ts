@@ -83,3 +83,19 @@ export function useCancelExpense() {
     },
   });
 }
+
+/**
+ * Hook para atualizar apenas a descrição de uma despesa
+ */
+export function useUpdateExpenseDescription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, description }: { id: number | string; description: string }) => 
+      expenseApi.updateDescription(id, description),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['expense', id] });
+    },
+  });
+}

@@ -25,11 +25,12 @@ import {
   ShoppingOutlined,
   DollarOutlined,
   FilePdfOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  EditOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useServiceOrder, useCancelServiceOrder } from '../hooks/useServices';
+import { useServiceOrder, useCancelServiceOrder, useUpdateServiceOrderNotes } from '../hooks/useServices';
 import { useAuthStore } from '../store/auth-store';
 import { NotificationService } from '../services/notification.service';
 import type { ServiceProduct, ServiceRealized, CashFlow } from '../types/service-order';
@@ -37,6 +38,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useState, useEffect } from 'react';
 import { generateServiceOrderReport } from '../utils/reports';
 import { formatCurrency, formatDateTime, parseDecimal } from '../utils/format.util';
+import { EditTextModal } from '../components/common/EditTextModal';
 
 const { Title, Text } = Typography;
 
@@ -49,9 +51,11 @@ export function ServiceOrderDetail() {
 
   const { data: serviceOrder, isLoading, error } = useServiceOrder(serviceOrderId);
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelServiceOrder();
+  const { mutate: updateNotes, isPending: isUpdatingNotes } = useUpdateServiceOrderNotes();
   const { user } = useAuthStore();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isEditNotesModalOpen, setIsEditNotesModalOpen] = useState(false);
   const [cancelForm] = Form.useForm();
   const [cameFromSearch, setCameFromSearch] = useState(false);
 
@@ -88,6 +92,27 @@ export function ServiceOrderDetail() {
       return;
     }
     setIsCancelModalOpen(true);
+  };
+
+  const handleEditNotes = () => {
+    setIsEditNotesModalOpen(true);
+  };
+
+  const handleSaveNotes = async (notes: string | null) => {
+    return new Promise<void>((resolve, reject) => {
+      updateNotes(
+        { id: serviceOrderId, notes },
+        {
+          onSuccess: () => {
+            setIsEditNotesModalOpen(false);
+            resolve();
+          },
+          onError: (error: any) => {
+            reject(error);
+          },
+        }
+      );
+    });
   };
 
   const handleConfirmCancel = async () => {
@@ -293,18 +318,26 @@ export function ServiceOrderDetail() {
         </Button>
         <Space>
           {serviceOrder.status !== 'cancelled' && (
-            <Button
-              danger
-              icon={<StopOutlined />}
-              onClick={handleCancelOrder}
-              style={{ 
-                backgroundColor: '#ff4d4f', 
-                borderColor: '#ff4d4f',
-                color: 'white'
-              }}
-            >
-              {t('services.cancelOrder')}
-            </Button>
+            <>
+              <Button
+                icon={<EditOutlined />}
+                onClick={handleEditNotes}
+              >
+                {t('common.editNotes')}
+              </Button>
+              <Button
+                danger
+                icon={<StopOutlined />}
+                onClick={handleCancelOrder}
+                style={{ 
+                  backgroundColor: '#ff4d4f', 
+                  borderColor: '#ff4d4f',
+                  color: 'white'
+                }}
+              >
+                {t('services.cancelOrder')}
+              </Button>
+            </>
           )}
           <Button
             icon={<FilePdfOutlined />}
@@ -543,6 +576,23 @@ export function ServiceOrderDetail() {
           </Form>
         </Space>
       </Modal>
+
+      {/* Edit Notes Modal */}
+      <EditTextModal
+        open={isEditNotesModalOpen}
+        title={t('common.editNotes')}
+        label={t('common.notes')}
+        fieldName="notes"
+        initialValue={serviceOrder?.notes}
+        onCancel={() => setIsEditNotesModalOpen(false)}
+        onSave={handleSaveNotes}
+        isLoading={isUpdatingNotes}
+        required={false}
+        maxLength={500}
+        placeholder={t('services.notesPlaceholder')}
+        multiline={true}
+        rows={4}
+      />
     </div>
   );
 }

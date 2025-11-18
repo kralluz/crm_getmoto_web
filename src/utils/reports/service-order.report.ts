@@ -99,8 +99,12 @@ function createCustomerVehicleSection(serviceOrder: ServiceOrder): Content {
               { text: vehicle?.model || 'N/A', style: 'value', border: [false, false, true, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
             ],
             [
-              { text: 'Year', style: 'label', border: [true, false, false, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
-              { text: vehicle?.year?.toString() || 'N/A', style: 'value', border: [false, false, true, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: 'Year', style: 'label', border: [true, false, false, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: vehicle?.year?.toString() || 'N/A', style: 'value', border: [false, false, true, false], margin: [5, 4, 5, 4] as [number, number, number, number] },
+            ],
+            [
+              { text: 'Odometer / Mile', style: 'label', border: [true, false, false, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: vehicle?.mile ? `${vehicle.mile.toLocaleString()} km` : 'N/A', style: 'value', border: [false, false, true, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
             ],
           ],
         },

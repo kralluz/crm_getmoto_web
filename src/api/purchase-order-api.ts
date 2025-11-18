@@ -63,4 +63,14 @@ export const purchaseOrderApi = {
     });
     return response;
   },
+
+  // Atualizar apenas as observações de uma ordem de compra
+  updateNotes: async (id: string | number, notes: string | null) => {
+    const response = await customAxiosInstance<PurchaseOrder>({
+      url: `/api/purchase-orders/${id}/notes`,
+      method: 'PATCH',
+      data: { notes },
+    });
+    return response;
+  },
 };

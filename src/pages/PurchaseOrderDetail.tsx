@@ -7,8 +7,9 @@ import {
   Col,
   Statistic,
   Alert,
+  Button,
 } from 'antd';
-import { ShoppingCartOutlined } from '@ant-design/icons';
+import { ShoppingCartOutlined, EditOutlined } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../hooks/useFormat';
@@ -17,6 +18,8 @@ import { PageHeader } from '../components/common/PageHeader';
 import { purchaseOrderApi } from '../api/purchase-order-api';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
+import { useUpdatePurchaseOrderNotes } from '../hooks/usePurchaseOrders';
+import { EditTextModal } from '../components/common/EditTextModal';
 
 const { Text } = Typography;
 
@@ -37,8 +40,10 @@ export function PurchaseOrderDetail() {
   const location = useLocation();
   const { formatCurrency, formatDate, formatDateTime } = useFormat();
   const [cameFromSearch, setCameFromSearch] = useState(false);
+  const [isEditNotesModalOpen, setIsEditNotesModalOpen] = useState(false);
 
   const { data: purchaseOrder, isLoading } = usePurchaseOrder(id);
+  const { mutate: updateNotes, isPending: isUpdatingNotes } = useUpdatePurchaseOrderNotes();
 
   // Detectar se veio da página de busca
   useEffect(() => {
@@ -78,13 +83,45 @@ export function PurchaseOrderDetail() {
     }
   };
 
+  const handleEditNotes = () => {
+    setIsEditNotesModalOpen(true);
+  };
+
+  const handleSaveNotes = async (notes: string | null) => {
+    if (!id) return Promise.reject('No ID');
+    return new Promise<void>((resolve, reject) => {
+      updateNotes(
+        { id, notes },
+        {
+          onSuccess: () => {
+            setIsEditNotesModalOpen(false);
+            resolve();
+          },
+          onError: (error: any) => {
+            reject(error);
+          },
+        }
+      );
+    });
+  };
+
   return (
     <div>
-      <PageHeader
-        title={t('purchaseOrder.orderDetails')}
-        subtitle={`#${purchaseOrder.purchase_order_id}`}
-        onBack={handleBack}
-      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <PageHeader
+          title={t('purchaseOrder.orderDetails')}
+          subtitle={`#${purchaseOrder.purchase_order_id}`}
+          onBack={handleBack}
+        />
+        {!purchaseOrder.cancelled_at && (
+          <Button
+            icon={<EditOutlined />}
+            onClick={handleEditNotes}
+          >
+            {t('common.editNotes')}
+          </Button>
+        )}
+      </div>
 
       {/* Card com estatísticas principais */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -194,6 +231,23 @@ export function PurchaseOrderDetail() {
         description={t('purchaseOrder.stockImpactDescription')}
         type="info"
         showIcon
+      />
+
+      {/* Edit Notes Modal */}
+      <EditTextModal
+        open={isEditNotesModalOpen}
+        title={t('common.editNotes')}
+        label={t('common.notes')}
+        fieldName="notes"
+        initialValue={purchaseOrder?.notes}
+        onCancel={() => setIsEditNotesModalOpen(false)}
+        onSave={handleSaveNotes}
+        isLoading={isUpdatingNotes}
+        required={false}
+        maxLength={500}
+        placeholder={t('purchaseOrder.notesPlaceholder')}
+        multiline={true}
+        rows={4}
       />
     </div>
   );

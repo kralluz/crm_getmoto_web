@@ -46,6 +46,7 @@ export function VehicleForm() {
         color: vehicle.color,
         plate: vehicle.plate,
         year: vehicle.year,
+        mile: vehicle.mile,
         is_active: vehicle.is_active,
       });
     }
@@ -206,6 +207,26 @@ export function VehicleForm() {
                   style={{ width: '100%' }}
                   min={1900}
                   max={new Date().getFullYear() + 1}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} sm={12} md={8}>
+              <Form.Item
+                label={t('vehicles.mile')}
+                name="mile"
+                rules={[
+                  {
+                    type: 'number',
+                    min: 0,
+                    message: t('vehicles.mileMinError'),
+                  },
+                ]}
+              >
+                <InputNumber
+                  placeholder={t('vehicles.milePlaceholder')}
+                  style={{ width: '100%' }}
+                  min={0}
                 />
               </Form.Item>
             </Col>

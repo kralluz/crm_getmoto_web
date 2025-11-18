@@ -142,6 +142,17 @@ export function VehicleSelect({ value, onChange, onVehicleCreated, ...props }: V
           </Form.Item>
 
           <Form.Item
+            label="Quilometragem (km)"
+            name="mile"
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              min={0}
+              placeholder="Ex: 15000"
+            />
+          </Form.Item>
+
+          <Form.Item
             label="Cor"
             name="color"
           >

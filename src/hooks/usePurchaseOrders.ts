@@ -85,3 +85,19 @@ export function useCancelPurchaseOrder() {
     },
   });
 }
+
+/**
+ * Hook para atualizar apenas as observações de uma ordem de compra
+ */
+export function useUpdatePurchaseOrderNotes() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: number | string; notes: string | null }) => 
+      purchaseOrderApi.updateNotes(id, notes),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-order', id] });
+    },
+  });
+}

@@ -9,6 +9,8 @@ import { PageHeader } from '../components/common/PageHeader';
 import type { ServiceOrder, ServiceOrderStatus } from '../types/service-order';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { useHideCancelled } from '../hooks/useHideCancelled';
+import { HideCancelledCheckbox } from '../components/common/HideCancelledCheckbox';
 
 const { Title } = Typography;
 
@@ -20,6 +22,9 @@ export function ServiceList() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingServiceOrderId, setEditingServiceOrderId] = useState<number | undefined>();
 
+  // Hook para ocultar cancelamentos
+  const { hideCancelled, setHideCancelled } = useHideCancelled('serviceOrders');
+
   const { data: serviceOrders, isLoading, error } = useServiceOrders({
     status: selectedStatus || undefined,
     customer_name: searchText || undefined,
@@ -29,6 +34,11 @@ export function ServiceList() {
   if (error) {
     console.error('Erro ao carregar ordens de serviço:', error);
   }
+
+  // Função para verificar se ordem está cancelada
+  const isCancelledServiceOrder = (order: ServiceOrder) => {
+    return order.status === 'cancelled';
+  };
 
   // Filtrar ordens de serviço localmente (backup do filtro da API)
   const filteredServiceOrders = useMemo(() => {
@@ -43,9 +53,11 @@ export function ServiceList() {
 
       const matchesStatus = selectedStatus === '' || order.status === selectedStatus;
 
-      return matchesSearch && matchesStatus;
+      const matchesCancelled = !hideCancelled || !isCancelledServiceOrder(order);
+
+      return matchesSearch && matchesStatus && matchesCancelled;
     });
-  }, [serviceOrders, searchText, selectedStatus]);
+  }, [serviceOrders, searchText, selectedStatus, hideCancelled]);
 
   // Converter Decimal do Prisma para número
   const parseDecimal = (value: any): number => {
@@ -229,6 +241,12 @@ export function ServiceList() {
               allowClear
               options={statusOptions}
               style={{ width: '100%' }}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <HideCancelledCheckbox
+              checked={hideCancelled}
+              onChange={setHideCancelled}
             />
           </Col>
         </Row>

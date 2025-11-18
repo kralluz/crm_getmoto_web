@@ -7,8 +7,10 @@ import {
   Col,
   Statistic,
   Alert,
+  Button,
+  Space,
 } from 'antd';
-import { DollarOutlined } from '@ant-design/icons';
+import { DollarOutlined, EditOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../hooks/useFormat';
@@ -16,6 +18,9 @@ import { LoadingOverlay } from '../components/common/LoadingOverlay';
 import { PageHeader } from '../components/common/PageHeader';
 import { expenseApi } from '../api/expense-api';
 import { useQuery } from '@tanstack/react-query';
+import { useUpdateExpenseDescription } from '../hooks/useExpenses';
+import { EditTextModal } from '../components/common/EditTextModal';
+import { useState } from 'react';
 
 const { Text } = Typography;
 
@@ -35,6 +40,8 @@ export function ExpenseDetail() {
   const { formatCurrency, formatDate, formatDateTime } = useFormat();
 
   const { data: expense, isLoading } = useExpense(id);
+  const { mutate: updateDescription, isPending: isUpdatingDescription } = useUpdateExpenseDescription();
+  const [isEditDescriptionModalOpen, setIsEditDescriptionModalOpen] = useState(false);
 
   if (isLoading) {
     return <LoadingOverlay />;
@@ -58,6 +65,28 @@ export function ExpenseDetail() {
     navigate('/despesas');
   };
 
+  const handleEditDescription = () => {
+    setIsEditDescriptionModalOpen(true);
+  };
+
+  const handleSaveDescription = async (description: string | null) => {
+    if (!id || !description) return Promise.reject('Invalid data');
+    return new Promise<void>((resolve, reject) => {
+      updateDescription(
+        { id, description },
+        {
+          onSuccess: () => {
+            setIsEditDescriptionModalOpen(false);
+            resolve();
+          },
+          onError: (error: any) => {
+            reject(error);
+          },
+        }
+      );
+    });
+  };
+
   const getCategoryLabel = (category: string) => {
     const categoryMap: Record<string, string> = {
       salary: t('expenses.categories.salary'),
@@ -73,11 +102,21 @@ export function ExpenseDetail() {
 
   return (
     <div>
-      <PageHeader
-        title={t('expenses.expenseDetails')}
-        subtitle={`#${expense.expense_id}`}
-        onBack={handleBack}
-      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <PageHeader
+          title={t('expenses.expenseDetails')}
+          subtitle={`#${expense.expense_id}`}
+          onBack={handleBack}
+        />
+        {!expense.cancelled_at && (
+          <Button
+            icon={<EditOutlined />}
+            onClick={handleEditDescription}
+          >
+            {t('common.editDescription')}
+          </Button>
+        )}
+      </div>
 
       {/* Card com estatísticas principais */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -170,6 +209,24 @@ export function ExpenseDetail() {
           </Descriptions.Item>
         </Descriptions>
       </Card>
+
+      {/* Edit Description Modal */}
+      <EditTextModal
+        open={isEditDescriptionModalOpen}
+        title={t('common.editDescription')}
+        label={t('common.description')}
+        fieldName="description"
+        initialValue={expense?.description}
+        onCancel={() => setIsEditDescriptionModalOpen(false)}
+        onSave={handleSaveDescription}
+        isLoading={isUpdatingDescription}
+        required={true}
+        minLength={5}
+        maxLength={500}
+        placeholder={t('expenses.descriptionPlaceholder')}
+        multiline={true}
+        rows={4}
+      />
     </div>
   );
 }

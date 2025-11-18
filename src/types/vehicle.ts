@@ -3,6 +3,7 @@ export interface Vehicle {
   brand?: string;
   model?: string;
   year?: number;
+  mile?: number;
   plate: string;
   color?: string;
   is_active: boolean;

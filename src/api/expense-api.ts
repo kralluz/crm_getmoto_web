@@ -67,4 +67,14 @@ export const expenseApi = {
     });
     return response;
   },
+
+  // Atualizar apenas a descrição de uma despesa
+  updateDescription: async (id: string | number, description: string) => {
+    const response = await customAxiosInstance<Expense>({
+      url: `/api/expenses/${id}/description`,
+      method: 'PATCH',
+      data: { description },
+    });
+    return response;
+  },
 };

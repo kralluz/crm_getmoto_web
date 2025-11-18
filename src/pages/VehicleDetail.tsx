@@ -70,6 +70,7 @@ export function VehicleDetail() {
         brand: vehicle.brand || '-',
         model: vehicle.model || '-',
         year: vehicle.year || '-',
+        mile: vehicle.mile || '-',
         color: vehicle.color || '-',
       },
       stats: statsData?.stats || {},
@@ -236,6 +237,9 @@ export function VehicleDetail() {
             </Descriptions.Item>
             <Descriptions.Item label={t('vehicles.year')}>
               {vehicle.year || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.mile')}>
+              {vehicle.mile ? `${vehicle.mile.toLocaleString('pt-BR')} km` : '-'}
             </Descriptions.Item>
             <Descriptions.Item label={t('vehicles.color')}>
               {vehicle.color || '-'}
