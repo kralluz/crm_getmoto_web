@@ -36,11 +36,19 @@ export function VehicleDetail() {
   const location = useLocation();
   const { t } = useTranslation();
   const [cameFromSearch, setCameFromSearch] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const { data: vehicle, isLoading: vehicleLoading } = useVehicle(id ? parseInt(id) : undefined);
   const { data: statsData, isLoading: statsLoading } = useVehicleStats(id ? parseInt(id) : undefined);
 
   const isLoading = vehicleLoading || statsLoading;
+
+  // Detectar mudanças no tamanho da tela
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Detectar se veio da página de busca
   useEffect(() => {
@@ -147,15 +155,22 @@ export function VehicleDetail() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
+      <div style={{
+        marginBottom: 16,
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? 12 : 0,
+      }}>
+        <Button icon={<ArrowLeftOutlined />} onClick={handleBack} size="middle">
           {t('common.back')}
         </Button>
-        <Space>
-          <Button icon={<FileTextOutlined />} onClick={handleGenerateReport}>
-            {t('vehicles.generateReport')}
+        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+          <Button icon={<FileTextOutlined />} onClick={handleGenerateReport} size="middle" block={isMobile}>
+            {isMobile ? 'Relatório' : t('vehicles.generateReport')}
           </Button>
-          <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
+          <Button type="primary" icon={<EditOutlined />} onClick={handleEdit} size="middle" block={isMobile}>
             {t('common.edit')}
           </Button>
         </Space>

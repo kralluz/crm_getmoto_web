@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, DatePicker, Dropdown } from 'antd';
+import { useState, useMemo, useEffect } from 'react';
+import { Table, Card, Input, Tag, Space, Select, Button, DatePicker, Dropdown, Row, Col } from 'antd';
 import { SearchOutlined, PlusOutlined, FilterOutlined, DownOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +25,13 @@ export function ExpensesList() {
   const [dateRange, setDateRange] = useState<[string, string] | undefined>(undefined);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Hook para ocultar cancelamentos
   const { hideCancelled, setHideCancelled } = useHideCancelled('expenses');
@@ -181,84 +188,99 @@ export function ExpensesList() {
         helpText={t('expenses.pageHelp')}
         extra={
           <Dropdown menu={{ items: newExpenseMenuItems }} placement="bottomRight">
-            <Button type="primary" icon={<PlusOutlined />} size="large">
-              {t('expenses.newExpense')} <DownOutlined />
+            <Button type="primary" icon={<PlusOutlined />} size={isMobile ? 'middle' : 'large'}>
+              {isMobile ? 'Novo' : t('expenses.newExpense')} <DownOutlined />
             </Button>
           </Dropdown>
         }
       />
 
       <Card style={{ marginBottom: 16 }}>
-        <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
-          <Input
-            placeholder={t('expenses.searchPlaceholder')}
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
-            allowClear
-          />
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24} md={12} lg={8}>
+            <Input
+              placeholder={t('expenses.searchPlaceholder')}
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: '100%' }}
+              allowClear
+            />
+          </Col>
 
-          <Select
-            placeholder={t('expenses.categoryFilter')}
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-            style={{ width: 200 }}
-          >
-            <Select.Option value="all">{t('expenses.allCategories')}</Select.Option>
-            {categories.map(category => (
-              <Select.Option key={category} value={category}>
-                {category}
-              </Select.Option>
-            ))}
-          </Select>
+          <Col xs={24} sm={12} md={8} lg={5}>
+            <Select
+              placeholder={t('expenses.categoryFilter')}
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="all">{t('expenses.allCategories')}</Select.Option>
+              {categories.map(category => (
+                <Select.Option key={category} value={category}>
+                  {category}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
 
-          <RangePicker
-            format="DD/MM/YYYY"
-            placeholder={[t('expenses.startDate'), t('expenses.endDate')]}
-            onChange={handleDateRangeChange}
-            style={{ width: 280 }}
-          />
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <RangePicker
+              format="DD/MM/YYYY"
+              placeholder={[t('expenses.startDate'), t('expenses.endDate')]}
+              onChange={handleDateRangeChange}
+              style={{ width: '100%' }}
+            />
+          </Col>
 
-          <HideCancelledCheckbox
-            checked={hideCancelled}
-            onChange={setHideCancelled}
-          />
+          <Col xs={24} sm={12} md={8} lg={3}>
+            <HideCancelledCheckbox
+              checked={hideCancelled}
+              onChange={setHideCancelled}
+            />
+          </Col>
 
           {(searchText || categoryFilter !== 'all' || dateRange) && (
-            <Button
-              icon={<FilterOutlined />}
-              onClick={() => {
-                setSearchText('');
-                setCategoryFilter('all');
-                setDateRange(undefined);
-              }}
-            >
-              {t('common.clearFilters')}
-            </Button>
+            <Col xs={24} sm={12} md={8} lg={2}>
+              <Button
+                block
+                icon={<FilterOutlined />}
+                onClick={() => {
+                  setSearchText('');
+                  setCategoryFilter('all');
+                  setDateRange(undefined);
+                }}
+              >
+                {t('common.clearFilters')}
+              </Button>
+            </Col>
           )}
-        </Space>
+        </Row>
       </Card>
 
       <Card style={{ marginBottom: 16 }}>
-        <Space size="large" style={{ width: '100%', justifyContent: 'space-around' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>
-              {t('expenses.totalExpenses')}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12}>
+            <div style={{ textAlign: 'center', padding: isMobile ? '8px 0' : '0' }}>
+              <div style={{ color: '#8c8c8c', fontSize: isMobile ? 11 : 14, marginBottom: 4 }}>
+                {t('expenses.totalExpenses')}
+              </div>
+              <div style={{ color: '#ff4d4f', fontSize: isMobile ? 16 : 24, fontWeight: 600, wordBreak: 'break-word' }}>
+                {formatCurrency(totals.total)}
+              </div>
             </div>
-            <div style={{ color: '#ff4d4f', fontSize: 24, fontWeight: 600 }}>
-              {formatCurrency(totals.total)}
+          </Col>
+          <Col xs={24} sm={12}>
+            <div style={{ textAlign: 'center', padding: isMobile ? '8px 0' : '0' }}>
+              <div style={{ color: '#8c8c8c', fontSize: isMobile ? 11 : 14, marginBottom: 4 }}>
+                {t('expenses.expensesCount')}
+              </div>
+              <div style={{ fontSize: isMobile ? 16 : 24, fontWeight: 600 }}>
+                {totals.count}
+              </div>
             </div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>
-              {t('expenses.expensesCount')}
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 600 }}>
-              {totals.count}
-            </div>
-          </div>
-        </Space>
+          </Col>
+        </Row>
       </Card>
 
       <Card>
@@ -268,12 +290,13 @@ export function ExpensesList() {
           loading={isLoading}
           rowKey="expense_id"
           pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
             showTotal: (total) => t('expenses.totalItems', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
+            simple: isMobile,
           }}
-          size="small"
+          size={isMobile ? 'middle' : 'small'}
           scroll={{ x: 1000 }}
         />
       </Card>

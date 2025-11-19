@@ -20,7 +20,7 @@ import { expenseApi } from '../api/expense-api';
 import { useQuery } from '@tanstack/react-query';
 import { useUpdateExpenseDescription } from '../hooks/useExpenses';
 import { EditTextModal } from '../components/common/EditTextModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const { Text } = Typography;
 
@@ -42,6 +42,13 @@ export function ExpenseDetail() {
   const { data: expense, isLoading } = useExpense(id);
   const { mutate: updateDescription, isPending: isUpdatingDescription } = useUpdateExpenseDescription();
   const [isEditDescriptionModalOpen, setIsEditDescriptionModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (isLoading) {
     return <LoadingOverlay />;
@@ -102,7 +109,14 @@ export function ExpenseDetail() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? 12 : 0,
+        marginBottom: 16
+      }}>
         <PageHeader
           title={t('expenses.expenseDetails')}
           subtitle={`#${expense.expense_id}`}
@@ -112,8 +126,10 @@ export function ExpenseDetail() {
           <Button
             icon={<EditOutlined />}
             onClick={handleEditDescription}
+            size="middle"
+            block={isMobile}
           >
-            {t('common.editDescription')}
+            {isMobile ? 'Editar' : t('common.editDescription')}
           </Button>
         )}
       </div>

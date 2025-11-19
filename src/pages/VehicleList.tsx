@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button } from 'antd';
+import { useState, useMemo, useEffect } from 'react';
+import { Table, Card, Input, Tag, Space, Select, Button, Row, Col } from 'antd';
 import {
   SearchOutlined,
   PlusOutlined,
@@ -19,6 +19,13 @@ export function VehicleList() {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: vehicles, isLoading } = useVehicles({
     is_active: activeFilter,
@@ -194,36 +201,41 @@ export function VehicleList() {
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleCreate}
+            size={isMobile ? 'middle' : 'large'}
           >
-            {t('vehicles.newVehicle')}
+            {isMobile ? 'Novo' : t('vehicles.newVehicle')}
           </Button>
         }
       />
 
       <Card>
         <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
-          <Space wrap>
-            <Input
-              placeholder={t('vehicles.searchPlaceholder')}
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 300 }}
-              allowClear
-            />
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={16} md={12}>
+              <Input
+                placeholder={t('vehicles.searchPlaceholder')}
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{ width: '100%' }}
+                allowClear
+              />
+            </Col>
 
-            <Select
-              placeholder={t('common.filter')}
-              value={activeFilter}
-              onChange={setActiveFilter}
-              style={{ width: 150 }}
-              suffixIcon={<FilterOutlined />}
-              allowClear
-            >
-              <Select.Option value={true}>{t('vehicles.actives')}</Select.Option>
-              <Select.Option value={false}>{t('vehicles.inactives')}</Select.Option>
-            </Select>
-          </Space>
+            <Col xs={24} sm={8} md={6}>
+              <Select
+                placeholder={t('common.filter')}
+                value={activeFilter}
+                onChange={setActiveFilter}
+                style={{ width: '100%' }}
+                suffixIcon={<FilterOutlined />}
+                allowClear
+              >
+                <Select.Option value={true}>{t('vehicles.actives')}</Select.Option>
+                <Select.Option value={false}>{t('vehicles.inactives')}</Select.Option>
+              </Select>
+            </Col>
+          </Row>
 
           <Table
             columns={columns}
@@ -231,11 +243,13 @@ export function VehicleList() {
             rowKey="vehicle_id"
             loading={isLoading}
             pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
+              pageSize: isMobile ? 10 : 20,
+              showSizeChanger: !isMobile,
               showTotal: (total) =>
                 t('vehicles.totalVehicles', { total: total }),
+              simple: isMobile,
             }}
+            size={isMobile ? 'middle' : 'small'}
             scroll={{ x: 1200 }}
           />
         </Space>

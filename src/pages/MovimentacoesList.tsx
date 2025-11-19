@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, DatePicker } from 'antd';
+import { useState, useMemo, useEffect } from 'react';
+import { Table, Card, Input, Tag, Space, Select, Button, DatePicker, Row, Col } from 'antd';
 import { SearchOutlined, FilterOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,13 @@ export function MovimentacoesList() {
   const [searchText, setSearchText] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | CashFlowDirection>('all');
   const [dateRange, setDateRange] = useState<[string, string] | undefined>(undefined);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: transactions, isLoading } = useCashFlowTransactions({
     startDate: dateRange?.[0],
@@ -216,75 +223,91 @@ export function MovimentacoesList() {
       />
 
       <Card style={{ marginBottom: 16 }}>
-        <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
-          <Input
-            placeholder={t('cashflow.searchMovements')}
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
-            allowClear
-          />
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24} md={12} lg={8}>
+            <Input
+              placeholder={t('cashflow.searchMovements')}
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: '100%' }}
+              allowClear
+            />
+          </Col>
 
-          <Select
-            placeholder={t('cashflow.typeFilter')}
-            value={directionFilter}
-            onChange={setDirectionFilter}
-            style={{ width: 150 }}
-            options={[
-              { value: 'all', label: t('cashflow.allTypes') },
-              { value: 'entrada', label: t('cashflow.incomes') },
-              { value: 'saida', label: t('cashflow.expenses') },
-            ]}
-          />
+          <Col xs={24} sm={12} md={8} lg={5}>
+            <Select
+              placeholder={t('cashflow.typeFilter')}
+              value={directionFilter}
+              onChange={setDirectionFilter}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'all', label: t('cashflow.allTypes') },
+                { value: 'entrada', label: t('cashflow.incomes') },
+                { value: 'saida', label: t('cashflow.expenses') },
+              ]}
+            />
+          </Col>
 
-          <RangePicker
-            format="DD/MM/YYYY"
-            placeholder={[t('cashflow.startDate'), t('cashflow.endDate')]}
-            onChange={handleDateRangeChange}
-            style={{ width: 280 }}
-          />
+          <Col xs={24} sm={12} md={8} lg={7}>
+            <RangePicker
+              format="DD/MM/YYYY"
+              placeholder={[t('cashflow.startDate'), t('cashflow.endDate')]}
+              onChange={handleDateRangeChange}
+              style={{ width: '100%' }}
+            />
+          </Col>
 
           {(searchText || directionFilter !== 'all' || dateRange) && (
-            <Button
-              icon={<FilterOutlined />}
-              onClick={() => {
-                setSearchText('');
-                setDirectionFilter('all');
-                setDateRange(undefined);
-              }}
-            >
-              {t('common.clearFilters')}
-            </Button>
+            <Col xs={24} sm={24} md={8} lg={4}>
+              <Button
+                block
+                icon={<FilterOutlined />}
+                onClick={() => {
+                  setSearchText('');
+                  setDirectionFilter('all');
+                  setDateRange(undefined);
+                }}
+              >
+                {t('common.clearFilters')}
+              </Button>
+            </Col>
           )}
-        </Space>
+        </Row>
       </Card>
 
       <Card style={{ marginBottom: 16 }}>
-        <Space size="large" style={{ width: '100%', justifyContent: 'space-around' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.totalIncome')}</div>
-            <div style={{ color: '#52c41a', fontSize: 24, fontWeight: 600 }}>
-              {formatCurrency(totals.income)}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={8}>
+            <div style={{ textAlign: 'center', padding: isMobile ? '8px 0' : '0' }}>
+              <div style={{ color: '#8c8c8c', fontSize: isMobile ? 11 : 14, marginBottom: 4 }}>{t('cashflow.totalIncome')}</div>
+              <div style={{ color: '#52c41a', fontSize: isMobile ? 16 : 24, fontWeight: 600, wordBreak: 'break-word' }}>
+                {formatCurrency(totals.income)}
+              </div>
             </div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.totalExpense')}</div>
-            <div style={{ color: '#ff4d4f', fontSize: 24, fontWeight: 600 }}>
-              {formatCurrency(totals.expense)}
+          </Col>
+          <Col xs={24} sm={8}>
+            <div style={{ textAlign: 'center', padding: isMobile ? '8px 0' : '0' }}>
+              <div style={{ color: '#8c8c8c', fontSize: isMobile ? 11 : 14, marginBottom: 4 }}>{t('cashflow.totalExpense')}</div>
+              <div style={{ color: '#ff4d4f', fontSize: isMobile ? 16 : 24, fontWeight: 600, wordBreak: 'break-word' }}>
+                {formatCurrency(totals.expense)}
+              </div>
             </div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.balanceLabel')}</div>
-            <div style={{
-              color: totals.balance >= 0 ? '#52c41a' : '#ff4d4f',
-              fontSize: 24,
-              fontWeight: 600
-            }}>
-              {formatCurrency(totals.balance)}
+          </Col>
+          <Col xs={24} sm={8}>
+            <div style={{ textAlign: 'center', padding: isMobile ? '8px 0' : '0' }}>
+              <div style={{ color: '#8c8c8c', fontSize: isMobile ? 11 : 14, marginBottom: 4 }}>{t('cashflow.balanceLabel')}</div>
+              <div style={{
+                color: totals.balance >= 0 ? '#52c41a' : '#ff4d4f',
+                fontSize: isMobile ? 16 : 24,
+                fontWeight: 600,
+                wordBreak: 'break-word'
+              }}>
+                {formatCurrency(totals.balance)}
+              </div>
             </div>
-          </div>
-        </Space>
+          </Col>
+        </Row>
       </Card>
 
       <Card>
@@ -294,12 +317,13 @@ export function MovimentacoesList() {
           loading={isLoading}
           rowKey="cash_flow_id"
           pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
             showTotal: (total) => t('cashflow.totalMovements', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
+            simple: isMobile,
           }}
-          size="small"
+          size={isMobile ? 'middle' : 'small'}
           scroll={{ x: 1200 }}
         />
       </Card>

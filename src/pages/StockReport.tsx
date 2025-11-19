@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Card, 
   Row, 
@@ -40,6 +40,13 @@ export function StockReport() {
     dayjs().endOf('month'),
   ]);
   const [selectedProduct, setSelectedProduct] = useState<number | undefined>();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: products, isLoading: isLoadingProducts } = useProducts({ active: true });
   const { data: stockMoves, isLoading: isLoadingMoves } = useStockMoves({
@@ -342,11 +349,12 @@ export function StockReport() {
           rowKey="product_id"
           loading={isLoadingProducts}
           pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
             showTotal: (total) => t('inventory.totalProductsCount', { total }),
+            simple: isMobile,
           }}
-          size="small"
+          size={isMobile ? 'middle' : 'small'}
           scroll={{ x: 1000 }}
         />
       </Card>
@@ -424,11 +432,12 @@ export function StockReport() {
           rowKey="stock_move_id"
           loading={isLoadingMoves}
           pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
             showTotal: (total) => t('inventory.totalMovementsCount', { total }),
+            simple: isMobile,
           }}
-          size="small"
+          size={isMobile ? 'middle' : 'small'}
           locale={{
             emptyText: t('inventory.noMovementInPeriod'),
           }}

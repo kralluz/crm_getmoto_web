@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Table, Card, Input, Typography, Select, Button, Alert, Row, Col } from 'antd';
 import { SearchOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,13 @@ export function ServiceList() {
   const [selectedStatus, setSelectedStatus] = useState<ServiceOrderStatus | ''>('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingServiceOrderId, setEditingServiceOrderId] = useState<number | undefined>();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Hook para ocultar cancelamentos
   const { hideCancelled, setHideCancelled } = useHideCancelled('serviceOrders');
@@ -215,9 +222,9 @@ export function ServiceList() {
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleCreate}
-            size="large"
+            size={isMobile ? 'middle' : 'large'}
           >
-            {t('services.newOrder')}
+            {isMobile ? 'Novo' : t('services.newOrder')}
           </Button>
         }
       />
@@ -269,12 +276,13 @@ export function ServiceList() {
           loading={isLoading}
           rowKey="service_order_id"
           pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
             showTotal: (total) => t('services.totalOrders', { total }),
             responsive: true,
+            simple: isMobile,
           }}
-          size="small"
+          size={isMobile ? 'middle' : 'small'}
           scroll={{ x: 1300 }}
           sticky
         />

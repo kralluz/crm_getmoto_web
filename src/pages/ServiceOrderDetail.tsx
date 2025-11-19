@@ -60,6 +60,14 @@ export function ServiceOrderDetail() {
   const [isEditDescriptionModalOpen, setIsEditDescriptionModalOpen] = useState(false);
   const [cancelForm] = Form.useForm();
   const [cameFromSearch, setCameFromSearch] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Detectar mudanças no tamanho da tela
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Detectar se veio da página de busca
   useEffect(() => {
@@ -332,35 +340,43 @@ export function ServiceOrderDetail() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? 12 : 0,
+        marginBottom: 16
+      }}>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={handleBack}
+          size="middle"
         >
           {t('common.back')}
         </Button>
-        <Space>
+        <Space direction="horizontal">
           {serviceOrder.status !== 'cancelled' && (
             <Button
               danger
               icon={<StopOutlined />}
               onClick={handleCancelOrder}
-              style={{ 
-                backgroundColor: '#ff4d4f', 
+              size="middle"
+              style={{
+                backgroundColor: '#ff4d4f',
                 borderColor: '#ff4d4f',
                 color: 'white'
               }}
-            >
-              {t('services.cancelOrder')}
-            </Button>
+              title={t('services.cancelOrder')}
+            />
           )}
           <Button
             icon={<FilePdfOutlined />}
             onClick={handleGeneratePdf}
             loading={isPdfLoading}
-          >
-            {t('services.generateInvoice')}
-          </Button>
+            size="middle"
+            title={t('services.generateInvoice')}
+          />
         </Space>
       </div>
 
@@ -533,7 +549,8 @@ export function ServiceOrderDetail() {
                 dataSource={serviceOrder.service_products}
                 rowKey="service_product_id"
                 pagination={false}
-                size="small"
+                size={isMobile ? 'middle' : 'small'}
+                scroll={{ x: 800 }}
               />
             </Card>
           )}
@@ -549,7 +566,8 @@ export function ServiceOrderDetail() {
                 dataSource={serviceOrder.services_realized}
                 rowKey="services_realized_id"
                 pagination={false}
-                size="small"
+                size={isMobile ? 'middle' : 'small'}
+                scroll={{ x: 800 }}
               />
             </Card>
           )}
@@ -565,7 +583,8 @@ export function ServiceOrderDetail() {
                 dataSource={serviceOrder.cash_flow}
                 rowKey="cash_flow_id"
                 pagination={false}
-                size="small"
+                size={isMobile ? 'middle' : 'small'}
+                scroll={{ x: 800 }}
               />
             </Card>
           )}

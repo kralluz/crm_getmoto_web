@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Table,
   Card,
@@ -35,6 +35,13 @@ export function ProductCategoryList() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<number | undefined>();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: categories, isLoading } = useProductCategories({
     is_active: activeFilter === 'all' ? undefined : activeFilter === 'active',
@@ -231,10 +238,11 @@ export function ProductCategoryList() {
           loading={isLoading}
           rowKey="product_category_id"
           pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
             showTotal: (total) => t('products.totalCategories', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
+            simple: isMobile,
           }}
           size="small"
         />

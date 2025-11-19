@@ -23,6 +23,7 @@ export interface AppSidebarProps {
   selectedMenu: string;
   openKeys?: string[];
   onMenuSelect: (key: string) => void;
+  isMobile?: boolean;
 }
 
 export function AppSidebar({
@@ -31,6 +32,7 @@ export function AppSidebar({
   selectedMenu,
   openKeys: initialOpenKeys = [],
   onMenuSelect,
+  isMobile = false,
 }: AppSidebarProps) {
   const { t } = useTranslation();
   const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu']);
@@ -55,6 +57,9 @@ export function AppSidebar({
   };
 
   const handleMouseEnter = () => {
+    // Desabilita hover em mobile
+    if (isMobile) return;
+
     // Só expande no hover se estiver manualmente minimizado
     if (isManuallyCollapsed && !isHovering) {
       setIsHovering(true);
@@ -63,6 +68,9 @@ export function AppSidebar({
   };
 
   const handleMouseLeave = () => {
+    // Desabilita hover em mobile
+    if (isMobile) return;
+
     // Só minimiza ao sair do hover se estava manualmente minimizado
     if (isManuallyCollapsed && isHovering) {
       setIsHovering(false);
@@ -154,25 +162,48 @@ export function AppSidebar({
   ];
 
   return (
-    <Sider
-      collapsible
-      collapsed={collapsed}
-      width={260}
-      collapsedWidth={80}
-      onCollapse={handleCollapseClick}
-      theme="light"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        overflow: 'auto',
-        height: '100vh',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
-      }}
-    >
+    <>
+      {/* CSS para controlar exibição dos tooltips apenas em hover */}
+      <style>
+        {`
+          /* Esconde tooltips por padrão */
+          .ant-menu-inline-collapsed-tooltip {
+            display: none !important;
+          }
+
+          /* Mostra tooltips apenas em hover do item do menu */
+          .ant-menu-inline-collapsed .ant-menu-item:hover .ant-menu-item-icon + span,
+          .ant-menu-inline-collapsed .ant-menu-submenu:hover .ant-menu-submenu-title {
+            pointer-events: auto;
+          }
+
+          /* Mostra tooltip apenas quando o item está em hover */
+          .ant-menu-inline-collapsed .ant-menu-item:hover ~ .ant-tooltip,
+          .ant-menu-inline-collapsed .ant-menu-submenu:hover ~ .ant-tooltip {
+            display: block !important;
+          }
+        `}
+      </style>
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        width={260}
+        collapsedWidth={isMobile ? 0 : 80}
+        onCollapse={handleCollapseClick}
+        theme="light"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          overflow: 'auto',
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+          zIndex: isMobile ? 1000 : 1,
+        }}
+      >
       <div
         style={{
           height: 64,
@@ -203,8 +234,17 @@ export function AppSidebar({
         openKeys={openKeys}
         onOpenChange={handleOpenChange}
         items={menuItems}
-        onClick={({ key }) => onMenuSelect(key)}
+        onClick={({ key }) => {
+          onMenuSelect(key);
+          // Fecha o menu em mobile após seleção
+          if (isMobile) {
+            onCollapse(true);
+          }
+        }}
+        inlineCollapsed={!isMobile && collapsed && !isHovering}
+        triggerSubMenuAction={isMobile ? 'click' : 'hover'}
       />
     </Sider>
+    </>
   );
 }

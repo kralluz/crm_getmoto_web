@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert } from 'antd';
+import { useState, useMemo, useEffect } from 'react';
+import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert, Row, Col } from 'antd';
 import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined, SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
@@ -24,6 +24,13 @@ export function ProductList() {
   const [stockMovementModalOpen, setStockMovementModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editingProductId, setEditingProductId] = useState<number | undefined>();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: products, isLoading} = useProducts({
     active: activeFilter === 'all' ? undefined : activeFilter === 'active',
@@ -325,12 +332,13 @@ export function ProductList() {
           loading={isLoading}
           rowKey="product_id"
           pagination={{
-            pageSize: 20,
-            showSizeChanger: true,
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
             showTotal: (total) => t('products.totalProducts', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
+            simple: isMobile,
           }}
-          size="small"
+          size={isMobile ? 'middle' : 'small'}
           scroll={{ x: 1200 }}
         />
       </Card>

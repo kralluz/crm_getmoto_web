@@ -125,8 +125,8 @@ export function GlobalSearch({ onSearch, placeholder }: GlobalSearchProps) {
       onChange={setQuery}
       open={open && searchHistory.length > 0}
       onOpenChange={setOpen}
-      style={{ width: 400, maxWidth: '100%' }}
-      popupMatchSelectWidth={400}
+      style={{ width: '100%' }}
+      popupMatchSelectWidth={false}
     >
       <Input
         placeholder={placeholder || t('search.placeholder')}
