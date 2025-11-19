@@ -26,7 +26,6 @@ import { ServiceCategoryModal } from '../components/services/ServiceCategoryModa
 import type { ServiceCategory } from '../types/service-category';
 import { useFormat } from '../hooks/useFormat';
 import { parseDecimal } from '../utils';
-import dayjs from 'dayjs';
 
 const { Link } = Typography;
 
@@ -54,11 +53,6 @@ export function ServiceCategoryList() {
       return matchesSearch;
     });
   }, [categories, searchText]);
-
-  const handleEdit = (id: number) => {
-    setEditingCategoryId(id);
-    setModalOpen(true);
-  };
 
   const handleDelete = async (id: number) => {
     const category = categories?.find((c) => c.service_id === id);
@@ -96,10 +90,8 @@ export function ServiceCategoryList() {
       render: (_, record) => (
         <ActionButtons
           onView={() => navigate(`/categorias-servicos/${record.service_id}`)}
-          onEdit={() => handleEdit(record.service_id)}
           onDelete={() => handleDelete(record.service_id)}
           showView
-          showEdit
           showDelete
           deleteTitle={t('services.deleteService')}
           deleteDescription={t('services.deleteServiceConfirm', { name: record.service_name })}
@@ -123,7 +115,7 @@ export function ServiceCategoryList() {
       title: t('services.serviceCost'),
       dataIndex: 'service_cost',
       key: 'service_cost',
-      width: 150,
+      width: 120,
       align: 'right',
       render: (value: any) => (
         <span style={{ fontWeight: 600, color: '#52c41a' }}>
@@ -148,15 +140,6 @@ export function ServiceCategoryList() {
         { text: t('common.inactive'), value: false },
       ],
       onFilter: (value, record) => record.is_active === value,
-    },
-    {
-      title: t('vehicles.createdAt'),
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: 130,
-      align: 'center',
-      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
-      sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
   ];
 

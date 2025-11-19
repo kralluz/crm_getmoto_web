@@ -9,12 +9,9 @@ const { Content } = Layout;
 export function MainLayout() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Recupera estado do localStorage ou inicia como minimizado
-  // Em mobile, sempre inicia colapsado
+  // Em mobile, sempre inicia colapsado. Em desktop, sempre aberto
   const [collapsed, setCollapsed] = useState(() => {
-    if (window.innerWidth < 768) return true;
-    const saved = localStorage.getItem('sidebar-collapsed');
-    return saved ? JSON.parse(saved) : true;
+    return window.innerWidth < 768;
   });
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,21 +21,18 @@ export function MainLayout() {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Sempre fecha o menu quando redimensiona para mobile
-      if (mobile) {
-        setCollapsed(true);
-      }
+      // Sempre fecha o menu quando redimensiona para mobile, abre quando redimensiona para desktop
+      setCollapsed(mobile);
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Salva o estado no localStorage quando mudar (apenas em desktop)
+  // Permite colapsar apenas em mobile
   const handleCollapse = (value: boolean) => {
-    setCollapsed(value);
-    if (!isMobile) {
-      localStorage.setItem('sidebar-collapsed', JSON.stringify(value));
+    if (isMobile) {
+      setCollapsed(value);
     }
   };
   const {
@@ -119,7 +113,7 @@ export function MainLayout() {
       />
       <Layout
         style={{
-          marginLeft: isMobile ? 0 : collapsed ? 80 : 260,
+          marginLeft: isMobile ? 0 : 260,
           transition: 'margin-left 0.2s',
         }}
       >

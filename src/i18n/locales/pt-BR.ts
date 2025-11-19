@@ -498,6 +498,7 @@ export default {
     description: 'Descrição',
     professional: 'Profissional',
     ordersList: 'Ordens de Serviço',
+    noOrders: 'Nenhuma ordem de serviço encontrada',
     deleteService: 'Deletar Serviço',
     deleteServiceConfirm: 'Tem certeza que deseja deletar o serviço "{{name}}"? Esta ação não pode ser desfeita se o serviço estiver vinculado a ordens de serviço.',
     yesDelete: 'Sim, deletar',

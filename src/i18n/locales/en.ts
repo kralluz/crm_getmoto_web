@@ -498,6 +498,7 @@ export default {
     description: 'Description',
     professional: 'Professional',
     ordersList: 'Service Orders',
+    noOrders: 'No service orders found',
     deleteService: 'Delete Service',
     deleteServiceConfirm: 'Are you sure you want to delete the service "{{name}}"? This action cannot be undone if the service is linked to service orders.',
     yesDelete: 'Yes, delete',

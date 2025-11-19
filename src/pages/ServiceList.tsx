@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Table, Card, Input, Typography, Select, Button, Alert, Row, Col } from 'antd';
-import { SearchOutlined, PlusOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Typography, Select, Button, Alert, Row, Col, Space, Tag } from 'antd';
+import { SearchOutlined, PlusOutlined, EyeOutlined, UserOutlined, CarOutlined, CalendarOutlined, ToolOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useServiceOrders } from '../hooks/useServices';
@@ -211,6 +211,132 @@ export function ServiceList() {
     { value: 'cancelled', label: t('services.status.cancelled') },
   ];
 
+  const getStatusColor = (status: ServiceOrderStatus): string => {
+    switch (status) {
+      case 'draft': return 'default';
+      case 'in_progress': return 'processing';
+      case 'completed': return 'success';
+      case 'cancelled': return 'error';
+      default: return 'default';
+    }
+  };
+
+  const getStatusLabel = (status: ServiceOrderStatus): string => {
+    switch (status) {
+      case 'draft': return t('services.status.draft');
+      case 'in_progress': return t('services.status.in_progress');
+      case 'completed': return t('services.status.completed');
+      case 'cancelled': return t('services.status.cancelled');
+      default: return status;
+    }
+  };
+
+  const renderMobileCards = () => {
+    if (isLoading) {
+      return (
+        <Card loading style={{ marginBottom: 16 }}>
+          <Card.Meta title="Loading..." description="Loading..." />
+        </Card>
+      );
+    }
+
+    if (!filteredServiceOrders || filteredServiceOrders.length === 0) {
+      return (
+        <Card>
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
+            {t('services.noOrders')}
+          </div>
+        </Card>
+      );
+    }
+
+    return (
+      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        {filteredServiceOrders.map((order) => (
+          <Card
+            key={order.service_order_id}
+            size="small"
+            style={{ borderRadius: 8 }}
+            bodyStyle={{ padding: '12px 16px' }}
+          >
+            <Space direction="vertical" size="small" style={{ width: '100%' }}>
+              {/* Header com Status e Botão */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Tag color={getStatusColor(order.status)}>
+                  {getStatusLabel(order.status)}
+                </Tag>
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<EyeOutlined />}
+                  onClick={() => handleView(order.service_order_id)}
+                >
+                  {t('common.view')}
+                </Button>
+              </div>
+
+              {/* Cliente */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <UserOutlined style={{ color: '#1890ff' }} />
+                <span style={{ fontWeight: 500 }}>{order.customer_name || '-'}</span>
+              </div>
+
+              {/* Veículo */}
+              {order.vehicles && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <CarOutlined style={{ color: '#52c41a', marginTop: 2 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 500 }}>
+                      {order.vehicles.brand} {order.vehicles.model}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#888' }}>
+                      {order.vehicles.plate} - {order.vehicles.year}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Descrição */}
+              {order.service_description && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <ToolOutlined style={{ color: '#faad14', marginTop: 2 }} />
+                  <div style={{ fontSize: 13, color: '#666', flex: 1 }}>
+                    {order.service_description}
+                  </div>
+                </div>
+              )}
+
+              {/* Profissional */}
+              {order.professional_name && (
+                <div style={{ fontSize: 12, color: '#888' }}>
+                  <strong>{t('services.professional')}:</strong> {order.professional_name}
+                </div>
+              )}
+
+              {/* Footer com Data e Valor */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingTop: 8,
+                borderTop: '1px solid #f0f0f0',
+                marginTop: 4
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#888' }}>
+                  <CalendarOutlined />
+                  {formatDate(order.created_at)}
+                </div>
+                <div style={{ fontWeight: 600, fontSize: 15, color: '#1890ff' }}>
+                  {formatCurrency(calculateTotal(order))}
+                </div>
+              </div>
+            </Space>
+          </Card>
+        ))}
+      </Space>
+    );
+  };
+
   return (
     <div>
       <PageHeader
@@ -269,24 +395,27 @@ export function ServiceList() {
         />
       )}
 
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredServiceOrders}
-          loading={isLoading}
-          rowKey="service_order_id"
-          pagination={{
-            pageSize: isMobile ? 10 : 20,
-            showSizeChanger: !isMobile,
-            showTotal: (total) => t('services.totalOrders', { total }),
-            responsive: true,
-            simple: isMobile,
-          }}
-          size={isMobile ? 'middle' : 'small'}
-          scroll={{ x: 'max-content' }}
-          sticky
-        />
-      </Card>
+      {isMobile ? (
+        renderMobileCards()
+      ) : (
+        <Card>
+          <Table
+            columns={columns}
+            dataSource={filteredServiceOrders}
+            loading={isLoading}
+            rowKey="service_order_id"
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showTotal: (total) => t('services.totalOrders', { total }),
+              responsive: true,
+            }}
+            size="small"
+            scroll={{ x: 'max-content' }}
+            sticky
+          />
+        </Card>
+      )}
 
       <ServiceOrderModal
         open={modalOpen}
