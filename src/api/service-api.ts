@@ -57,6 +57,17 @@ export const serviceOrderApi = {
     });
   },
 
+  /**
+   * Atualiza apenas a descrição do serviço de uma ordem de serviço
+   */
+  async updateDescription(id: number, service_description: string | null) {
+    return customAxiosInstance<ServiceOrder>({
+      url: `${BASE_URL}/${id}/description`,
+      method: 'PATCH',
+      data: { service_description },
+    });
+  },
+
   async delete(id: number) {
     return customAxiosInstance<void>({
       url: `${BASE_URL}/${id}`,

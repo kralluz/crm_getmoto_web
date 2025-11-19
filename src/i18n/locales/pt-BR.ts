@@ -396,6 +396,12 @@ export default {
     searchByName: 'Buscar por nome...',
     filterByStatus: 'Filtrar por status',
     allStatuses: 'Todos os status',
+    status: {
+      draft: 'Rascunho',
+      in_progress: 'Em Andamento',
+      completed: 'Concluído',
+      cancelled: 'Cancelado',
+    },
     // Service Order Form
     newOrder: 'Nova Ordem de Serviço',
     editOrder: 'Editar Ordem de Serviço',
@@ -416,7 +422,9 @@ export default {
     serviceDescriptionPlaceholder: 'Descreva o serviço a ser realizado',
     diagnosisPlaceholder: 'Diagnóstico do problema encontrado',
     notes: 'Observações',
-    notesPlaceholder: 'Observações adicionais',
+    notesPlaceholder: 'Digite observações sobre a ordem de serviço',
+    editDescription: 'Editar Descrição do Serviço',
+    descriptionPlaceholder: 'Digite a descrição do serviço realizado',
     finalizationDate: 'Data de Finalização',
     creationDate: 'Data Criação',
     selectStatus: 'Selecione o status',

@@ -76,6 +76,22 @@ export function useUpdateServiceOrderNotes() {
   });
 }
 
+/**
+ * Hook para atualizar apenas a descrição do serviço de uma ordem de serviço
+ */
+export function useUpdateServiceOrderDescription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, service_description }: { id: number; service_description: string | null }) => 
+      serviceOrderApi.updateDescription(id, service_description),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['service-order', id] });
+    },
+  });
+}
+
 export function useDeleteServiceOrder() {
   const queryClient = useQueryClient();
 

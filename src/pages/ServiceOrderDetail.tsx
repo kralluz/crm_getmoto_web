@@ -30,7 +30,7 @@ import {
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useServiceOrder, useCancelServiceOrder, useUpdateServiceOrderNotes } from '../hooks/useServices';
+import { useServiceOrder, useCancelServiceOrder, useUpdateServiceOrderNotes, useUpdateServiceOrderDescription } from '../hooks/useServices';
 import { useAuthStore } from '../store/auth-store';
 import { NotificationService } from '../services/notification.service';
 import type { ServiceProduct, ServiceRealized, CashFlow } from '../types/service-order';
@@ -52,10 +52,12 @@ export function ServiceOrderDetail() {
   const { data: serviceOrder, isLoading, error } = useServiceOrder(serviceOrderId);
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelServiceOrder();
   const { mutate: updateNotes, isPending: isUpdatingNotes } = useUpdateServiceOrderNotes();
+  const { mutate: updateDescription, isPending: isUpdatingDescription } = useUpdateServiceOrderDescription();
   const { user } = useAuthStore();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isEditNotesModalOpen, setIsEditNotesModalOpen] = useState(false);
+  const [isEditDescriptionModalOpen, setIsEditDescriptionModalOpen] = useState(false);
   const [cancelForm] = Form.useForm();
   const [cameFromSearch, setCameFromSearch] = useState(false);
 
@@ -105,6 +107,27 @@ export function ServiceOrderDetail() {
         {
           onSuccess: () => {
             setIsEditNotesModalOpen(false);
+            resolve();
+          },
+          onError: (error: any) => {
+            reject(error);
+          },
+        }
+      );
+    });
+  };
+
+  const handleEditDescription = () => {
+    setIsEditDescriptionModalOpen(true);
+  };
+
+  const handleSaveDescription = async (service_description: string | null) => {
+    return new Promise<void>((resolve, reject) => {
+      updateDescription(
+        { id: serviceOrderId, service_description },
+        {
+          onSuccess: () => {
+            setIsEditDescriptionModalOpen(false);
             resolve();
           },
           onError: (error: any) => {
@@ -318,26 +341,18 @@ export function ServiceOrderDetail() {
         </Button>
         <Space>
           {serviceOrder.status !== 'cancelled' && (
-            <>
-              <Button
-                icon={<EditOutlined />}
-                onClick={handleEditNotes}
-              >
-                {t('common.editNotes')}
-              </Button>
-              <Button
-                danger
-                icon={<StopOutlined />}
-                onClick={handleCancelOrder}
-                style={{ 
-                  backgroundColor: '#ff4d4f', 
-                  borderColor: '#ff4d4f',
-                  color: 'white'
-                }}
-              >
-                {t('services.cancelOrder')}
-              </Button>
-            </>
+            <Button
+              danger
+              icon={<StopOutlined />}
+              onClick={handleCancelOrder}
+              style={{ 
+                backgroundColor: '#ff4d4f', 
+                borderColor: '#ff4d4f',
+                color: 'white'
+              }}
+            >
+              {t('services.cancelOrder')}
+            </Button>
           )}
           <Button
             icon={<FilePdfOutlined />}
@@ -408,7 +423,21 @@ export function ServiceOrderDetail() {
                 '-'
               )}
             </Descriptions.Item>
-            <Descriptions.Item label={t('services.serviceDescriptionLabel')} span={2}>
+            <Descriptions.Item 
+              label={
+                <Space>
+                  {t('services.serviceDescriptionLabel')}
+                  {serviceOrder.status !== 'cancelled' && (
+                    <EditOutlined 
+                      onClick={handleEditDescription}
+                      style={{ cursor: 'pointer', color: '#1677ff', fontSize: 14 }}
+                      title={t('services.editDescription')}
+                    />
+                  )}
+                </Space>
+              } 
+              span={2}
+            >
               {serviceOrder.service_description || '-'}
             </Descriptions.Item>
             {serviceOrder.diagnosis && (
@@ -416,7 +445,21 @@ export function ServiceOrderDetail() {
                 {serviceOrder.diagnosis}
               </Descriptions.Item>
             )}
-            <Descriptions.Item label={t('services.observationsLabel')} span={2}>
+            <Descriptions.Item 
+              label={
+                <Space>
+                  {t('services.observationsLabel')}
+                  {serviceOrder.status !== 'cancelled' && (
+                    <EditOutlined 
+                      onClick={handleEditNotes}
+                      style={{ cursor: 'pointer', color: '#1677ff', fontSize: 14 }}
+                      title={t('common.editNotes')}
+                    />
+                  )}
+                </Space>
+              } 
+              span={2}
+            >
               {serviceOrder.notes || '-'}
             </Descriptions.Item>
             {serviceOrder.status === 'cancelled' && serviceOrder.cancellation_reason && (
@@ -576,6 +619,24 @@ export function ServiceOrderDetail() {
           </Form>
         </Space>
       </Modal>
+
+      {/* Edit Description Modal */}
+      <EditTextModal
+        open={isEditDescriptionModalOpen}
+        title={t('services.editDescription')}
+        label={t('services.serviceDescription')}
+        fieldName="service_description"
+        initialValue={serviceOrder?.service_description}
+        onCancel={() => setIsEditDescriptionModalOpen(false)}
+        onSave={handleSaveDescription}
+        isLoading={isUpdatingDescription}
+        required={false}
+        minLength={5}
+        maxLength={500}
+        placeholder={t('services.descriptionPlaceholder')}
+        multiline={true}
+        rows={4}
+      />
 
       {/* Edit Notes Modal */}
       <EditTextModal
