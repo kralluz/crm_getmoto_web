@@ -283,7 +283,7 @@ export function ServiceList() {
             simple: isMobile,
           }}
           size={isMobile ? 'middle' : 'small'}
-          scroll={{ x: 1300 }}
+          scroll={{ x: 'max-content' }}
           sticky
         />
       </Card>
