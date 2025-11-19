@@ -133,25 +133,51 @@ export function AppSidebar({
   ];
 
   return (
-    <Sider
-      collapsible={isMobile}
-      collapsed={collapsed}
-      width={260}
-      collapsedWidth={isMobile ? 0 : 260}
-      onCollapse={handleCollapseClick}
-      theme="light"
-      trigger={isMobile ? undefined : null}
-      style={{
-        overflow: 'auto',
-        height: '100vh',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
-        zIndex: isMobile ? 1000 : 1,
-      }}
-    >
+    <>
+      {/* CSS para desabilitar TODOS os tooltips e popovers do menu */}
+      <style>
+        {`
+          /* Desabilita tooltips do menu collapsed - abordagem agressiva */
+          .ant-menu-inline-collapsed-tooltip,
+          .ant-tooltip[role="tooltip"],
+          div[class*="ant-tooltip"],
+          div[class*="ant-menu-submenu-popup"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+          }
+
+          /* Esconde TODOS os tooltips globalmente */
+          body > .ant-tooltip {
+            display: none !important;
+          }
+
+          /* Esconde popovers de submenu */
+          .ant-menu-submenu-popup {
+            display: none !important;
+          }
+        `}
+      </style>
+      <Sider
+        collapsible={isMobile}
+        collapsed={collapsed}
+        width={260}
+        collapsedWidth={isMobile ? 0 : 260}
+        onCollapse={handleCollapseClick}
+        theme="light"
+        trigger={isMobile ? undefined : null}
+        style={{
+          overflow: 'auto',
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+          zIndex: isMobile ? 1000 : 1,
+        }}
+      >
       <div
         style={{
           height: 64,
@@ -192,5 +218,6 @@ export function AppSidebar({
         triggerSubMenuAction={isMobile ? 'click' : 'hover'}
       />
     </Sider>
+    </>
   );
 }
