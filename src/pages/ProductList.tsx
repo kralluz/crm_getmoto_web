@@ -241,23 +241,25 @@ export function ProductList() {
         subtitle={t('products.productListSubtitle')}
         helpText={t('products.pageHelp')}
         extra={
-          <Space>
+          <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
             <Button
               type="default"
               icon={<SwapOutlined />}
               onClick={handleOpenStockMovement}
-              size="large"
+              size={isMobile ? 'middle' : 'large'}
               disabled={!filteredProducts || filteredProducts.length === 0}
+              block={isMobile}
             >
-              {t('stockAdjustment.title')}
+              {isMobile ? 'Movimentar' : t('stockAdjustment.title')}
             </Button>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={handleCreate}
-              size="large"
+              size={isMobile ? 'middle' : 'large'}
+              block={isMobile}
             >
-              {t('products.newProduct')}
+              {isMobile ? 'Novo' : t('products.newProduct')}
             </Button>
           </Space>
         }
