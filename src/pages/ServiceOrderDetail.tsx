@@ -342,19 +342,16 @@ export function ServiceOrderDetail() {
     <div>
       <div style={{
         display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between',
-        alignItems: isMobile ? 'stretch' : 'center',
-        gap: isMobile ? 12 : 0,
+        alignItems: 'center',
         marginBottom: 16
       }}>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={handleBack}
           size="middle"
-        >
-          {t('common.back')}
-        </Button>
+          title={t('common.back')}
+        />
         <Space direction="horizontal">
           {serviceOrder.status !== 'cancelled' && (
             <Button
