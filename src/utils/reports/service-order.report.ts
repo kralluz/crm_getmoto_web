@@ -241,8 +241,35 @@ export async function generateServiceOrderReport(serviceOrder: ServiceOrder): Pr
     createGetMotoHeader(logoBase64),
     createCustomerVehicleSection(serviceOrder),
     createItemsTable(serviceOrder),
-    createTotalBox(totals.total),
   ];
+
+  // Adicionar notes se existir
+  if (serviceOrder.notes && serviceOrder.notes.trim() !== '') {
+    content.push({
+      table: {
+        widths: ['*'],
+        body: [
+          [
+            {
+              text: serviceOrder.notes,
+              style: 'tableCell',
+              alignment: 'left',
+              margin: [5, 5, 5, 5] as [number, number, number, number],
+            },
+          ],
+        ],
+      },
+      layout: {
+        hLineWidth: () => 1,
+        vLineWidth: () => 1,
+        hLineColor: () => '#000000',
+        vLineColor: () => '#000000',
+      },
+      margin: [0, 0, 0, 20] as [number, number, number, number],
+    });
+  }
+
+  content.push(createTotalBox(totals.total));
 
   // Adicionar rodapé como parte do conteúdo
   content.push({
