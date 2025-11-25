@@ -198,9 +198,35 @@ function createItemsTable(serviceOrder: ServiceOrder): Content {
 }
 
 /**
- * Cria caixa de total
+ * Cria caixa de total com desconto
  */
-function createTotalBox(total: number): Content {
+function createTotalsBox(serviceOrder: ServiceOrder, totals: ReturnType<typeof calculateTotals>): Content {
+  const rows: any[] = [];
+
+  // Subtotal
+  rows.push([
+    { text: 'Subtotal', style: 'label', alignment: 'right', margin: [10, 5, 5, 5] as [number, number, number, number] },
+    { text: formatCurrency(totals.subtotal), style: 'value', alignment: 'right', margin: [5, 5, 10, 5] as [number, number, number, number] },
+  ]);
+
+  // Desconto (se houver)
+  if (totals.discountValue > 0) {
+    let discountLabel = 'Discount';
+    if (serviceOrder.discount_percent) {
+      discountLabel = `Discount (${parseDecimal(serviceOrder.discount_percent).toFixed(2)}%)`;
+    }
+    rows.push([
+      { text: discountLabel, style: 'label', alignment: 'right', margin: [10, 5, 5, 5] as [number, number, number, number], color: '#ff4d4f' },
+      { text: `- ${formatCurrency(totals.discountValue)}`, style: 'value', alignment: 'right', margin: [5, 5, 10, 5] as [number, number, number, number], color: '#ff4d4f' },
+    ]);
+  }
+
+  // Total
+  rows.push([
+    { text: 'Total', style: 'totalLabel', alignment: 'right', margin: [10, 5, 5, 5] as [number, number, number, number] },
+    { text: formatCurrency(totals.total), style: 'totalValue', alignment: 'right', margin: [5, 5, 10, 5] as [number, number, number, number] },
+  ]);
+
   return {
     columns: [
       { text: '', width: '*' }, // Espaço vazio à esquerda
@@ -208,12 +234,7 @@ function createTotalBox(total: number): Content {
         width: 'auto',
         table: {
           widths: [80, 100],
-          body: [
-            [
-              { text: 'Total', style: 'totalLabel', alignment: 'right', margin: [10, 5, 5, 5] as [number, number, number, number] },
-              { text: formatCurrency(total), style: 'totalValue', alignment: 'right', margin: [5, 5, 10, 5] as [number, number, number, number] },
-            ],
-          ],
+          body: rows,
         },
         layout: {
           hLineWidth: () => 1,
@@ -269,91 +290,130 @@ export async function generateServiceOrderReport(serviceOrder: ServiceOrder): Pr
     });
   }
 
-  content.push(createTotalBox(totals.total));
-
-  // Adicionar rodapé como parte do conteúdo
-  content.push({
-    table: {
-      widths: ['*'],
-      body: [
-        // Linha 1: Mensagens de contato
-        [
-          {
-            columns: [
-              {
-                text: 'If you have any questions concerning this invoice, Please contact us.',
-                fontSize: 8,
-                width: '*',
-              },
-              {
-                text: '                    ',
-                fontSize: 8,
-                width: 'auto',
-              },
-              {
-                text: 'Thank you for your business!',
-                fontSize: 8,
-                width: 'auto',
-              },
-            ],
-            margin: [4, 4, 4, 4] as [number, number, number, number],
-          },
-        ],
-        // Linha 2: Registro da empresa
-        [
-          {
-            text: `Company Registration No. ${COMPANY_INFO.registration.number}`,
-            alignment: 'center',
-            bold: true,
-            fontSize: 8,
-            margin: [4, 4, 4, 4] as [number, number, number, number],
-          },
-        ],
-        // Linha 3: Detalhes bancários
-        [
-          {
-            text: `Bank Details. ${COMPANY_INFO.bank.name} Sort Code ${COMPANY_INFO.bank.sortCode}. Account No ${COMPANY_INFO.bank.accountNo}`,
-            alignment: 'center',
-            fontSize: 8,
-            margin: [4, 4, 4, 4] as [number, number, number, number],
-          },
-        ],
-      ],
-    },
-    layout: {
-      hLineWidth: () => 1,
-      vLineWidth: () => 1,
-      hLineColor: () => '#000000',
-      vLineColor: () => '#000000',
-    },
-    margin: [0, 0, 0, 10] as [number, number, number, number],
-  });
-
-  // Invoice number e data
-  content.push({
-    columns: [
-      {
-        text: `INVOICE ${serviceOrder.service_order_id.toString().padStart(4, '0')}`,
-        bold: true,
-        fontSize: 9,
-        width: '50%',
-      },
-      {
-        text: `DATE ${invoiceDate}`,
-        bold: true,
-        fontSize: 9,
-        width: '50%',
-        alignment: 'right',
-      },
-    ],
-    margin: [0, 0, 0, 0] as [number, number, number, number],
-  });
+  content.push(createTotalsBox(serviceOrder, totals));
 
   const docDefinition: any = {
     ...defaultDocumentConfig,
     pageOrientation: 'portrait',
     content,
     styles: defaultStyles,
+    pageMargins: [60, 60, 60, 140] as [number, number, number, number], // Margens: esquerda, topo, direita, inferior
+    footer: (currentPage: number, pageCount: number) => {
+      return {
+        stack: [
+          // Box 1: Mensagens de contato
+          {
+            table: {
+              widths: [475],
+              body: [
+                [
+                  {
+                    columns: [
+                      {
+                        text: 'If you have any questions concerning this invoice, Please contact us.',
+                        fontSize: 9,
+                        width: '*',
+                      },
+                      {
+                        text: '     ',
+                        fontSize: 9,
+                        width: 'auto',
+                      },
+                      {
+                        text: 'Thank you for your business!',
+                        fontSize: 9,
+                        width: 'auto',
+                      },
+                    ],
+                    margin: [5, 5, 5, 5] as [number, number, number, number],
+                  },
+                ],
+              ],
+            },
+            layout: {
+              hLineWidth: () => 1,
+              vLineWidth: () => 1,
+              hLineColor: () => '#000000',
+              vLineColor: () => '#000000',
+            },
+            margin: [60, 0, 0, 0] as [number, number, number, number],
+          },
+          // Box 2: Registro da empresa
+          {
+            table: {
+              widths: [475],
+              body: [
+                [
+                  {
+                    text: `Company Registration No. ${COMPANY_INFO.registration.number}`,
+                    alignment: 'center',
+                    bold: true,
+                    fontSize: 9,
+                    margin: [5, 5, 5, 5] as [number, number, number, number],
+                  },
+                ],
+              ],
+            },
+            layout: {
+              hLineWidth: () => 1,
+              vLineWidth: () => 1,
+              hLineColor: () => '#000000',
+              vLineColor: () => '#000000',
+            },
+            margin: [60, 0, 0, 0] as [number, number, number, number],
+          },
+          // Box 3: Detalhes bancários
+          {
+            table: {
+              widths: [475],
+              body: [
+                [
+                  {
+                    text: `Bank Details. ${COMPANY_INFO.bank.name} Sort Code ${COMPANY_INFO.bank.sortCode}. Account No ${COMPANY_INFO.bank.accountNo}`,
+                    alignment: 'center',
+                    fontSize: 9,
+                    margin: [5, 5, 5, 5] as [number, number, number, number],
+                  },
+                ],
+              ],
+            },
+            layout: {
+              hLineWidth: () => 1,
+              vLineWidth: () => 1,
+              hLineColor: () => '#000000',
+              vLineColor: () => '#000000',
+            },
+            margin: [60, 0, 0, 0] as [number, number, number, number],
+          },
+          // Invoice number, data e paginação
+          {
+            columns: [
+              {
+                text: `INVOICE ${serviceOrder.service_order_id.toString().padStart(4, '0')}`,
+                bold: true,
+                fontSize: 9,
+                width: '33%',
+              },
+              {
+                text: `pag ${currentPage} / ${pageCount}`,
+                bold: true,
+                fontSize: 9,
+                width: '34%',
+                alignment: 'center',
+              },
+              {
+                text: `DATE ${invoiceDate}`,
+                bold: true,
+                fontSize: 9,
+                width: '33%',
+                alignment: 'right',
+              },
+            ],
+            margin: [60, 3, 60, 0] as [number, number, number, number],
+          },
+        ],
+      };
+    },
     background: (currentPage: number, pageSize: any) => {
       return {
         canvas: [
@@ -559,7 +619,7 @@ export async function generateBudgetPDF(data: BudgetData, t?: (key: string) => s
       margin: [0, 0, 0, 20] as [number, number, number, number],
     },
 
-    // Total
+    // Totais com desconto
     {
       columns: [
         { text: '', width: '*' }, // Espaço vazio à esquerda
@@ -568,9 +628,28 @@ export async function generateBudgetPDF(data: BudgetData, t?: (key: string) => s
           table: {
             widths: [80, 100],
             body: [
+              // Subtotal
               [
-                { text: t ? t('services.total') : 'Total', style: 'totalLabel', alignment: 'right', margin: [10, 5, 5, 5] as [number, number, number, number] },
-                { text: formatCurrency(total), style: 'totalValue', alignment: 'right', margin: [5, 5, 10, 5] as [number, number, number, number] },
+                { text: t ? t('services.subtotal') : 'Subtotal', style: 'label', alignment: 'right' as const, margin: [10, 5, 5, 5] as [number, number, number, number] },
+                { text: formatCurrency(subtotal), style: 'value', alignment: 'right' as const, margin: [5, 5, 10, 5] as [number, number, number, number] },
+              ],
+              // Desconto (se houver)
+              ...(discountValue > 0 ? [[
+                { 
+                  text: data.discount_percent 
+                    ? `${t ? t('services.discount') : 'Discount'} (${data.discount_percent.toFixed(2)}%)` 
+                    : t ? t('services.discount') : 'Discount',
+                  style: 'label', 
+                  alignment: 'right' as const, 
+                  margin: [10, 5, 5, 5] as [number, number, number, number],
+                  color: '#ff4d4f'
+                },
+                { text: `- ${formatCurrency(discountValue)}`, style: 'value', alignment: 'right' as const, margin: [5, 5, 10, 5] as [number, number, number, number], color: '#ff4d4f' },
+              ]] : []),
+              // Total
+              [
+                { text: t ? t('services.total') : 'Total', style: 'totalLabel', alignment: 'right' as const, margin: [10, 5, 5, 5] as [number, number, number, number] },
+                { text: formatCurrency(total), style: 'totalValue', alignment: 'right' as const, margin: [5, 5, 10, 5] as [number, number, number, number] },
               ],
             ],
           },

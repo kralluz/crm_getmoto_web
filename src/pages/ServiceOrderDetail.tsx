@@ -351,7 +351,9 @@ export function ServiceOrderDetail() {
           onClick={handleBack}
           size="middle"
           title={t('common.back')}
-        />
+        >
+          {!isMobile && t('common.back')}
+        </Button>
         <Space direction="horizontal">
           {serviceOrder.status !== 'cancelled' && (
             <Button
@@ -365,7 +367,9 @@ export function ServiceOrderDetail() {
                 color: 'white'
               }}
               title={t('services.cancelOrder')}
-            />
+            >
+              {!isMobile && t('services.cancelOrder')}
+            </Button>
           )}
           <Button
             icon={<FilePdfOutlined />}
@@ -373,7 +377,9 @@ export function ServiceOrderDetail() {
             loading={isPdfLoading}
             size="middle"
             title={t('services.generateInvoice')}
-          />
+          >
+            {!isMobile && t('services.generateInvoice')}
+          </Button>
         </Space>
       </div>
 
