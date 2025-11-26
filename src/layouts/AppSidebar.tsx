@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, theme } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
@@ -16,6 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 const { Sider } = Layout;
+const { useToken } = theme;
 
 export interface AppSidebarProps {
   collapsed: boolean;
@@ -35,7 +36,11 @@ export function AppSidebar({
   isMobile = false,
 }: AppSidebarProps) {
   const { t } = useTranslation();
+  const { token } = useToken();
   const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu']);
+
+  // Detectar se está em tema dark
+  const isDarkMode = token.colorBgContainer === '#141414';
 
   // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, serviços, despesas e produtos sempre abertos
   useEffect(() => {
@@ -191,11 +196,11 @@ export function AppSidebar({
           <HomeOutlined style={{ fontSize: 24, color: '#1890ff' }} />
         ) : (
           <img
-            src="/logo-getmoto-transparent.png"
+            src={isDarkMode ? "/logo-getmoto-removebg.png" : "/logo-getmoto-transparent.png"}
             alt="GetMoto LTD."
             style={{
               width: '100%',
-              maxWidth: '180px',
+              maxWidth: '100px',
               height: 'auto',
             }}
           />
