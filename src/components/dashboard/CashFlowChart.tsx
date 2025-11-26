@@ -1,5 +1,5 @@
 import { Card } from 'antd';
-import { Line } from '@ant-design/charts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -32,59 +32,72 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
     {} as Record<string, { date: string; income: number; expense: number }>
   ) : {};
 
-  // Converter para array e format para o gráfico
-  const chartData =
-    groupedData &&
-    Object.values(groupedData).flatMap((item) => [
-      { date: item.date, type: t('dashboard.income'), value: item.income },
-      { date: item.date, type: t('dashboard.expense'), value: item.expense },
-    ]);
+  // Converter para array
+  const chartData = Object.values(groupedData).sort((a, b) => {
+    const [dayA, monthA] = a.date.split('/').map(Number);
+    const [dayB, monthB] = b.date.split('/').map(Number);
+    return monthA === monthB ? dayA - dayB : monthA - monthB;
+  });
 
-  const config = {
-    data: chartData || [],
-    xField: 'date',
-    yField: 'value',
-    seriesField: 'type',
-    smooth: true,
-    height: 300,
-    animation: {
-      appear: {
-        animation: 'path-in',
-        duration: 1000,
-      },
-    },
-    color: ({ type }: { type: string }) => {
-      return type === t('dashboard.income') ? '#52c41a' : '#ff4d4f';
-    },
-    yAxis: {
-      label: {
-        formatter: (v: string) =>
-          `£${Number(v).toLocaleString('en-GB', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}`,
-      },
-    },
-    tooltip: {
-      formatter: (datum: { type: string; value: number }) => {
-        return {
-          name: datum.type,
-          value: `£${Number(datum.value).toLocaleString('en-GB', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-        };
-      },
-    },
-    legend: {
-      position: 'top' as const,
-    },
+  const formatCurrency = (value: number) => {
+    return `£${value.toLocaleString('en-GB', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+  };
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          backgroundColor: 'white',
+          padding: '10px',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}>
+          <p style={{ margin: 0, marginBottom: 5, fontWeight: 600 }}>{payload[0].payload.date}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ margin: 0, color: entry.color }}>
+              {entry.name}: £{entry.value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
     <Card title={t('dashboard.cashFlowChart')} loading={loading}>
       {chartData && chartData.length > 0 ? (
-        <Line {...config} />
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis tickFormatter={formatCurrency} />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Line 
+              type="monotone" 
+              dataKey="income" 
+              stroke="#52c41a" 
+              strokeWidth={2}
+              name={t('dashboard.income')}
+              dot={{ fill: '#52c41a', r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="expense" 
+              stroke="#ff4d4f" 
+              strokeWidth={2}
+              name={t('dashboard.expense')}
+              dot={{ fill: '#ff4d4f', r: 4 }}
+              activeDot={{ r: 6 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       ) : (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
           {t('dashboard.noData')}
