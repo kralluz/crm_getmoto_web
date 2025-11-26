@@ -1,4 +1,4 @@
-import { DatePicker, Space, Card, Dropdown, Button, Row, Col } from 'antd';
+import { DatePicker, Space, Card, Dropdown, Button, Row, Col, theme } from 'antd';
 import type { MenuProps } from 'antd';
 import { CalendarOutlined, DownOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useState } from 'react';
 
 const { RangePicker } = DatePicker;
+const { useToken } = theme;
 
 export type PeriodType =
   | 'today'
@@ -31,6 +32,7 @@ interface PeriodSelectorProps {
 
 export function PeriodSelector({ onPeriodChange, onGenerateReport, reportLoading, reportDisabled }: PeriodSelectorProps) {
   const { t } = useTranslation();
+  const { token } = useToken();
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('thisMonth');
   const [customDates, setCustomDates] = useState<[Dayjs, Dayjs] | null>(null);
 
@@ -240,24 +242,25 @@ export function PeriodSelector({ onPeriodChange, onGenerateReport, reportLoading
                   style={{
                     minWidth: 200,
                     padding: '4px 11px',
-                    border: '1px solid #d9d9d9',
+                    border: `1px solid ${token.colorBorder}`,
                     borderRadius: '6px',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    backgroundColor: '#fff',
+                    backgroundColor: token.colorBgContainer,
+                    color: token.colorText,
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#4096ff';
+                    e.currentTarget.style.borderColor = token.colorPrimary;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#d9d9d9';
+                    e.currentTarget.style.borderColor = token.colorBorder;
                   }}
                 >
                   <span>{getLabelForPeriod(selectedPeriod)}</span>
-                  <DownOutlined style={{ color: '#00000073', fontSize: 12 }} />
+                  <DownOutlined style={{ color: token.colorTextSecondary, fontSize: 12 }} />
                 </div>
               </Dropdown>
               {selectedPeriod === 'custom' && (

@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { MainLayout } from '../layouts';
 import { ProtectedRoute } from '../components/auth';
 import { Login } from '../pages/Login';
-import { Register } from '../pages/Register';
 
 import { DashboardFinanceiro } from '../pages/DashboardFinanceiro';
 import { MovimentacaoDetail } from '../pages/MovimentacaoDetail';
@@ -26,14 +25,10 @@ import { SearchResults } from '../pages/SearchResults';
 import { Settings } from '../pages/Settings';
 
 export const router = createBrowserRouter([
-  // Rotas públicas (login e registro)
+  // Rota pública (apenas login)
   {
     path: '/login',
     element: <Login />,
-  },
-  {
-    path: '/register',
-    element: <Register />,
   },
   // Rotas privadas (protegidas)
   {
