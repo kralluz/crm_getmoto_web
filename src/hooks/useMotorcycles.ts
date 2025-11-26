@@ -72,8 +72,13 @@ export function useUpdateVehicle() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number | string; data: UpdateMotorcycleData }) =>
       motorcycleApi.update(id, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidar lista de veículos
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      // Invalidar veículo específico que foi atualizado
+      queryClient.invalidateQueries({ queryKey: ['vehicle', variables.id] });
+      // Invalidar estatísticas do veículo
+      queryClient.invalidateQueries({ queryKey: ['vehicle-stats', variables.id] });
       success(t('vehicles.vehicleUpdatedSuccess'));
     },
     onError: (error: any) => {
@@ -98,63 +103,9 @@ export function useUpdateVehicle() {
   });
 }
 
-export function useDeleteVehicle() {
-  const queryClient = useQueryClient();
-  const { success, error: showError } = useNotification();
-  const { t } = useTranslation();
-
-  return useMutation({
-    mutationFn: (id: number | string) => motorcycleApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success(t('vehicles.vehicleDeletedSuccess'));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || t('vehicles.vehicleDeleteError');
-      showError(message);
-    },
-  });
-}
-
-export function useDeactivateVehicle() {
-  const queryClient = useQueryClient();
-  const { success, error: showError } = useNotification();
-  const { t } = useTranslation();
-
-  return useMutation({
-    mutationFn: (id: number | string) => motorcycleApi.deactivate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success(t('vehicles.vehicleDeactivatedSuccess'));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || t('vehicles.vehicleDeactivationError');
-      showError(message);
-    },
-  });
-}
-
-export function useActivateVehicle() {
-  const queryClient = useQueryClient();
-  const { success, error: showError } = useNotification();
-  const { t } = useTranslation();
-
-  return useMutation({
-    mutationFn: (id: number | string) => motorcycleApi.activate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      success(t('vehicles.vehicleActivatedSuccess'));
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || t('vehicles.vehicleActivationError');
-      showError(message);
-    },
-  });
-}
 
 // Aliases para compatibilidade
 export const useMotorcycles = useVehicles;
 export const useMotorcycle = useVehicle;
 export const useCreateMotorcycle = useCreateVehicle;
 export const useUpdateMotorcycle = useUpdateVehicle;
-export const useDeleteMotorcycle = useDeleteVehicle;

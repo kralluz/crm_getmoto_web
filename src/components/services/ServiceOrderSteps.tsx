@@ -154,6 +154,35 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
             </Form.Item>
           </Col>
         </Row>
+
+        {selectedVehicle && (
+          <>
+            <Divider />
+            <Row gutter={16}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label={t('vehicles.updateMileOdometer')}
+                  name="vehicle_mile"
+                  initialValue={selectedVehicle.mile || 0}
+                  tooltip={t('vehicles.updateMileTooltip')}
+                  rules={[
+                    {
+                      type: 'number',
+                      min: selectedVehicle.mile || 0,
+                      message: t('vehicles.mileCannotDecrease'),
+                    },
+                  ]}
+                >
+                  <InputNumber
+                    placeholder={t('vehicles.milePlaceholder')}
+                    style={{ width: '100%' }}
+                    min={selectedVehicle.mile || 0}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </>
+        )}
       </div>
 
       <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
@@ -254,10 +283,10 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
             </Button>
           </Space>
           {services.length > 0 && (
-            <Card style={{ marginTop: 16, backgroundColor: '#f5f5f5' }}>
+            <Card style={{ marginTop: 16 }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Text strong>{t('services.servicesTotal')}:</Text>
-                <Text style={{ fontSize: 20, color: '#52c41a' }}>
+                <Text style={{ fontSize: 20, color: '#52c41a', fontWeight: 'bold' }}>
                   {formatCurrency(servicesTotal)}
                 </Text>
               </Space>
@@ -313,94 +342,109 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
               const hasInsufficientStock = product.product_id && (product.product_qtd > availableStock || isOutOfStock);
               
               return (
-                <Card 
-                  key={product.key} 
+                <Card
+                  key={product.key}
                   size="small"
                   style={hasInsufficientStock ? { borderColor: '#ff4d4f', borderWidth: 2 } : undefined}
                 >
-                  <Row gutter={[16, 16]} align="middle">
-                    <Col xs={24} md={10}>
-                      <div style={{ marginBottom: 4 }}>
-                        <Text type="secondary">{t('services.product')}</Text>
-                        <Tooltip title={t('services.addProductTooltip')} placement="top">
-                          <InfoCircleOutlined style={{ marginLeft: 6, fontSize: 12, color: '#8c8c8c', cursor: 'help' }} />
-                        </Tooltip>
-                      </div>
-                      <ProductSelect
-                        value={product.product_id}
-                        onChange={(value) => {
-                          handleProductChange(product.key, 'product_id', value);
-                          // Resetar preço quando mudar o produto
-                          const newProduct = productsData?.find((p) => p.product_id === value);
-                          if (newProduct) {
-                            handleProductChange(product.key, 'unit_price', newProduct.sell_price);
-                          }
-                        }}
-                        placeholder={t('services.selectProduct')}
-                      />
-                    </Col>
-                    <Col xs={24} md={4}>
-                      <Text type="secondary">{t('services.quantity')}</Text>
-                      <InputNumber
-                        min={1}
-                        value={product.product_qtd}
-                        onChange={(value) =>
-                          handleProductChange(
-                            product.key,
-                            'product_qtd',
-                            value || 1
-                          )
-                        }
-                        style={{ width: '100%' }}
-                        status={hasInsufficientStock ? 'error' : undefined}
-                      />
-                      {product.product_id && (
-                        <div style={{ marginTop: 4 }}>
-                          <Text 
-                            type={isOutOfStock ? "danger" : "secondary"} 
-                            style={{ fontSize: 11, fontWeight: isOutOfStock ? 'bold' : 'normal' }}
-                          >
-                            Disponível: {availableStock}
-                          </Text>
-                          {isOutOfStock ? (
-                            <div>
-                              <Text type="danger" style={{ fontSize: 12, fontWeight: 'bold' }}>
-                                🚫 Este item está esgotado!
-                              </Text>
-                            </div>
-                          ) : hasInsufficientStock && (
-                            <div>
-                              <Text type="danger" style={{ fontSize: 11 }}>
-                                ⚠️ Quantidade ultrapassa estoque disponível!
-                              </Text>
-                            </div>
-                          )}
+                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    <Row gutter={16}>
+                      <Col span={24}>
+                        <div style={{ marginBottom: 4 }}>
+                          <Text type="secondary">{t('services.product')}</Text>
+                          <Tooltip title={t('services.addProductTooltip')} placement="top">
+                            <InfoCircleOutlined style={{ marginLeft: 6, fontSize: 12, color: '#8c8c8c', cursor: 'help' }} />
+                          </Tooltip>
                         </div>
-                      )}
-                    </Col>
-                    <Col xs={24} md={6}>
-                      <Text type="secondary">{t('services.unitPrice')}</Text>
-                      <CurrencyInput
-                        value={product.unit_price !== undefined ? product.unit_price : defaultPrice}
-                        onChange={(value) => {
-                          console.log('💰 CurrencyInput onChange produto:', product.key, 'value:', value);
-                          handleProductChange(product.key, 'unit_price', value ?? 0);
-                        }}
-                        style={{ width: '100%' }}
-                        placeholder="£ 0.00"
-                      />
-                    </Col>
-                    <Col xs={24} md={4}>
-                      <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleRemoveProduct(product.key)}
-                        block
-                      >
-                        {t('common.remove')}
-                      </Button>
-                    </Col>
-                  </Row>
+                        <ProductSelect
+                          value={product.product_id}
+                          onChange={(value) => {
+                            handleProductChange(product.key, 'product_id', value);
+                            // Resetar preço quando mudar o produto
+                            const newProduct = productsData?.find((p) => p.product_id === value);
+                            if (newProduct) {
+                              handleProductChange(product.key, 'unit_price', newProduct.sell_price);
+                            }
+                          }}
+                          placeholder={t('services.selectProduct')}
+                        />
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16} align="top">
+                      <Col xs={12} sm={8} md={6}>
+                        <div style={{ marginBottom: 4 }}>
+                          <Text type="secondary">{t('services.quantity')}</Text>
+                        </div>
+                        <InputNumber
+                          min={1}
+                          value={product.product_qtd}
+                          onChange={(value) =>
+                            handleProductChange(
+                              product.key,
+                              'product_qtd',
+                              value || 1
+                            )
+                          }
+                          style={{ width: '100%' }}
+                          status={hasInsufficientStock ? 'error' : undefined}
+                        />
+                        {product.product_id && (
+                          <div style={{ marginTop: 4 }}>
+                            <Text
+                              type={isOutOfStock ? "danger" : "secondary"}
+                              style={{ fontSize: 11, fontWeight: isOutOfStock ? 'bold' : 'normal' }}
+                            >
+                              Disponível: {availableStock}
+                            </Text>
+                            {isOutOfStock && (
+                              <div style={{ marginTop: 2 }}>
+                                <Text type="danger" style={{ fontSize: 11, fontWeight: 'bold', display: 'block' }}>
+                                  🚫 Esgotado!
+                                </Text>
+                              </div>
+                            )}
+                            {!isOutOfStock && hasInsufficientStock && (
+                              <div style={{ marginTop: 2 }}>
+                                <Text type="danger" style={{ fontSize: 11, display: 'block' }}>
+                                  ⚠️ Ultrapassa estoque!
+                                </Text>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Col>
+
+                      <Col xs={12} sm={8} md={8}>
+                        <div style={{ marginBottom: 4 }}>
+                          <Text type="secondary">{t('services.unitPrice')}</Text>
+                        </div>
+                        <CurrencyInput
+                          value={product.unit_price !== undefined ? product.unit_price : defaultPrice}
+                          onChange={(value) => {
+                            console.log('💰 CurrencyInput onChange produto:', product.key, 'value:', value);
+                            handleProductChange(product.key, 'unit_price', value ?? 0);
+                          }}
+                          style={{ width: '100%' }}
+                          placeholder="£ 0.00"
+                        />
+                      </Col>
+
+                      <Col xs={24} sm={8} md={10}>
+                        <div style={{ marginBottom: 4 }}>
+                          <Text type="secondary" style={{ opacity: 0 }}>.</Text>
+                        </div>
+                        <Button
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleRemoveProduct(product.key)}
+                          block
+                        >
+                          {t('common.remove')}
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Space>
                 </Card>
               );
             })}
@@ -414,10 +458,10 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
             </Button>
           </Space>
           {products.length > 0 && (
-            <Card style={{ marginTop: 16, backgroundColor: '#f5f5f5' }}>
+            <Card style={{ marginTop: 16 }}>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Text strong>{t('services.productsTotal')}:</Text>
-                <Text style={{ fontSize: 20, color: '#52c41a' }}>
+                <Text style={{ fontSize: 20, color: '#52c41a', fontWeight: 'bold' }}>
                   {formatCurrency(productsTotal)}
                 </Text>
               </Space>
@@ -549,7 +593,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                 </Space>
               </Form.Item>
 
-              <Card style={{ backgroundColor: '#e6f7ff', marginTop: 16 }}>
+              <Card style={{ marginTop: 16 }}>
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Row justify="space-between">
                     <Text>{t('services.servicesTotal')}:</Text>
@@ -578,7 +622,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                     </Text>
                     <Text
                       strong
-                      style={{ fontSize: 20, color: '#52c41a' }}
+                      style={{ fontSize: 20, color: '#52c41a', fontWeight: 'bold' }}
                     >
                       {formatCurrency(grandTotal)}
                     </Text>
@@ -711,7 +755,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
             </Card>
           )}
 
-          <Card style={{ backgroundColor: '#e6f7ff' }}>
+          <Card>
             <Space direction="vertical" style={{ width: '100%' }} size="large">
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Row justify="space-between">
@@ -739,7 +783,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                   <Text strong style={{ fontSize: 18 }}>
                     {t('services.grandTotal')}:
                   </Text>
-                  <Text strong style={{ fontSize: 24, color: '#52c41a' }}>
+                  <Text strong style={{ fontSize: 24, color: '#52c41a', fontWeight: 'bold' }}>
                     {formatCurrency(grandTotal)}
                   </Text>
                 </Row>

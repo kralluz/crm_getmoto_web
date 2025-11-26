@@ -194,13 +194,6 @@ export function ServiceList() {
       align: 'center',
       render: (date: string) => formatDate(date),
     },
-    {
-      title: t('services.totalEstimated'),
-      key: 'total_estimated',
-      width: 130,
-      align: 'right',
-      render: (_, record) => formatCurrency(calculateTotal(record)),
-    },
   ];
 
   const statusOptions: { value: ServiceOrderStatus | ''; label: string }[] = [

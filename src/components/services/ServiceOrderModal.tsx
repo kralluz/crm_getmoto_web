@@ -12,7 +12,7 @@ import {
 // import { useCustomers } from '../../hooks/useCustomers'; // REMOVIDO: tabela customers não existe
 import { useServiceCategories } from '../../hooks/useServiceCategories';
 import { useProducts } from '../../hooks/useProducts';
-import { useVehicle } from '../../hooks/useMotorcycles';
+import { useVehicle, useUpdateVehicle } from '../../hooks/useMotorcycles';
 // Removed large inline step JSX; now contained in ServiceOrderSteps component
 import { ServiceOrderSteps } from './ServiceOrderSteps';
 import type { CreateServiceOrderData, UpdateServiceOrderData } from '../../types/service-order';
@@ -67,6 +67,7 @@ export function ServiceOrderModal({
   // Mutations
   const createMutation = useCreateServiceOrder();
   // const updateMutation = useUpdateServiceOrder(); // REMOVIDO: Service orders são imutáveis
+  const { mutate: updateVehicle } = useUpdateVehicle();
 
   const isSaving = createMutation.isPending; // || updateMutation.isPending;
 
@@ -123,6 +124,13 @@ export function ServiceOrderModal({
   useEffect(() => {
     console.log('📊 Services state changed:', services);
   }, [services]);
+
+  // Atualizar campo de quilometragem quando veículo for alterado
+  useEffect(() => {
+    if (selectedVehicle && !isEditing) {
+      form.setFieldValue('vehicle_mile', selectedVehicle.mile || 0);
+    }
+  }, [selectedVehicle, form, isEditing]);
 
   // Adicionar produto
   const handleAddProduct = () => {
@@ -333,8 +341,38 @@ export function ServiceOrderModal({
           services: validServices,
         }),
       };
-      
+
       console.log('📤 Data being sent to API:', JSON.stringify(formData, null, 2));
+
+      // Atualizar quilometragem do veículo se fornecida e diferente da atual
+      if (!isEditing && values.vehicle_mile !== undefined && selectedVehicle) {
+        const currentMile = selectedVehicle.mile || 0;
+        const newMile = values.vehicle_mile;
+
+        if (newMile !== currentMile && newMile > currentMile) {
+          console.log(`🚗 Atualizando quilometragem do veículo ${values.vehicle_id}: ${currentMile}km -> ${newMile}km`);
+          try {
+            await new Promise<void>((resolve, reject) => {
+              updateVehicle(
+                { id: values.vehicle_id, data: { mile: newMile } },
+                {
+                  onSuccess: () => {
+                    console.log('✅ Quilometragem atualizada com sucesso');
+                    resolve();
+                  },
+                  onError: (error) => {
+                    console.error('❌ Erro ao atualizar quilometragem:', error);
+                    reject(error);
+                  },
+                }
+              );
+            });
+          } catch (error) {
+            console.error('❌ Falha ao atualizar quilometragem do veículo:', error);
+            NotificationService.warning('Ordem de serviço será criada, mas não foi possível atualizar a quilometragem do veículo.');
+          }
+        }
+      }
 
       if (isEditing) {
         // NOTA: Service orders são imutáveis e não podem ser editados

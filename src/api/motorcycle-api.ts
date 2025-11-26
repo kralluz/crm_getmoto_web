@@ -42,29 +42,6 @@ export const motorcycleApi = {
       data,
     });
   },
-
-  async delete(id: number | string) {
-    return customAxiosInstance<{ message: string }>({
-      url: `${BASE_URL}/${id}`,
-      method: 'DELETE',
-    });
-  },
-
-  async deactivate(id: number | string) {
-    return customAxiosInstance<Motorcycle>({
-      url: `${BASE_URL}/${id}`,
-      method: 'PUT',
-      data: { is_active: false },
-    });
-  },
-
-  async activate(id: number | string) {
-    return customAxiosInstance<Motorcycle>({
-      url: `${BASE_URL}/${id}`,
-      method: 'PUT',
-      data: { is_active: true },
-    });
-  },
 };
 
 // Alias para manter compatibilidade

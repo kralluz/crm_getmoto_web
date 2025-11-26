@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -10,7 +10,9 @@ import {
   Form,
   Input,
   Select,
-  Switch
+  Switch,
+  Row,
+  Col
 } from 'antd';
 import {
   PlusOutlined,
@@ -35,8 +37,15 @@ export function UsersSettings() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: users = [], isLoading } = useUsers();
   const { mutate: createUser, isPending: isCreating } = useCreateUser();
@@ -271,17 +280,63 @@ export function UsersSettings() {
           </Button>
         </Space>
 
-        <Table
-          columns={columns}
-          dataSource={users}
-          loading={isLoading}
-          rowKey="id"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => t('users.totalUsers', { total }),
-          }}
-        />
+        {isMobile ? (
+          <Row gutter={[16, 16]}>
+            {users.map((user) => (
+              <Col xs={24} key={user.id}>
+                <Card
+                  size="small"
+                  actions={[
+                    <Tooltip title={t('users.edit')} key="edit">
+                      <EditOutlined onClick={() => handleEdit(user)} />
+                    </Tooltip>,
+                    <Tooltip title={t('users.changePassword')} key="password">
+                      <KeyOutlined onClick={() => handleChangePassword(user.id)} />
+                    </Tooltip>,
+                    <Tooltip title={t('users.delete')} key="delete">
+                      <DeleteOutlined
+                        style={{ color: '#ff4d4f' }}
+                        onClick={() => handleDelete(user)}
+                      />
+                    </Tooltip>,
+                  ]}
+                >
+                  <div style={{ marginBottom: 8 }}>
+                    <strong>{user.name}</strong>
+                  </div>
+                  <div style={{ marginBottom: 8, fontSize: 12, color: '#8c8c8c' }}>
+                    {user.email}
+                  </div>
+                  <Space wrap>
+                    <Tag color={getRoleColor(user.role)}>
+                      {getRoleLabel(user.role)}
+                    </Tag>
+                    <Tag color={user.active ? 'success' : 'default'}>
+                      {user.active ? t('users.active') : t('users.inactive')}
+                    </Tag>
+                  </Space>
+                  <div style={{ marginTop: 8, fontSize: 11, color: '#8c8c8c' }}>
+                    {t('users.createdAt')}: {dayjs.utc(user.createdAt).format('DD/MM/YYYY')}
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={users}
+            loading={isLoading}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => t('users.totalUsers', { total }),
+            }}
+            scroll={{ x: 800 }}
+            size="middle"
+          />
+        )}
       </Card>
 
       {/* Modal de Criar/Editar */}
@@ -437,15 +492,14 @@ export function UsersSettings() {
             borderRadius: '6px'
           }}>
             <Space direction="vertical" size="small">
-              <strong style={{ color: '#d48806' }}>⚠️ Atenção sobre Permissões</strong>
+              <strong style={{ color: '#d48806' }}>⚠️ {t('users.permissionsWarningTitle')}</strong>
               <p style={{ margin: 0, color: '#595959' }}>
-                Todos os usuários do sistema possuem acesso completo às informações e funcionalidades. 
-                Qualquer usuário poderá visualizar, criar, editar e excluir dados em todos os módulos do sistema.
+                {t('users.permissionsWarningMessage')}
               </p>
             </Space>
           </div>
           <p style={{ margin: 0, color: '#595959' }}>
-            Deseja prosseguir com a criação do novo usuário?
+            {t('users.createUserConfirm')}
           </p>
         </Space>
       </Modal>

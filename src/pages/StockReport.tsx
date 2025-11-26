@@ -10,13 +10,17 @@ import {
   Select,
   Button,
   Tag,
-  Typography
+  Typography,
+  Tooltip
 } from 'antd';
 import { 
   StockOutlined, 
   WarningOutlined, 
   BarChartOutlined,
-  DownloadOutlined 
+  DownloadOutlined,
+  TagOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -343,20 +347,68 @@ export function StockReport() {
       </Row>
 
       <Card title={t('inventory.fullInventory')} style={{ marginBottom: 16 }}>
-        <Table
-          columns={productColumns}
-          dataSource={products || []}
-          rowKey="product_id"
-          loading={isLoadingProducts}
-          pagination={{
-            pageSize: isMobile ? 10 : 20,
-            showSizeChanger: !isMobile,
-            showTotal: (total) => t('inventory.totalProductsCount', { total }),
-            simple: isMobile,
-          }}
-          size={isMobile ? 'middle' : 'small'}
-          scroll={{ x: 1000 }}
-        />
+        {isMobile ? (
+          <Row gutter={[16, 16]}>
+            {(products || []).map((product) => {
+              const qtyNum = parseDecimal(product.quantity);
+              const alertQty = parseDecimal(product.quantity_alert);
+              const isLow = qtyNum <= alertQty;
+              const costValue = parseDecimal(product.quantity) * parseDecimal(product.buy_price);
+              const sellValue = parseDecimal(product.quantity) * parseDecimal(product.sell_price);
+              const profit = sellValue - costValue;
+
+              return (
+                <Col xs={24} key={product.product_id}>
+                  <Card size="small">
+                    <div style={{ marginBottom: 8 }}>
+                      <strong>{product.product_name}</strong>
+                    </div>
+                    {product.product_category && (
+                      <div style={{ marginBottom: 8 }}>
+                        <Tag color="blue">{product.product_category.product_category_name}</Tag>
+                      </div>
+                    )}
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.stock')}:</span>
+                        <span style={{ color: isLow ? '#ff4d4f' : undefined, fontWeight: isLow ? 600 : 400 }}>
+                          {isLow && <WarningOutlined style={{ marginRight: 4 }} />}
+                          {qtyNum}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.costValue')}:</span>
+                        <span>{formatCurrency(costValue)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.saleValue')}:</span>
+                        <span>{formatCurrency(sellValue)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.potentialProfit')}:</span>
+                        <span style={{ color: '#52c41a', fontWeight: 600 }}>{formatCurrency(profit)}</span>
+                      </div>
+                    </Space>
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
+        ) : (
+          <Table
+            columns={productColumns}
+            dataSource={products || []}
+            rowKey="product_id"
+            loading={isLoadingProducts}
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showTotal: (total) => t('inventory.totalProductsCount', { total }),
+            }}
+            size="middle"
+            scroll={{ x: 1000 }}
+          />
+        )}
       </Card>
 
       <Card 
@@ -393,14 +445,14 @@ export function StockReport() {
       >
         {moveStats && (
           <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Statistic
                 title={t('inventory.totalMovements')}
                 value={moveStats.totalMovements}
                 prefix={<BarChartOutlined />}
               />
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Statistic
                 title={t('inventory.entries')}
                 value={moveStats.totalEntries.toFixed(1)}
@@ -408,7 +460,7 @@ export function StockReport() {
                 suffix={`(${moveStats.entriesCount})`}
               />
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Statistic
                 title={t('inventory.exits')}
                 value={moveStats.totalExits.toFixed(1)}
@@ -416,7 +468,7 @@ export function StockReport() {
                 suffix={`(${moveStats.exitsCount})`}
               />
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Statistic
                 title={t('inventory.adjustments')}
                 value={moveStats.adjustmentsCount}
@@ -426,22 +478,65 @@ export function StockReport() {
           </Row>
         )}
 
-        <Table
-          columns={movementColumns}
-          dataSource={stockMoves || []}
-          rowKey="stock_move_id"
-          loading={isLoadingMoves}
-          pagination={{
-            pageSize: isMobile ? 10 : 20,
-            showSizeChanger: !isMobile,
-            showTotal: (total) => t('inventory.totalMovementsCount', { total }),
-            simple: isMobile,
-          }}
-          size={isMobile ? 'middle' : 'small'}
-          locale={{
-            emptyText: t('inventory.noMovementInPeriod'),
-          }}
-        />
+        {isMobile ? (
+          <Row gutter={[16, 16]}>
+            {(stockMoves || []).map((move) => {
+              const qtyNum = parseDecimal(move.quantity);
+              const config = moveTypeLabels[move.move_type];
+              const color = move.move_type === 'ENTRY' ? '#52c41a' :
+                            move.move_type === 'EXIT' ? '#ff4d4f' : '#fa8c16';
+              const prefix = move.move_type === 'ENTRY' ? '+' :
+                             move.move_type === 'EXIT' ? '-' : '';
+
+              return (
+                <Col xs={24} key={move.stock_move_id}>
+                  <Card size="small">
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong>{move.products?.product_name}</strong>
+                        <Tag color={config?.color}>{config?.label || move.move_type}</Tag>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.quantity')}:</span>
+                        <Text strong style={{ color }}>
+                          {prefix}{qtyNum}
+                        </Text>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.responsible')}:</span>
+                        <span>{move.users?.name || '-'}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 4 }}>
+                        {formatDateTime(move.created_at)}
+                      </div>
+                      {move.notes && (
+                        <div style={{ fontSize: 12, fontStyle: 'italic', color: '#595959', marginTop: 4 }}>
+                          {move.notes}
+                        </div>
+                      )}
+                    </Space>
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
+        ) : (
+          <Table
+            columns={movementColumns}
+            dataSource={stockMoves || []}
+            rowKey="stock_move_id"
+            loading={isLoadingMoves}
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showTotal: (total) => t('inventory.totalMovementsCount', { total }),
+            }}
+            size="middle"
+            locale={{
+              emptyText: t('inventory.noMovementInPeriod'),
+            }}
+          />
+        )}
       </Card>
     </div>
   );

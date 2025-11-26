@@ -1,4 +1,4 @@
-import { Modal, Form, Input, InputNumber, Space, Select, Radio, Alert } from 'antd';
+import { Modal, Form, Input, InputNumber, Space, Select, Radio, Alert, theme } from 'antd';
 import { useEffect, useState } from 'react';
 import { useCreateStockMove } from '../../hooks/useProducts';
 import type { Product, CreateStockMoveData } from '../../types/product';
@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
+const { useToken } = theme;
 
 interface StockMovementModalProps {
   product?: Product;
@@ -23,6 +24,7 @@ export function StockMovementModal({
   const [form] = Form.useForm();
   const createStockMove = useCreateStockMove();
   const { t } = useTranslation();
+  const { token } = useToken();
   const [adjustmentType, setAdjustmentType] = useState<'increase' | 'decrease'>('increase');
 
   const ADJUSTMENT_REASONS = [
@@ -119,7 +121,14 @@ export function StockMovementModal({
           />
 
           {product && (
-            <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+            <div style={{ 
+              marginBottom: 16, 
+              padding: 12, 
+              background: token.colorBgContainer, 
+              border: `1px solid ${token.colorBorder}`,
+              borderRadius: 4,
+              color: token.colorText
+            }}>
               <strong>{t('products.product') || 'Produto'}:</strong> {product.product_name}
               <br />
               <strong>{t('inventory.currentStock') || 'Estoque Atual'}:</strong> {product.quantity} {t('inventory.units') || 'unidades'}

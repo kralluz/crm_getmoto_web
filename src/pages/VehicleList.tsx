@@ -1,14 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, Row, Col } from 'antd';
+import { Table, Card, Input, Tag, Space, Select, Button, Row, Col, Tooltip } from 'antd';
 import {
   SearchOutlined,
   PlusOutlined,
   FilterOutlined,
+  EyeOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { useVehicles, useDeactivateVehicle, useActivateVehicle } from '../hooks/useMotorcycles';
+import { useVehicles } from '../hooks/useMotorcycles';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
 import type { Motorcycle } from '../types/motorcycle';
@@ -30,8 +32,6 @@ export function VehicleList() {
   const { data: vehicles, isLoading } = useVehicles({
     is_active: activeFilter,
   });
-  const { mutate: deactivateVehicle } = useDeactivateVehicle();
-  const { mutate: activateVehicle } = useActivateVehicle();
 
   const filteredVehicles = useMemo(() => {
     if (!Array.isArray(vehicles)) return [];
@@ -50,14 +50,6 @@ export function VehicleList() {
 
   const handleEdit = (id: number) => {
     navigate(`/veiculos/${id}/editar`);
-  };
-
-  const handleToggleActive = async (id: number, isActive: boolean) => {
-    if (isActive) {
-      deactivateVehicle(id);
-    } else {
-      activateVehicle(id);
-    }
   };
 
   const handleView = (id: number) => {
@@ -79,17 +71,8 @@ export function VehicleList() {
         <ActionButtons
           onView={() => handleView(record.vehicle_id)}
           onEdit={() => handleEdit(record.vehicle_id)}
-          onDelete={() => handleToggleActive(record.vehicle_id, record.is_active)}
           showView
           showEdit
-          showDelete
-          deleteTitle={record.is_active ? t('vehicles.deactivateVehicle') : t('vehicles.activateVehicle')}
-          deleteDescription={record.is_active 
-            ? t('vehicles.deactivateVehicleConfirm', { plate: record.plate })
-            : t('vehicles.activateVehicleConfirm', { plate: record.plate })
-          }
-          deleteButtonType={record.is_active ? 'text' : 'text'}
-          deleteDanger={record.is_active}
           iconOnly
         />
       ),
@@ -237,21 +220,85 @@ export function VehicleList() {
             </Col>
           </Row>
 
-          <Table
-            columns={columns}
-            dataSource={filteredVehicles}
-            rowKey="vehicle_id"
-            loading={isLoading}
-            pagination={{
-              pageSize: isMobile ? 10 : 20,
-              showSizeChanger: !isMobile,
-              showTotal: (total) =>
-                t('vehicles.totalVehicles', { total: total }),
-              simple: isMobile,
-            }}
-            size={isMobile ? 'middle' : 'small'}
-            scroll={{ x: 1200 }}
-          />
+          {isMobile ? (
+            <Row gutter={[16, 16]}>
+              {filteredVehicles.map((vehicle) => (
+                <Col xs={24} key={vehicle.vehicle_id}>
+                  <Card
+                    size="small"
+                    actions={[
+                      <Tooltip title={t('common.view')} key="view">
+                        <EyeOutlined onClick={() => handleView(vehicle.vehicle_id)} />
+                      </Tooltip>,
+                      <Tooltip title={t('common.edit')} key="edit">
+                        <EditOutlined onClick={() => handleEdit(vehicle.vehicle_id)} />
+                      </Tooltip>,
+                    ]}
+                  >
+                    <div style={{ marginBottom: 8 }}>
+                      <Tag color="blue" style={{ fontSize: '14px', fontWeight: 600 }}>
+                        {vehicle.plate}
+                      </Tag>
+                    </div>
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('vehicles.brand')}:</span>
+                        <span>{vehicle.brand || '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('vehicles.model')}:</span>
+                        <span>{vehicle.model || '-'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('vehicles.year')}:</span>
+                        <span>{vehicle.year || '-'}</span>
+                      </div>
+                      {vehicle.mile && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('vehicles.mile')}:</span>
+                          <span>{vehicle.mile.toLocaleString('pt-BR')} km</span>
+                        </div>
+                      )}
+                      {vehicle.color && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('vehicles.color')}:</span>
+                          <span>{vehicle.color}</span>
+                        </div>
+                      )}
+                    </Space>
+                    <div style={{ marginTop: 8 }}>
+                      <Space wrap>
+                        <Tag color="orange">
+                          {t('vehicles.serviceOrderCount', { count: vehicle._count?.service_order || 0 })}
+                        </Tag>
+                        <Tag color={vehicle.is_active ? 'green' : 'default'}>
+                          {vehicle.is_active ? t('common.active') : t('common.inactive')}
+                        </Tag>
+                      </Space>
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 11, color: '#8c8c8c' }}>
+                      {t('vehicles.createdAt')}: {dayjs.utc(vehicle.created_at).format('DD/MM/YYYY')}
+                    </div>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          ) : (
+            <Table
+              columns={columns}
+              dataSource={filteredVehicles}
+              rowKey="vehicle_id"
+              loading={isLoading}
+              pagination={{
+                pageSize: 20,
+                showSizeChanger: true,
+                showTotal: (total) =>
+                  t('vehicles.totalVehicles', { total: total }),
+              }}
+              size="middle"
+              scroll={{ x: 1200 }}
+            />
+          )}
         </Space>
       </Card>
     </div>

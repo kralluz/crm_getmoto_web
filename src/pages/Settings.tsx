@@ -1,12 +1,20 @@
 import { Tabs } from 'antd';
 import { SettingOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
 import { GeneralSettings } from '../components/settings/GeneralSettings';
 import { UsersSettings } from '../components/settings/UsersSettings';
 
 export function Settings() {
   const { t } = useTranslation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const items = [
     {
@@ -14,7 +22,7 @@ export function Settings() {
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <SettingOutlined />
-          {t('settings.general')}
+          {!isMobile && t('settings.general')}
         </span>
       ),
       children: <GeneralSettings />,
@@ -24,7 +32,7 @@ export function Settings() {
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <UserOutlined />
-          {t('settings.usersTab')}
+          {!isMobile && t('settings.usersTab')}
         </span>
       ),
       children: <UsersSettings />,
@@ -42,7 +50,7 @@ export function Settings() {
       <Tabs
         defaultActiveKey="general"
         items={items}
-        size="large"
+        size={isMobile ? "small" : "large"}
         style={{ marginTop: 24 }}
       />
     </div>

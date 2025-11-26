@@ -830,6 +830,10 @@ export default {
     cannotDeleteVehicle: 'Não é possível deletar',
     cannotDeleteVehicleMessage: 'Este veículo possui {{count}} ordem(ns) de serviço vinculada(s)',
     understood: 'Entendi',
+    updateMileOdometer: 'Atualizar Quilometragem',
+    updateMileTooltip: 'Atualize a quilometragem do veículo durante a criação da ordem de serviço',
+    mileCannotDecrease: 'A quilometragem não pode ser menor que a atual',
+    currentMile: 'Quilometragem Atual',
   },
 
   users: {
@@ -893,6 +897,9 @@ export default {
     viewDetails: 'Ver detalhes',
     registrationDate: 'Data Cadastro',
     editUserTitle: 'Editar Usuário',
+    permissionsWarningTitle: 'Atenção sobre Permissões',
+    permissionsWarningMessage: 'Todos os usuários do sistema possuem acesso completo às informações e funcionalidades. Qualquer usuário poderá visualizar, criar, editar e excluir dados em todos os módulos do sistema.',
+    createUserConfirm: 'Deseja prosseguir com a criação do novo usuário?',
     newUserTitle: 'Novo Usuário',
     namePlaceholder: 'Ex: João Silva',
     emailPlaceholder: 'exemplo@email.com',

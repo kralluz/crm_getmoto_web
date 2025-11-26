@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert, Row, Col } from 'antd';
-import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined, SwapOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined, SwapOutlined, InfoCircleOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useProducts, useDeleteProduct } from '../hooks/useProducts';
@@ -328,21 +328,100 @@ export function ProductList() {
       />
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredProducts}
-          loading={isLoading}
-          rowKey="product_id"
-          pagination={{
-            pageSize: isMobile ? 10 : 20,
-            showSizeChanger: !isMobile,
-            showTotal: (total) => t('products.totalProducts', { total }),
-            pageSizeOptions: ['10', '20', '50', '100'],
-            simple: isMobile,
-          }}
-          size={isMobile ? 'middle' : 'small'}
-          scroll={{ x: 1200 }}
-        />
+        {isMobile ? (
+          <Row gutter={[16, 16]}>
+            {filteredProducts.map((product) => {
+              const buyPrice = parseDecimal(product.buy_price);
+              const sellPrice = parseDecimal(product.sell_price);
+              const margin = buyPrice > 0 ? ((sellPrice - buyPrice) / buyPrice) * 100 : 0;
+              const qty = parseDecimal(product.quantity);
+              const alertQty = parseDecimal(product.quantity_alert);
+              const isLowStock = qty <= alertQty;
+
+              return (
+                <Col xs={24} key={product.product_id}>
+                  <Card
+                    size="small"
+                    actions={[
+                      <Tooltip title={t('products.view')} key="view">
+                        <EyeOutlined onClick={() => handleView(product.product_id)} />
+                      </Tooltip>,
+                      <Tooltip title={t('products.edit')} key="edit">
+                        <EditOutlined onClick={() => handleEdit(product.product_id)} />
+                      </Tooltip>,
+                      <Tooltip title={t('inventory.stockMovement')} key="stock">
+                        <SwapOutlined
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setStockMovementModalOpen(true);
+                          }}
+                        />
+                      </Tooltip>,
+                      <Tooltip title={t('products.delete')} key="delete">
+                        <DeleteOutlined
+                          style={{ color: '#ff4d4f' }}
+                          onClick={() => handleDelete(product.product_id)}
+                        />
+                      </Tooltip>,
+                    ]}
+                  >
+                    <div style={{ marginBottom: 8 }}>
+                      <strong>{product.product_name}</strong>
+                    </div>
+                    {product.product_category && (
+                      <div style={{ marginBottom: 8 }}>
+                        <Tag color="blue">{product.product_category.product_category_name}</Tag>
+                      </div>
+                    )}
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('products.purchasePrice')}:</span>
+                        <span>{formatCurrency(buyPrice)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('products.salesPriceColumn')}:</span>
+                        <span style={{ fontWeight: 600, color: '#52c41a' }}>{formatCurrency(sellPrice)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('products.margin')}:</span>
+                        <Tag color={margin >= 30 ? 'green' : margin >= 15 ? 'orange' : 'red'}>
+                          {margin.toFixed(1)}%
+                        </Tag>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('products.stockColumn')}:</span>
+                        <span style={{ color: isLowStock ? '#ff4d4f' : undefined, fontWeight: isLowStock ? 600 : 400 }}>
+                          {isLowStock && <WarningOutlined style={{ marginRight: 4 }} />}
+                          {qty}
+                        </span>
+                      </div>
+                    </Space>
+                    <div style={{ marginTop: 8 }}>
+                      <Tag color={product.is_active ? 'green' : 'default'}>
+                        {product.is_active ? t('products.active') : t('products.inactive')}
+                      </Tag>
+                    </div>
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredProducts}
+            loading={isLoading}
+            rowKey="product_id"
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showTotal: (total) => t('products.totalProducts', { total }),
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            size="middle"
+            scroll={{ x: 1200 }}
+          />
+        )}
       </Card>
 
       <ProductModal

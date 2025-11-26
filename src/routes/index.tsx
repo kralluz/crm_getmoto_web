@@ -21,6 +21,7 @@ import { ServiceCategoryDetail } from '../pages/ServiceCategoryDetail';
 import { ClientDetail } from '../pages/ClientDetail';
 import { VehicleList } from '../pages/VehicleList';
 import { VehicleDetail } from '../pages/VehicleDetail';
+import { VehicleForm } from '../pages/VehicleForm';
 import { SearchResults } from '../pages/SearchResults';
 import { Settings } from '../pages/Settings';
 
@@ -121,8 +122,16 @@ export const router = createBrowserRouter([
         element: <VehicleList />,
       },
       {
+        path: 'veiculos/novo',
+        element: <VehicleForm />,
+      },
+      {
         path: 'veiculos/:id',
         element: <VehicleDetail />,
+      },
+      {
+        path: 'veiculos/:id/editar',
+        element: <VehicleForm />,
       },
       {
         path: 'busca',

@@ -32,11 +32,14 @@ export function VehicleForm() {
 
   const [form] = Form.useForm();
 
-  const { data: vehicle, isLoading } = useVehicle(
+  const { data: vehicle, isLoading: vehicleLoading } = useVehicle(
     isEditing ? parseInt(id!) : undefined
   );
   const { mutate: createVehicle, isPending: isCreating } = useCreateVehicle();
   const { mutate: updateVehicle, isPending: isUpdating } = useUpdateVehicle();
+
+  // Apenas mostrar loading quando estiver editando e carregando dados
+  const isLoading = isEditing && vehicleLoading;
 
   useEffect(() => {
     if (vehicle && isEditing) {
@@ -54,8 +57,12 @@ export function VehicleForm() {
 
   const handleSubmit = (values: CreateMotorcycleData | UpdateMotorcycleData) => {
     if (isEditing) {
+      // Permitir apenas atualização da quilometragem
+      const updateData = {
+        mile: values.mile,
+      };
       updateVehicle(
-        { id: parseInt(id!), data: values },
+        { id: parseInt(id!), data: updateData },
         {
           onSuccess: () => {
             navigate('/veiculos');
@@ -115,6 +122,7 @@ export function VehicleForm() {
                   placeholder={t('vehicles.platePlaceholder')}
                   maxLength={12}
                   style={{ textTransform: 'uppercase' }}
+                  disabled={isEditing}
                 />
               </Form.Item>
             </Col>
@@ -137,6 +145,7 @@ export function VehicleForm() {
                 <Input
                   placeholder={t('vehicles.brandPlaceholder')}
                   maxLength={100}
+                  disabled={isEditing}
                 />
               </Form.Item>
             </Col>
@@ -159,6 +168,7 @@ export function VehicleForm() {
                 <Input
                   placeholder={t('vehicles.modelPlaceholder')}
                   maxLength={100}
+                  disabled={isEditing}
                 />
               </Form.Item>
             </Col>
@@ -181,6 +191,7 @@ export function VehicleForm() {
                 <Input
                   placeholder={t('vehicles.colorPlaceholder')}
                   maxLength={50}
+                  disabled={isEditing}
                 />
               </Form.Item>
             </Col>
@@ -207,6 +218,7 @@ export function VehicleForm() {
                   style={{ width: '100%' }}
                   min={1900}
                   max={new Date().getFullYear() + 1}
+                  disabled={isEditing}
                 />
               </Form.Item>
             </Col>
@@ -240,6 +252,7 @@ export function VehicleForm() {
                 <Switch
                   checkedChildren={t('common.active')}
                   unCheckedChildren={t('common.inactive')}
+                  disabled={isEditing}
                 />
               </Form.Item>
             </Col>

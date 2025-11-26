@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, DatePicker, Dropdown, Row, Col } from 'antd';
-import { SearchOutlined, PlusOutlined, FilterOutlined, DownOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Tag, Space, Select, Button, DatePicker, Dropdown, Row, Col, Tooltip } from 'antd';
+import { SearchOutlined, PlusOutlined, FilterOutlined, DownOutlined, EyeOutlined, CalendarOutlined, TagOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
@@ -284,21 +284,62 @@ export function ExpensesList() {
       </Card>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredExpenses}
-          loading={isLoading}
-          rowKey="expense_id"
-          pagination={{
-            pageSize: isMobile ? 10 : 20,
-            showSizeChanger: !isMobile,
-            showTotal: (total) => t('expenses.totalItems', { total }),
-            pageSizeOptions: ['10', '20', '50', '100'],
-            simple: isMobile,
-          }}
-          size={isMobile ? 'middle' : 'small'}
-          scroll={{ x: 1000 }}
-        />
+        {isMobile ? (
+          <Row gutter={[16, 16]}>
+            {filteredExpenses.map((expense) => (
+              <Col xs={24} key={expense.expense_id}>
+                <Card
+                  size="small"
+                  actions={[
+                    <Tooltip title={t('common.view')} key="view">
+                      <EyeOutlined onClick={() => handleView(expense.expense_id)} />
+                    </Tooltip>,
+                  ]}
+                >
+                  <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Tag color="blue">{expense.category}</Tag>
+                      {expense.cancelled_at ? (
+                        <Tag color="red">{t('expenses.cancelled')}</Tag>
+                      ) : (
+                        <Tag color="green">{t('expenses.active')}</Tag>
+                      )}
+                    </div>
+                    
+                    <div style={{ fontSize: 14, fontWeight: 500, marginTop: 4 }}>
+                      {expense.description}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                      <span style={{ fontSize: 11, color: '#8c8c8c' }}>
+                        <CalendarOutlined style={{ marginRight: 4 }} />
+                        {formatDate(expense.expense_date, 'short')}
+                      </span>
+                      <span style={{ color: '#ff4d4f', fontWeight: 600, fontSize: 16 }}>
+                        {formatCurrency(expense.amount)}
+                      </span>
+                    </div>
+                  </Space>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredExpenses}
+            loading={isLoading}
+            rowKey="expense_id"
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showTotal: (total) => t('expenses.totalItems', { total }),
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            size="middle"
+            scroll={{ x: 1000 }}
+          />
+        )}
       </Card>
 
       <ExpenseModal

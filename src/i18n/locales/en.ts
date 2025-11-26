@@ -828,6 +828,10 @@ export default {
     cannotDeleteVehicle: 'Cannot delete',
     cannotDeleteVehicleMessage: 'This vehicle has {{count}} service order(s) linked',
     understood: 'Understood',
+    updateMileOdometer: 'Update Mileage/Odometer',
+    updateMileTooltip: 'Update the vehicle mileage during service order creation',
+    mileCannotDecrease: 'Mileage cannot be less than current',
+    currentMile: 'Current Mileage',
   },
 
   users: {
@@ -891,6 +895,9 @@ export default {
     viewDetails: 'View details',
     registrationDate: 'Registration Date',
     editUserTitle: 'Edit User',
+    permissionsWarningTitle: 'Attention about Permissions',
+    permissionsWarningMessage: 'All system users have full access to information and functionalities. Any user will be able to view, create, edit and delete data in all system modules.',
+    createUserConfirm: 'Do you want to proceed with creating the new user?',
     newUserTitle: 'New User',
     namePlaceholder: 'E.g.: John Doe',
     emailPlaceholder: 'example@email.com',

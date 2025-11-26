@@ -9,12 +9,18 @@ import {
   Button,
   Modal,
   Typography,
+  Row,
+  Col,
+  Tooltip,
 } from 'antd';
 import {
   SearchOutlined,
   PlusOutlined,
   FilterOutlined,
   ExclamationCircleOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
@@ -232,20 +238,63 @@ export function ProductCategoryList() {
       </Card>
 
       <Card>
-        <Table
-          columns={columns}
-          dataSource={filteredCategories}
-          loading={isLoading}
-          rowKey="product_category_id"
-          pagination={{
-            pageSize: isMobile ? 10 : 20,
-            showSizeChanger: !isMobile,
-            showTotal: (total) => t('products.totalCategories', { total }),
-            pageSizeOptions: ['10', '20', '50', '100'],
-            simple: isMobile,
-          }}
-          size="small"
-        />
+        {isMobile ? (
+          <Row gutter={[16, 16]}>
+            {filteredCategories.map((category) => (
+              <Col xs={24} key={category.product_category_id}>
+                <Card
+                  size="small"
+                  actions={[
+                    <Tooltip title={t('common.view')} key="view">
+                      <EyeOutlined
+                        onClick={() => navigate(`/categorias-produtos/${category.product_category_id}`)}
+                      />
+                    </Tooltip>,
+                    <Tooltip title={t('common.edit')} key="edit">
+                      <EditOutlined onClick={() => handleEdit(category.product_category_id)} />
+                    </Tooltip>,
+                    <Tooltip title={t('common.delete')} key="delete">
+                      <DeleteOutlined
+                        style={{ color: '#ff4d4f' }}
+                        onClick={() => handleDelete(category.product_category_id)}
+                      />
+                    </Tooltip>,
+                  ]}
+                >
+                  <div style={{ marginBottom: 8 }}>
+                    <strong>{category.product_category_name}</strong>
+                  </div>
+                  <Space wrap>
+                    <Tag color="blue">
+                      {t('products.linkedProductsCount', { count: category._count?.products || 0 })}
+                    </Tag>
+                    <Tag color={category.is_active ? 'green' : 'default'}>
+                      {category.is_active ? t('common.active') : t('common.inactive')}
+                    </Tag>
+                  </Space>
+                  <div style={{ marginTop: 8, fontSize: 11, color: '#8c8c8c' }}>
+                    {t('products.createdAt')}: {dayjs.utc(category.created_at).format('DD/MM/YYYY')}
+                  </div>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredCategories}
+            loading={isLoading}
+            rowKey="product_category_id"
+            pagination={{
+              pageSize: 20,
+              showSizeChanger: true,
+              showTotal: (total) => t('products.totalCategories', { total }),
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            scroll={{ x: 800 }}
+            size="middle"
+          />
+        )}
       </Card>
 
       <ProductCategoryModal
