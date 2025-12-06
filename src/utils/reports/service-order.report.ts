@@ -104,7 +104,7 @@ function createCustomerVehicleSection(serviceOrder: ServiceOrder): Content {
             ],
             [
               { text: 'Odometer / Mile', style: 'label', border: [true, false, false, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
-              { text: vehicle?.mile ? `${vehicle.mile.toLocaleString()} km` : 'N/A', style: 'value', border: [false, false, true, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
+              { text: serviceOrder.vehicle_mile ? `${serviceOrder.vehicle_mile.toLocaleString('en-GB')} miles` : 'N/A', style: 'value', border: [false, false, true, true], margin: [5, 4, 5, 4] as [number, number, number, number] },
             ],
           ],
         },

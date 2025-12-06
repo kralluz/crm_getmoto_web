@@ -194,6 +194,14 @@ export function ServiceList() {
       align: 'center',
       render: (date: string) => formatDate(date),
     },
+    {
+      title: 'Order ID',
+      dataIndex: 'service_order_id',
+      key: 'service_order_id',
+      width: 100,
+      align: 'center',
+      render: (id: number) => `#${id}`,
+    },
   ];
 
   const statusOptions: { value: ServiceOrderStatus | ''; label: string }[] = [
@@ -253,11 +261,14 @@ export function ServiceList() {
             bodyStyle={{ padding: '12px 16px' }}
           >
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              {/* Header com Status e Botão */}
+              {/* Header com Order ID, Status e Botão */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Tag color={getStatusColor(order.status)}>
-                  {getStatusLabel(order.status)}
-                </Tag>
+                <Space size="small">
+                  <span style={{ fontWeight: 600, color: '#1890ff' }}>#{order.service_order_id}</span>
+                  <Tag color={getStatusColor(order.status)}>
+                    {getStatusLabel(order.status)}
+                  </Tag>
+                </Space>
                 <Button
                   type="primary"
                   size="small"
