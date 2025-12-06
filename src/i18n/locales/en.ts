@@ -797,7 +797,7 @@ export default {
     mile: 'Odometer / Mile',
     milePlaceholder: 'e.g., 15000',
     mileMinError: 'Mileage must be greater than or equal to zero',
-    mileAtService: 'Mileage at service',
+    mileAtService: 'Odometer at service',
     vehicleNotFound: 'Vehicle not found',
     noBrand: 'No brand',
     noModel: 'No model',

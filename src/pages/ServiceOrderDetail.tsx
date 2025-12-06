@@ -441,7 +441,7 @@ export function ServiceOrderDetail() {
                     <>
                       <br />
                       <Text type="secondary">
-                        {t('vehicles.mileAtService')}: <Text strong>{serviceOrder.vehicle_mile.toLocaleString('pt-BR')} km</Text>
+                        {t('vehicles.mileAtService')}: <Text strong>{serviceOrder.vehicle_mile.toLocaleString('en-GB')} miles</Text>
                       </Text>
                     </>
                   )}

@@ -143,7 +143,7 @@ export function VehicleDetail() {
       width: 120,
       align: 'right',
       render: (mile: number | null) =>
-        mile ? `${mile.toLocaleString('pt-BR')} km` : '-',
+        mile ? `${mile.toLocaleString('en-GB')} miles` : '-',
     },
     {
       title: t('services.creationDate'),
