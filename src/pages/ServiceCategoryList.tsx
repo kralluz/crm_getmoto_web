@@ -104,7 +104,6 @@ export function ServiceCategoryList() {
       dataIndex: 'service_name',
       key: 'service_name',
       ellipsis: true,
-      sorter: (a, b) => a.service_name.localeCompare(b.service_name),
       render: (name: string, record) => (
         <Link onClick={() => navigate(`/categorias-servicos/${record.service_id}`)}>
           {name}
@@ -122,7 +121,6 @@ export function ServiceCategoryList() {
           {formatCurrency(parseDecimal(value))}
         </span>
       ),
-      sorter: (a, b) => parseDecimal(a.service_cost) - parseDecimal(b.service_cost),
     },
     {
       title: t('common.status'),
@@ -135,11 +133,6 @@ export function ServiceCategoryList() {
           {active ? t('common.active') : t('common.inactive')}
         </Tag>
       ),
-      filters: [
-        { text: t('common.active'), value: true },
-        { text: t('common.inactive'), value: false },
-      ],
-      onFilter: (value, record) => record.is_active === value,
     },
   ];
 

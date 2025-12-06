@@ -135,7 +135,6 @@ export function ProductCategoryList() {
       dataIndex: 'product_category_name',
       key: 'product_category_name',
       ellipsis: true,
-      sorter: (a, b) => a.product_category_name.localeCompare(b.product_category_name),
       render: (name: string, record) => (
         <Link onClick={() => navigate(`/categorias-produtos/${record.product_category_id}`)}>
           {name}
@@ -152,7 +151,6 @@ export function ProductCategoryList() {
           {t('products.linkedProductsCount', { count: record._count?.products || 0 })}
         </Tag>
       ),
-      sorter: (a, b) => (a._count?.products || 0) - (b._count?.products || 0),
     },
     {
       title: t('common.status'),
@@ -165,11 +163,6 @@ export function ProductCategoryList() {
           {active ? t('common.active') : t('common.inactive')}
         </Tag>
       ),
-      filters: [
-        { text: t('common.active'), value: true },
-        { text: t('common.inactive'), value: false },
-      ],
-      onFilter: (value, record) => record.is_active === value,
     },
     {
       title: t('products.createdAt'),
@@ -178,7 +171,6 @@ export function ProductCategoryList() {
       width: 130,
       align: 'center',
       render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
-      sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
   ];
 

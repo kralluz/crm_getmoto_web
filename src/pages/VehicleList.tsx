@@ -87,7 +87,6 @@ export function VehicleList() {
           {plate}
         </Tag>
       ),
-      sorter: (a, b) => a.plate.localeCompare(b.plate),
     },
     {
       title: t('vehicles.brand'),
@@ -95,7 +94,6 @@ export function VehicleList() {
       key: 'brand',
       ellipsis: true,
       render: (brand: string | null) => brand || '-',
-      sorter: (a, b) => (a.brand || '').localeCompare(b.brand || ''),
     },
     {
       title: t('vehicles.model'),
@@ -103,7 +101,6 @@ export function VehicleList() {
       key: 'model',
       ellipsis: true,
       render: (model: string | null) => model || '-',
-      sorter: (a, b) => (a.model || '').localeCompare(b.model || ''),
     },
     {
       title: t('vehicles.year'),
@@ -112,7 +109,6 @@ export function VehicleList() {
       width: 90,
       align: 'center',
       render: (year: number | null) => year || '-',
-      sorter: (a, b) => (a.year || 0) - (b.year || 0),
     },
     {
       title: t('vehicles.mile'),
@@ -121,7 +117,6 @@ export function VehicleList() {
       width: 120,
       align: 'right',
       render: (mile: number | null) => mile ? `${mile.toLocaleString('pt-BR')} km` : '-',
-      sorter: (a, b) => (a.mile || 0) - (b.mile || 0),
     },
     {
       title: t('vehicles.color'),
@@ -142,8 +137,6 @@ export function VehicleList() {
           })}
         </Tag>
       ),
-      sorter: (a, b) =>
-        (a._count?.service_order || 0) - (b._count?.service_order || 0),
     },
     {
       title: t('common.status'),
@@ -156,11 +149,6 @@ export function VehicleList() {
           {active ? t('common.active') : t('common.inactive')}
         </Tag>
       ),
-      filters: [
-        { text: t('common.active'), value: true },
-        { text: t('common.inactive'), value: false },
-      ],
-      onFilter: (value, record) => record.is_active === value,
     },
     {
       title: t('vehicles.createdAt'),
@@ -169,7 +157,6 @@ export function VehicleList() {
       width: 130,
       align: 'center',
       render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
-      sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
   ];
 

@@ -70,6 +70,9 @@ export default {
     editDescription: 'Editar Descrição',
     notes: 'Observações',
     description: 'Descrição',
+    generatedAt: 'Gerado em',
+    phone: 'Telefone',
+    email: 'E-mail',
   },
 
   auth: {
@@ -102,6 +105,10 @@ export default {
     stockControl: 'Controle de Estoque',
     productRegistration: 'Cadastro de Produtos',
     productCategories: 'Categorias de Produtos',
+    employees: 'Funcionários',
+    employeesList: 'Lista de Funcionários',
+    timeEntries: 'Registros de Ponto',
+    payroll: 'Folha de Pagamento',
   },
 
   settings: {
@@ -1096,5 +1103,247 @@ export default {
       retryAfter: 'Tentando novamente em {{seconds}}s',
       maxRetries: 'Número máximo de tentativas atingido',
     },
+  },
+
+  // Módulo de Funcionários
+  employees: {
+    title: 'Funcionários',
+    newEmployee: 'Novo Funcionário',
+    editEmployee: 'Editar Funcionário',
+    employeeDetails: 'Detalhes do Funcionário',
+    list: '{{count}} funcionário(s)',
+    noEmployees: 'Nenhum funcionário encontrado',
+    searchPlaceholder: 'Buscar por nome, cargo ou e-mail...',
+    filterByStatus: 'Filtrar por Status',
+    showStatus: 'Exibir',
+    activeOnly: 'Apenas Ativos',
+    allEmployees: 'Todos os Funcionários',
+
+    // Campos
+    firstName: 'Nome',
+    lastName: 'Sobrenome',
+    email: 'E-mail',
+    phone: 'Telefone',
+    nationalInsurance: 'NI Number',
+    jobTitle: 'Cargo',
+    hourlyRate: 'Taxa Horária (£)',
+    contractType: 'Tipo de Contrato',
+    weeklyHours: 'Horas Semanais',
+    startDate: 'Data de Início',
+    endDate: 'Data de Término',
+    address: 'Endereço',
+    employeeId: 'ID do Funcionário',
+
+    // Contract types
+    hourly: 'Por Hora',
+    salary: 'Salário',
+
+    // Actions
+    disable: 'Desabilitar',
+    enable: 'Habilitar',
+    disableEmployee: 'Desabilitar Funcionário',
+    enableEmployee: 'Habilitar Funcionário',
+
+    // Messages
+    createSuccess: 'Funcionário criado com sucesso',
+    createError: 'Erro ao criar funcionário',
+    updateSuccess: 'Funcionário atualizado com sucesso',
+    updateError: 'Erro ao atualizar funcionário',
+    disableSuccess: 'Funcionário desabilitado com sucesso',
+    disableError: 'Erro ao desabilitar funcionário',
+    enableSuccess: 'Funcionário habilitado com sucesso',
+    enableError: 'Erro ao habilitar funcionário',
+
+    // Confirmations
+    confirmDisable: 'Tem certeza que deseja desabilitar este funcionário? Ele não poderá mais receber pagamentos.',
+    confirmEnable: 'Tem certeza que deseja habilitar este funcionário?',
+
+    // Validations
+    requiredFirstName: 'Por favor insira o nome',
+    requiredLastName: 'Por favor insira o sobrenome',
+    requiredEmail: 'Por favor insira o e-mail',
+    invalidEmail: 'Por favor insira um e-mail válido',
+    requiredJobTitle: 'Por favor insira o cargo',
+    requiredHourlyRate: 'Por favor insira a taxa horária',
+    requiredWeeklyHours: 'Por favor insira as horas semanais',
+    requiredStartDate: 'Por favor selecione a data de início',
+
+    // Tabs
+    timeEntriesTab: 'Registros de Ponto',
+    paymentsTab: 'Pagamentos',
+
+    // Summary Statistics
+    summary: 'Resumo',
+    totalHoursWorked: 'Total de Horas Trabalhadas',
+    timeEntriesCount: '{{count}} registro(s) de ponto',
+    totalPaid: 'Total Pago',
+    paymentsCount: '{{count}} pagamento(s)',
+    averagePayment: 'Média por Pagamento',
+    perPayPeriod: 'por período de pagamento',
+  },
+
+  // Registros de Ponto
+  timeEntries: {
+    title: 'Registros de Ponto',
+    newEntry: 'Novo Registro',
+    editEntry: 'Editar Registro',
+    clockIn: 'Registrar Entrada',
+    clockOut: 'Registrar Saída',
+    list: 'Registros de Ponto',
+    noEntries: 'Nenhum registro de ponto encontrado',
+
+    // Campos
+    employee: 'Funcionário',
+    clockInTime: 'Horário de Entrada',
+    clockOutTime: 'Horário de Saída',
+    clockOutOptional: 'Horário de Saída (Opcional)',
+    totalHours: 'Total de Horas',
+    regularHours: 'Horas Normais',
+    overtimeHours: 'Horas Extras',
+    notes: 'Observações',
+    inProgress: 'Em Andamento',
+
+    // Actions
+    delete: 'Deletar',
+
+    // Messages
+    createSuccess: 'Registro criado com sucesso',
+    createError: 'Erro ao criar registro',
+    updateSuccess: 'Registro atualizado com sucesso',
+    updateError: 'Erro ao atualizar registro',
+    deleteSuccess: 'Registro deletado com sucesso',
+    deleteError: 'Erro ao deletar registro',
+
+    // Confirmations
+    confirmDelete: 'Tem certeza que deseja deletar este registro?',
+
+    // Validations
+    requiredEmployee: 'Por favor selecione um funcionário',
+    requiredClockIn: 'Por favor selecione o horário de entrada',
+    requiredClockOut: 'Por favor selecione o horário de saída',
+
+    // Registration modes
+    registrationMode: 'Modo de Registro',
+    byTime: 'Por Horário',
+    byHours: 'Por Horas',
+    registerByTime: 'Registrar por Horário',
+    registerByHours: 'Registrar por Horas',
+    workDate: 'Data do Trabalho',
+    requiredWorkDate: 'Por favor, selecione a data',
+    totalHoursWorked: 'Total de Horas Trabalhadas',
+    requiredTotalHours: 'Por favor, informe o total de horas',
+    
+    // Validation
+    validation: {
+      clockOutBeforeClockIn: 'A saída deve ser após a entrada',
+      hoursRange: 'As horas devem estar entre 1 e 24',
+      mustBeWholeHour: 'Apenas horas inteiras são permitidas (ex: 1, 2, 8, 24)',
+    },
+
+    // Notes
+    notesPlaceholder: 'Observações opcionais sobre este período de trabalho',
+    leaveEmpty: 'Deixe vazio se o trabalho ainda está em andamento',
+    
+    // Filters
+    filterByEmployee: 'Filtrar por funcionário',
+    startDate: 'Data Inicial',
+    endDate: 'Data Final',
+  },
+
+  // Folha de Pagamento
+  payroll: {
+    title: 'Folha de Pagamento',
+    newPayment: 'Novo Pagamento',
+    list: 'Pagamentos',
+    noPayments: 'Nenhum pagamento encontrado',
+
+    // Campos
+    employee: 'Funcionário',
+    paymentDate: 'Data de Pagamento',
+    payPeriod: 'Período',
+    periodStart: 'Início do Período',
+    periodEnd: 'Fim do Período',
+    regularHours: 'Horas Normais',
+    overtimeHours: 'Horas Extras',
+    totalHours: 'Total de Horas',
+    grossAmount: 'Valor Bruto',
+    deductions: 'Deduções',
+    taxDeductions: 'Deduções Fiscais (PAYE/NI)',
+    netAmount: 'Valor Líquido',
+    netAmountToPay: 'Valor Líquido a Pagar',
+    bonuses: 'Bônus',
+    notes: 'Observações',
+    paymentId: 'ID do Pagamento',
+    hourlyRate: 'Taxa Horária',
+    effectiveHourlyRate: 'Taxa Horária Efetiva',
+    regularPay: 'Pagamento Normal',
+    overtimePay: 'Pagamento de Horas Extras',
+
+    // Status
+    paid: 'Pago',
+    cancelled: 'Cancelado',
+    paymentCancelled: 'Pagamento Cancelado',
+
+    // Actions
+    calculate: 'Calcular Pagamento',
+    cancel: 'Cancelar',
+    cancelPayment: 'Cancelar Pagamento',
+    view: 'Visualizar',
+
+    // Messages
+    createSuccess: 'Pagamento criado com sucesso',
+    createError: 'Erro ao criar pagamento',
+    cancelSuccess: 'Pagamento cancelado com sucesso',
+    cancelError: 'Erro ao cancelar pagamento',
+
+    // Confirmations
+    confirmCancel: 'Tem certeza que deseja cancelar este pagamento?',
+    cancelWarning: 'Atenção: Vales deduzidos voltarão ao status PENDENTE',
+    cancellationReason: 'Motivo do Cancelamento',
+    requiredReason: 'O motivo do cancelamento é obrigatório',
+    reasonPlaceholder: 'Descreva o motivo do cancelamento...',
+    confirmCancelButton: 'Sim, Cancelar Pagamento',
+    amountPaid: 'Valor Pago',
+    deducted: 'Descontado',
+
+    // Validations
+    requiredEmployee: 'Por favor selecione um funcionário',
+    requiredPeriod: 'Por favor selecione o período',
+    requiredPaymentDate: 'Por favor selecione a data de pagamento',
+
+    // Calculation
+    paymentCalculation: 'Cálculo do Pagamento',
+    howItWorks: 'Como funciona',
+    howItWorksText: 'Selecione um funcionário e período para calcular o pagamento baseado nos registros de ponto. Adiantamentos pendentes serão automaticamente deduzidos do valor bruto.',
+    timeEntriesFound: 'Registros Encontrados',
+    notImplemented: 'não implementado',
+
+    // Summary
+    totalPaid: 'Total Pago',
+    paymentsCount: '{{count}} pagamento(s)',
+
+    // Sections
+    employeeInformation: 'Informações do Funcionário',
+    paymentDetails: 'Detalhes do Pagamento',
+    paymentPeriod: 'Período de Pagamento',
+    hoursWorked: 'Horas Trabalhadas',
+    paymentSummary: 'Resumo do Pagamento',
+    
+    // PDF
+    payslip: 'Holerite',
+    payslipNumber: 'Número do Holerite',
+    downloadPayslip: 'Baixar Holerite',
+    generatingPdf: 'Gerando PDF...',
+    description: 'Descrição',
+    hours: 'Horas',
+    rate: 'Taxa',
+    
+    // Payment Date
+    paymentWillBeRegisteredToday: 'Pagamento será registrado hoje',
+    paymentDateExplanation: 'A data do pagamento será automaticamente definida como hoje. O período trabalhado pode ser de dias anteriores.',
+    paidPeriods: 'Períodos já pagos',
+    noPaidPeriods: 'Nenhum período pago ainda',
+    periodAlreadyPaid: 'Este período já foi pago',
+    paymentConflict: 'Conflito com pagamento existente',
   },
 };

@@ -70,6 +70,9 @@ export default {
     editDescription: 'Edit Description',
     notes: 'Notes',
     description: 'Description',
+    generatedAt: 'Generated at',
+    phone: 'Phone',
+    email: 'Email',
   },
 
   auth: {
@@ -102,6 +105,10 @@ export default {
     stockControl: 'Stock Control',
     productRegistration: 'Product Registration',
     productCategories: 'Product Categories',
+    employees: 'Employees',
+    employeesList: 'Employee List',
+    timeEntries: 'Time Entries',
+    payroll: 'Payroll',
   },
 
   settings: {
@@ -1035,6 +1042,244 @@ export default {
       theft: 'Theft/Loss',
       other: 'Other',
     },
+  },
+
+  // Employee Management
+  employees: {
+    title: 'Employees',
+    newEmployee: 'New Employee',
+    employeeDetails: 'Employee Details',
+    list: 'Employee List',
+    noEmployees: 'No employees found',
+    searchPlaceholder: 'Search by name, job title or email...',
+    filterByStatus: 'Filter by Status',
+    showStatus: 'Show',
+    activeOnly: 'Active Only',
+    allEmployees: 'All Employees',
+
+    // Fields
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    email: 'Email',
+    phone: 'Phone',
+    jobTitle: 'Job Title',
+    hourlyRate: 'Hourly Rate',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    isActive: 'Active',
+    notes: 'Notes',
+
+    // Status
+    active: 'Active',
+    inactive: 'Inactive',
+
+    // Actions
+    edit: 'Edit',
+    delete: 'Delete',
+    viewDetails: 'View Details',
+    markAsInactive: 'Mark as Inactive',
+    markAsActive: 'Mark as Active',
+
+    // Messages
+    createSuccess: 'Employee created successfully',
+    updateSuccess: 'Employee updated successfully',
+    deleteSuccess: 'Employee deleted successfully',
+    statusUpdateSuccess: 'Status updated successfully',
+
+    // Confirmations
+    confirmDelete: 'Are you sure you want to delete this employee?',
+    confirmMarkInactive: 'Are you sure you want to mark this employee as inactive?',
+    confirmMarkActive: 'Are you sure you want to mark this employee as active?',
+
+    // Validations
+    requiredFirstName: 'Please enter first name',
+    requiredLastName: 'Please enter last name',
+    requiredJobTitle: 'Please enter job title',
+    requiredHourlyRate: 'Please enter hourly rate',
+    requiredStartDate: 'Please select start date',
+
+    // Tabs
+    overview: 'Overview',
+    timeEntries: 'Time Entries',
+    advances: 'Advances',
+    payroll: 'Payroll',
+
+    // Stats
+    totalTimeEntries: 'Total Time Entries',
+    totalHoursWorked: 'Total Hours Worked',
+    totalAdvances: 'Total Advances',
+    totalPayments: 'Total Payments',
+  },
+
+  // Time Entries
+  timeEntries: {
+    title: 'Time Entries',
+    newEntry: 'New Entry',
+    editEntry: 'Edit Entry',
+    clockIn: 'Clock In',
+    clockOut: 'Clock Out',
+    list: 'Time Entries',
+    noEntries: 'No time entries found',
+
+    // Fields
+    employee: 'Employee',
+    clockInTime: 'Clock In Time',
+    clockOutTime: 'Clock Out Time',
+    clockOutOptional: 'Clock Out Time (Optional)',
+    totalHours: 'Total Hours',
+    regularHours: 'Regular Hours',
+    overtimeHours: 'Overtime Hours',
+    notes: 'Notes',
+    inProgress: 'In Progress',
+
+    // Actions
+    delete: 'Delete',
+
+    // Messages
+    createSuccess: 'Entry created successfully',
+    createError: 'Error creating entry',
+    updateSuccess: 'Entry updated successfully',
+    updateError: 'Error updating entry',
+    deleteSuccess: 'Entry deleted successfully',
+    deleteError: 'Error deleting entry',
+
+    // Confirmations
+    confirmDelete: 'Are you sure you want to delete this entry?',
+
+    // Validations
+    requiredEmployee: 'Please select an employee',
+    requiredClockIn: 'Please select clock in time',
+    requiredClockOut: 'Please select clock out time',
+
+    // Registration modes
+    registrationMode: 'Registration Mode',
+    byTime: 'By Time',
+    byHours: 'By Hours',
+    registerByTime: 'Register by Time',
+    registerByHours: 'Register by Hours',
+    workDate: 'Work Date',
+    requiredWorkDate: 'Please select work date',
+    totalHoursWorked: 'Total Hours Worked',
+    requiredTotalHours: 'Please enter total hours',
+    
+    // Validation
+    validation: {
+      clockOutBeforeClockIn: 'Clock out must be after clock in',
+      hoursRange: 'Hours must be between 1 and 24',
+      mustBeWholeHour: 'Only whole hours are allowed (e.g., 1, 2, 8, 24)',
+    },
+
+    // Notes
+    notesPlaceholder: 'Optional notes about this work period',
+    leaveEmpty: 'Leave empty if work is still in progress',
+    
+    // Filters
+    filterByEmployee: 'Filter by employee',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+  },
+
+  // Payroll
+  payroll: {
+    title: 'Payroll',
+    newPayment: 'New Payment',
+    list: 'Payments',
+    noPayments: 'No payments found',
+
+    // Fields
+    employee: 'Employee',
+    paymentDate: 'Payment Date',
+    payPeriod: 'Period',
+    periodStart: 'Period Start',
+    periodEnd: 'Period End',
+    regularHours: 'Regular Hours',
+    overtimeHours: 'Overtime Hours',
+    totalHours: 'Total Hours',
+    grossAmount: 'Gross Amount',
+    deductions: 'Deductions',
+    taxDeductions: 'Tax Deductions (PAYE/NI)',
+    netAmount: 'Net Amount',
+    netAmountToPay: 'Net Amount to Pay',
+    bonuses: 'Bonuses',
+    notes: 'Notes',
+    paymentId: 'Payment ID',
+    hourlyRate: 'Hourly Rate',
+    effectiveHourlyRate: 'Effective Hourly Rate',
+    regularPay: 'Regular Pay',
+    overtimePay: 'Overtime Pay',
+
+    // Status
+    paid: 'Paid',
+    cancelled: 'Cancelled',
+    paymentCancelled: 'Payment Cancelled',
+
+    // Actions
+    edit: 'Edit',
+    delete: 'Delete',
+    cancel: 'Cancel Payment',
+    viewDetails: 'View Details',
+    calculate: 'Calculate',
+
+    // Messages
+    createSuccess: 'Payment created successfully',
+    updateSuccess: 'Payment updated successfully',
+    deleteSuccess: 'Payment deleted successfully',
+    cancelSuccess: 'Payment cancelled successfully',
+
+    // Confirmations
+    confirmDelete: 'Are you sure you want to delete this payment?',
+    confirmCancel: 'Are you sure you want to cancel this payment?',
+    cancelWarning: 'Warning: Deducted advances will return to PENDING status',
+    cancellationReason: 'Cancellation Reason',
+    requiredReason: 'Cancellation reason is required',
+    reasonPlaceholder: 'Describe the reason for cancellation...',
+    confirmCancelButton: 'Yes, Cancel Payment',
+    amountPaid: 'Amount Paid',
+    deducted: 'Deducted',
+    view: 'View',
+
+    // Validations
+    requiredEmployee: 'Please select an employee',
+    requiredPeriodStart: 'Please select period start date',
+    requiredPeriodEnd: 'Please select period end date',
+    requiredPaymentDate: 'Please select payment date',
+
+    // Summary
+    summary: 'Summary',
+    hoursBreakdown: 'Hours Breakdown',
+    payBreakdown: 'Pay Breakdown',
+    deductionsBreakdown: 'Deductions Breakdown',
+    advanceDeductions: 'Advance Deductions',
+    totalAdvanceDeduction: 'Total Advance Deduction',
+    noAdvances: 'No advances to deduct',
+
+    // Time Entries
+    timeEntriesForPeriod: 'Time Entries for Period',
+    noTimeEntries: 'No time entries found for this period',
+    
+    // Sections
+    employeeInformation: 'Employee Information',
+    paymentDetails: 'Payment Details',
+    paymentPeriod: 'Payment Period',
+    hoursWorked: 'Hours Worked',
+    paymentSummary: 'Payment Summary',
+    
+    // PDF
+    payslip: 'Payslip',
+    payslipNumber: 'Payslip Number',
+    downloadPayslip: 'Download Payslip',
+    generatingPdf: 'Generating PDF...',
+    description: 'Description',
+    hours: 'Hours',
+    rate: 'Rate',
+    
+    // Payment Date
+    paymentWillBeRegisteredToday: 'Payment will be registered today',
+    paymentDateExplanation: 'The payment date will be automatically set to today. The work period can be from previous days.',
+    paidPeriods: 'Already paid periods',
+    noPaidPeriods: 'No paid periods yet',
+    periodAlreadyPaid: 'This period has already been paid',
+    paymentConflict: 'Conflict with existing payment',
   },
 
   validation: {

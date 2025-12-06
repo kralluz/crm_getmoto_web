@@ -12,6 +12,9 @@ import {
   BarChartOutlined,
   DollarOutlined,
   CarOutlined,
+  TeamOutlined,
+  ClockCircleOutlined,
+  DollarCircleOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
@@ -37,15 +40,15 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const { t } = useTranslation();
   const { token } = useToken();
-  const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu']);
+  const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu', 'employees-submenu']);
 
   // Detectar se está em tema dark
   const isDarkMode = token.colorBgContainer === '#141414';
 
-  // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, serviços, despesas e produtos sempre abertos
+  // Atualizar openKeys quando initialOpenKeys mudar, mas mantém dashboard, serviços, despesas, produtos e employees sempre abertos
   useEffect(() => {
     // Mescla os openKeys iniciais com os padrões
-    const defaultKeys = ['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu'];
+    const defaultKeys = ['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu', 'employees-submenu'];
     const mergedKeys = Array.from(new Set([...defaultKeys, ...initialOpenKeys]));
     setOpenKeys(mergedKeys);
   }, [initialOpenKeys]);
@@ -127,6 +130,28 @@ export function AppSidebar({
           key: 'categorias-produtos',
           icon: <TagsOutlined />,
           label: t('menu.productCategories'),
+        },
+      ],
+    },
+    {
+      key: 'employees-submenu',
+      icon: <TeamOutlined />,
+      label: t('menu.employees'),
+      children: [
+        {
+          key: 'employees',
+          icon: <TeamOutlined />,
+          label: t('menu.employeesList'),
+        },
+        {
+          key: 'time-entries',
+          icon: <ClockCircleOutlined />,
+          label: t('menu.timeEntries'),
+        },
+        {
+          key: 'payroll-payments',
+          icon: <DollarCircleOutlined />,
+          label: t('menu.payroll'),
         },
       ],
     },
