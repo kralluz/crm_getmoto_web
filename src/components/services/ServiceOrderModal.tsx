@@ -327,6 +327,7 @@ export function ServiceOrderModal({
         vehicle_id: values.vehicle_id,
         customer_name: values.customer_name,
         service_description: values.service_description,
+        vehicle_mile: values.vehicle_mile,
         status: values.status || 'completed',
         notes: values.notes,
         finalized_at: values.finalized_at
