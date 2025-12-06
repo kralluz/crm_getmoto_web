@@ -796,6 +796,7 @@ export default {
     mile: 'Odometer / Mile',
     milePlaceholder: 'Ex: 15000',
     mileMinError: 'Quilometragem deve ser maior ou igual a zero',
+    mileAtService: 'KM no serviço',
     editVehicle: 'Editar Veículo',
     updateVehicleSubtitle: 'Atualize os dados do veículo',
     registerNewVehicleSubtitle: 'Cadastre um novo veículo no sistema',

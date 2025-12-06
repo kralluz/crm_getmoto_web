@@ -796,6 +796,7 @@ export default {
     mile: 'Odómetro / Mile',
     milePlaceholder: 'Ej: 15000',
     mileMinError: 'El kilometraje debe ser mayor o igual a cero',
+    mileAtService: 'KM en el servicio',
     vehicleNotFound: 'Vehículo no encontrado',
     noBrand: 'Sin marca',
     noModel: 'Sin modelo',

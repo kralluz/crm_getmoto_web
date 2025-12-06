@@ -437,6 +437,14 @@ export function ServiceOrderDetail() {
                     {serviceOrder.vehicles.plate} - {serviceOrder.vehicles.year}
                     {serviceOrder.vehicles.color && ` - ${serviceOrder.vehicles.color}`}
                   </Text>
+                  {serviceOrder.vehicle_mile && (
+                    <>
+                      <br />
+                      <Text type="secondary">
+                        {t('vehicles.mileAtService')}: <Text strong>{serviceOrder.vehicle_mile.toLocaleString('pt-BR')} km</Text>
+                      </Text>
+                    </>
+                  )}
                 </div>
               ) : (
                 '-'

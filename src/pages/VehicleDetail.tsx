@@ -137,6 +137,15 @@ export function VehicleDetail() {
       render: (desc: string | null) => desc || '-',
     },
     {
+      title: t('vehicles.mile'),
+      dataIndex: 'vehicle_mile',
+      key: 'vehicle_mile',
+      width: 120,
+      align: 'right',
+      render: (mile: number | null) =>
+        mile ? `${mile.toLocaleString('pt-BR')} km` : '-',
+    },
+    {
       title: t('services.creationDate'),
       dataIndex: 'created_at',
       key: 'created_at',

@@ -60,6 +60,7 @@ export interface ServiceOrder {
   vehicle_id?: number;
   customer_name?: string;
   service_description?: string;
+  vehicle_mile?: number;
   status: ServiceOrderStatus;
   finalized_at?: string;
   discount_percent?: number;
@@ -88,6 +89,7 @@ export interface CreateServiceOrderData {
   vehicle_id?: number;
   customer_name?: string;
   service_description?: string;
+  vehicle_mile?: number;
   status?: ServiceOrderStatus;
   discount_percent?: number;
   discount_amount?: number;
