@@ -268,7 +268,17 @@ export function ProductModal({ open, productId, onClose }: ProductModalProps) {
               name="quantity_alert" 
               rules={[
                 { required: true, message: t('products.minStockRequired') },
-                { type: 'number', min: 0, message: t('products.minStockPositive') }
+                {
+                  validator: (_, value) => {
+                    if (value === null || value === undefined) {
+                      return Promise.reject(new Error(t('products.minStockRequired')));
+                    }
+                    if (value < 0) {
+                      return Promise.reject(new Error(t('products.minStockPositive')));
+                    }
+                    return Promise.resolve();
+                  },
+                },
               ]} 
               tooltip={t('products.minStockTooltip')}
             >
@@ -278,7 +288,11 @@ export function ProductModal({ open, productId, onClose }: ProductModalProps) {
                 min={0} 
                 placeholder="0" 
                 suffix="unid." 
-                step={1} 
+                step={1}
+                parser={(value) => {
+                  const parsed = Number(value);
+                  return isNaN(parsed) || parsed < 0 ? 0 : Math.floor(parsed);
+                }}
               />
             </Form.Item>
           </Col>

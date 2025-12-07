@@ -167,9 +167,19 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                   tooltip={t('vehicles.updateMileTooltip')}
                   rules={[
                     {
-                      type: 'number',
-                      min: selectedVehicle.mile || 0,
-                      message: t('vehicles.mileCannotDecrease'),
+                      validator: (_, value) => {
+                        const minMile = selectedVehicle.mile || 0;
+                        if (value === null || value === undefined) {
+                          return Promise.resolve();
+                        }
+                        if (value < 0) {
+                          return Promise.reject(new Error(t('vehicles.mileMinError')));
+                        }
+                        if (value < minMile) {
+                          return Promise.reject(new Error(t('vehicles.mileCannotDecrease')));
+                        }
+                        return Promise.resolve();
+                      },
                     },
                   ]}
                 >
@@ -177,6 +187,11 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                     placeholder={t('vehicles.milePlaceholder')}
                     style={{ width: '100%' }}
                     min={selectedVehicle.mile || 0}
+                    parser={(value) => {
+                      const parsed = Number(value);
+                      const minMile = selectedVehicle.mile || 0;
+                      return isNaN(parsed) || parsed < minMile ? minMile : parsed;
+                    }}
                   />
                 </Form.Item>
               </Col>
@@ -245,6 +260,10 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                           )
                         }
                         style={{ width: '100%' }}
+                        parser={(value) => {
+                          const parsed = Number(value);
+                          return isNaN(parsed) || parsed < 1 ? 1 : parsed;
+                        }}
                       />
                     </Col>
                     <Col xs={24} md={6}>
@@ -388,6 +407,10 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                           }
                           style={{ width: '100%' }}
                           status={hasInsufficientStock ? 'error' : undefined}
+                          parser={(value) => {
+                            const parsed = Number(value);
+                            return isNaN(parsed) || parsed < 1 ? 1 : parsed;
+                          }}
                         />
                         {product.product_id && (
                           <div style={{ marginTop: 4 }}>
@@ -578,6 +601,12 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                             addonAfter="%"
                             style={{ width: '100%' }}
                             placeholder="0"
+                            parser={(value) => {
+                              const parsed = Number(value);
+                              if (isNaN(parsed) || parsed < 0) return 0;
+                              if (parsed > 100) return 100;
+                              return parsed;
+                            }}
                           />
                         ) : (
                           <CurrencyInput

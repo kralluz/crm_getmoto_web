@@ -130,9 +130,32 @@ export function EmployeeForm() {
             <Form.Item
               label={t('employees.weeklyHours')}
               name="weekly_hours"
-              rules={[{ required: true, message: t('employees.requiredWeeklyHours') }]}
+              rules={[
+                { required: true, message: t('employees.requiredWeeklyHours') },
+                {
+                  validator: (_, value) => {
+                    if (value === null || value === undefined) {
+                      return Promise.reject(new Error(t('employees.requiredWeeklyHours')));
+                    }
+                    if (value < 1 || value > 168) {
+                      return Promise.reject(new Error('Horas semanais devem estar entre 1 e 168'));
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
             >
-              <InputNumber min={1} max={168} style={{ width: '100%' }} />
+              <InputNumber 
+                min={1} 
+                max={168} 
+                style={{ width: '100%' }}
+                parser={(value) => {
+                  const parsed = Number(value);
+                  if (isNaN(parsed) || parsed < 1) return 1;
+                  if (parsed > 168) return 168;
+                  return Math.floor(parsed);
+                }}
+              />
             </Form.Item>
 
             <Form.Item

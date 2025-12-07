@@ -174,6 +174,10 @@ export function PurchaseOrderModal({
           step={1}
           style={{ width: '100%' }}
           onChange={(val) => updateProduct(record.key, 'quantity', val || 1)}
+          parser={(value) => {
+            const parsed = Number(value);
+            return isNaN(parsed) || parsed < 1 ? 1 : Math.floor(parsed);
+          }}
         />
       ),
     },

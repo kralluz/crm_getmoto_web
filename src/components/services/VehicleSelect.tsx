@@ -138,6 +138,13 @@ export function VehicleSelect({ value, onChange, onVehicleCreated, ...props }: V
               min={1900}
               max={new Date().getFullYear() + 1}
               placeholder="Ex: 2020"
+              parser={(value) => {
+                const parsed = Number(value);
+                const maxYear = new Date().getFullYear() + 1;
+                if (isNaN(parsed) || parsed < 1900) return 1900;
+                if (parsed > maxYear) return maxYear;
+                return Math.floor(parsed);
+              }}
             />
           </Form.Item>
 
@@ -149,6 +156,10 @@ export function VehicleSelect({ value, onChange, onVehicleCreated, ...props }: V
               style={{ width: '100%' }}
               min={0}
               placeholder="Ex: 15000"
+              parser={(value) => {
+                const parsed = Number(value);
+                return isNaN(parsed) || parsed < 0 ? 0 : Math.floor(parsed);
+              }}
             />
           </Form.Item>
 

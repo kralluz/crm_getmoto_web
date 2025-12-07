@@ -207,14 +207,18 @@ export function VehicleForm() {
                 name="year"
                 rules={[
                   {
-                    type: 'number',
-                    min: 1900,
-                    message: t('vehicles.invalidYearError'),
-                  },
-                  {
-                    type: 'number',
-                    max: new Date().getFullYear() + 1,
-                    message: t('vehicles.futureYearError'),
+                    validator: (_, value) => {
+                      if (value === null || value === undefined) {
+                        return Promise.resolve();
+                      }
+                      if (value < 1900) {
+                        return Promise.reject(new Error(t('vehicles.invalidYearError')));
+                      }
+                      if (value > new Date().getFullYear() + 1) {
+                        return Promise.reject(new Error(t('vehicles.futureYearError')));
+                      }
+                      return Promise.resolve();
+                    },
                   },
                 ]}
               >
@@ -224,6 +228,13 @@ export function VehicleForm() {
                   min={1900}
                   max={new Date().getFullYear() + 1}
                   disabled={isEditing}
+                  parser={(value) => {
+                    const parsed = Number(value);
+                    const maxYear = new Date().getFullYear() + 1;
+                    if (isNaN(parsed) || parsed < 1900) return 1900;
+                    if (parsed > maxYear) return maxYear;
+                    return parsed;
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -234,9 +245,15 @@ export function VehicleForm() {
                 name="mile"
                 rules={[
                   {
-                    type: 'number',
-                    min: 0,
-                    message: t('vehicles.mileMinError'),
+                    validator: (_, value) => {
+                      if (value === null || value === undefined) {
+                        return Promise.resolve();
+                      }
+                      if (value < 0) {
+                        return Promise.reject(new Error(t('vehicles.mileMinError')));
+                      }
+                      return Promise.resolve();
+                    },
                   },
                 ]}
               >
@@ -244,6 +261,10 @@ export function VehicleForm() {
                   placeholder={t('vehicles.milePlaceholder')}
                   style={{ width: '100%' }}
                   min={0}
+                  parser={(value) => {
+                    const parsed = Number(value);
+                    return isNaN(parsed) || parsed < 0 ? 0 : parsed;
+                  }}
                 />
               </Form.Item>
             </Col>

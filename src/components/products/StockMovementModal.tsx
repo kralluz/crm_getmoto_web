@@ -153,9 +153,14 @@ export function StockMovementModal({
             name="quantity"
             rules={[
               { required: true, message: t('inventory.quantityRequired') || 'Quantidade é obrigatória' },
-              { type: 'number', min: 1, message: t('stockAdjustment.quantityPositive') || 'Quantidade deve ser positiva' },
               {
                 validator: (_, value) => {
+                  if (value === null || value === undefined) {
+                    return Promise.reject(new Error(t('inventory.quantityRequired') || 'Quantidade é obrigatória'));
+                  }
+                  if (value < 1) {
+                    return Promise.reject(new Error(t('stockAdjustment.quantityPositive') || 'Quantidade deve ser positiva'));
+                  }
                   if (product && adjustmentType === 'decrease' && value > product.quantity) {
                     return Promise.reject(new Error(t('stockAdjustment.insufficientStock') || 'Estoque insuficiente'));
                   }
@@ -169,6 +174,10 @@ export function StockMovementModal({
               step={1}
               style={{ width: '100%' }}
               placeholder={t('stockAdjustment.quantityPlaceholder') || 'Digite a quantidade'}
+              parser={(value) => {
+                const parsed = Number(value);
+                return isNaN(parsed) || parsed < 1 ? 1 : Math.floor(parsed);
+              }}
             />
           </Form.Item>
 
