@@ -8,9 +8,10 @@ export function useVehicles(params?: { is_active?: boolean; search?: string }) {
   return useQuery({
     queryKey: ['vehicles', params],
     queryFn: () => motorcycleApi.getAll(params),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados considerados frescos
+    gcTime: 5 * 60 * 1000, // 5 minutos - cache mantido em memória
+    refetchOnWindowFocus: true, // Recarregar quando voltar para a aba
+    refetchOnMount: true, // Recarregar ao montar o componente
   });
 }
 
@@ -19,6 +20,9 @@ export function useVehicle(id: number | string | undefined) {
     queryKey: ['vehicle', id],
     queryFn: () => motorcycleApi.getById(id!),
     enabled: !!id,
+    staleTime: 0, // Sempre buscar dados atualizados
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }
 

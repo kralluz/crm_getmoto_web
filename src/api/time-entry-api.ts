@@ -8,7 +8,7 @@ import type {
 
 export const timeEntryApi = {
   // Listar registros de horário
-  getAll: async (params?: { employee_id?: number }) => {
+  getAll: async (params?: { employee_id?: number; start_date?: string; end_date?: string }) => {
     const response = await customAxiosInstance<TimeEntry[]>({
       url: '/api/time-entries',
       method: 'GET',

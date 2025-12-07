@@ -51,16 +51,23 @@ export function PayrollPaymentForm() {
     const employee = employees.find((e) => e.employee_id === selectedEmployeeId);
     if (!employee) return;
 
-    // Calculate total hours from time entries
-    const regularHours = timeEntries.reduce((sum, entry) => {
-      return sum + (entry.regular_hours || 0);
-    }, 0);
+    // Filter out time entries that are already paid
+    const unpaidEntries = timeEntries.filter(entry => !entry.payroll_payment_id);
 
-    const overtimeHours = timeEntries.reduce((sum, entry) => {
-      return sum + (entry.overtime_hours || 0);
-    }, 0);
+    // Calculate total hours from UNPAID time entries using total_hours
+    // Note: regular_hours and overtime_hours are calculated by backend during payment
+    let totalHours = 0;
+    for (const entry of unpaidEntries) {
+      if (entry.total_hours) {
+        totalHours += Number(entry.total_hours);
+      }
+    }
 
-    const totalHours = regularHours + overtimeHours;
+    // In UK model: first 40 hours/week are regular, rest is overtime
+    // For simplicity in frontend calculation, we'll treat all as regular
+    // Backend will recalculate properly during payment creation
+    const regularHours = totalHours;
+    const overtimeHours = 0;
 
     const hourlyRatePounds = penceToPounds(employee.hourly_rate_pence);
     const grossAmountPounds = totalHours * hourlyRatePounds;
@@ -198,15 +205,27 @@ export function PayrollPaymentForm() {
             )}
 
             {selectedEmployeeId && dateRange && !calculation && (
-              <Button
-                type="dashed"
-                icon={<CalculatorOutlined />}
-                onClick={handleCalculate}
-                block
-                size="large"
-              >
-                {t('payroll.calculate')}
-              </Button>
+              <>
+                {timeEntries.length > 0 && timeEntries.filter(e => !e.payroll_payment_id).length === 0 && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message={t('payroll.noUnpaidEntries')}
+                    description={t('payroll.noUnpaidEntriesDescription')}
+                    style={{ marginBottom: 16 }}
+                  />
+                )}
+                <Button
+                  type="dashed"
+                  icon={<CalculatorOutlined />}
+                  onClick={handleCalculate}
+                  block
+                  size="large"
+                  disabled={timeEntries.filter(e => !e.payroll_payment_id).length === 0}
+                >
+                  {t('payroll.calculate')}
+                </Button>
+              </>
             )}
 
             {calculation && selectedEmployee && (
@@ -236,10 +255,7 @@ export function PayrollPaymentForm() {
                       <strong>{formatUKCurrency(calculation.grossAmount)}</strong>
                     </Descriptions.Item>
                     <Descriptions.Item label={t('payroll.timeEntriesFound')}>
-                      {timeEntries.length}
-                    </Descriptions.Item>
-                    <Descriptions.Item label={t('payroll.taxDeductions')}>
-                      £0.00 ({t('payroll.notImplemented')})
+                      {timeEntries.filter(e => !e.payroll_payment_id).length} {t('common.of')} {timeEntries.length} ({t('payroll.unpaidOnly')})
                     </Descriptions.Item>
                   </Descriptions>
 

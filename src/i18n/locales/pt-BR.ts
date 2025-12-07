@@ -1316,6 +1316,9 @@ export default {
     howItWorks: 'Como funciona',
     howItWorksText: 'Selecione um funcionário e período para calcular o pagamento baseado nos registros de ponto. Adiantamentos pendentes serão automaticamente deduzidos do valor bruto.',
     timeEntriesFound: 'Registros Encontrados',
+    unpaidOnly: 'apenas não pagos',
+    noUnpaidEntries: 'Todos os registros já foram pagos',
+    noUnpaidEntriesDescription: 'Não há registros de ponto não pagos no período selecionado. Todos os registros já estão vinculados a pagamentos anteriores.',
     notImplemented: 'não implementado',
 
     // Summary

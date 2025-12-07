@@ -6,6 +6,7 @@ export interface TimeEntry {
   total_hours?: number | null;
   regular_hours?: number | null;
   overtime_hours?: number | null;
+  payroll_payment_id?: number | null;
   notes?: string | null;
   is_active: boolean;
   created_at: string;

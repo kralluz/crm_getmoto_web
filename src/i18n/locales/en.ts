@@ -1256,6 +1256,17 @@ export default {
     // Time Entries
     timeEntriesForPeriod: 'Time Entries for Period',
     noTimeEntries: 'No time entries found for this period',
+    timeEntriesFound: 'Records Found',
+    unpaidOnly: 'unpaid only',
+    
+    // Calculation
+    paymentCalculation: 'Payment Calculation',
+    howItWorks: 'How it works',
+    howItWorksText: 'Select an employee and period to calculate payment based on time entries. Pending advances will be automatically deducted from gross amount.',
+    paymentWillBeRegisteredToday: 'Payment will be registered today',
+    paymentDateExplanation: 'Payment date will be automatically set to today. The work period may be from previous days.',
+    noUnpaidEntries: 'All entries have already been paid',
+    noUnpaidEntriesDescription: 'There are no unpaid time entries in the selected period. All entries are already linked to previous payments.',
     
     // Sections
     employeeInformation: 'Employee Information',
@@ -1274,8 +1285,6 @@ export default {
     rate: 'Rate',
     
     // Payment Date
-    paymentWillBeRegisteredToday: 'Payment will be registered today',
-    paymentDateExplanation: 'The payment date will be automatically set to today. The work period can be from previous days.',
     paidPeriods: 'Already paid periods',
     noPaidPeriods: 'No paid periods yet',
     periodAlreadyPaid: 'This period has already been paid',
