@@ -25,6 +25,7 @@ export function ProductList() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editingProductId, setEditingProductId] = useState<number | undefined>();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -397,10 +398,11 @@ export function ProductList() {
             loading={isLoading}
             rowKey="product_id"
             pagination={{
-              pageSize: 20,
+              pageSize: pageSize,
               showSizeChanger: true,
-              showTotal: (total) => t('products.totalProducts', { total }),
               pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (_, size) => setPageSize(size),
+              showTotal: (total) => t('products.totalProducts', { total }),
             }}
             size="middle"
             scroll={{ x: 1200 }}

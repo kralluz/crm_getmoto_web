@@ -393,9 +393,53 @@ export function ServiceOrderModal({
       onClose();
     } catch (error: any) {
       console.error('❌ Error submitting form:', error);
+      
+      // Se for erro de validação do Ant Design (frontend)
       if (error?.errorFields) {
         NotificationService.warning(t('services.fillRequiredFields'));
+        return;
+      }
+      
+      // Se for erro de validação da API (backend)
+      const apiErrors = error?.response?.data?.errors;
+      if (apiErrors && Array.isArray(apiErrors)) {
+        console.log('📋 API validation errors:', apiErrors);
+        
+        // Mapear erros da API para os campos do formulário
+        const fieldErrors = apiErrors.map((err: any) => ({
+          name: err.field,
+          errors: [err.message],
+        }));
+        
+        // Aplicar os erros no formulário
+        form.setFields(fieldErrors);
+        
+        // Mostrar notificação com resumo dos erros
+        const errorMessages = apiErrors.map((err: any) => err.message).join('; ');
+        NotificationService.error(
+          error?.response?.data?.message || 'Erro de validação',
+          errorMessages
+        );
+        
+        // Se estiver em etapas avançadas e o erro for em campo da primeira etapa, voltar
+        const firstStepFields = ['vehicle_id', 'customer_name', 'vehicle_mile'];
+        const hasFirstStepError = apiErrors.some((err: any) => 
+          firstStepFields.includes(err.field)
+        );
+        if (hasFirstStepError && currentStep > 0) {
+          setCurrentStep(0);
+        }
+        
+        // Se erro em professional_name ou service_description, ir para etapa final
+        const finalStepFields = ['professional_name', 'service_description', 'notes'];
+        const hasFinalStepError = apiErrors.some((err: any) => 
+          finalStepFields.includes(err.field)
+        );
+        if (hasFinalStepError && currentStep !== 3) {
+          setCurrentStep(3);
+        }
       } else {
+        // Erro genérico
         NotificationService.error(
           error?.response?.data?.message || t('services.orderSaveError')
         );
@@ -412,7 +456,37 @@ export function ServiceOrderModal({
       // Validar campos do step atual
       if (currentStep === 0) {
         console.log('Validating step 0 fields...');
+        
+        // Validar campos obrigatórios
         await form.validateFields(['vehicle_id', 'customer_name']);
+        
+        // Se houver veículo selecionado, validar também o vehicle_mile
+        const vehicleId = form.getFieldValue('vehicle_id');
+        if (vehicleId && selectedVehicle) {
+          try {
+            await form.validateFields(['vehicle_mile']);
+            
+            // Verificar explicitamente se o valor não é negativo
+            const milValue = form.getFieldValue('vehicle_mile');
+            const minMile = selectedVehicle.mile || 0;
+            
+            if (milValue !== null && milValue !== undefined) {
+              if (milValue < 0) {
+                NotificationService.error(t('vehicles.mileMinError') || 'Quilometragem não pode ser negativa');
+                return;
+              }
+              if (milValue < minMile) {
+                NotificationService.error(t('vehicles.mileCannotDecrease') || 'Quilometragem não pode diminuir');
+                return;
+              }
+            }
+          } catch (error) {
+            console.error('❌ Vehicle mile validation failed:', error);
+            NotificationService.warning('Por favor, corrija a quilometragem do veículo');
+            return;
+          }
+        }
+        
         console.log('✅ Step 0 validation passed');
       }
       

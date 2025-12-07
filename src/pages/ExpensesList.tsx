@@ -23,6 +23,7 @@ export function ExpensesList() {
   const [searchText, setSearchText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[string, string] | undefined>(undefined);
+  const [pageSize, setPageSize] = useState(10);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -329,10 +330,11 @@ export function ExpensesList() {
             loading={isLoading}
             rowKey="expense_id"
             pagination={{
-              pageSize: 20,
+              pageSize: pageSize,
               showSizeChanger: true,
-              showTotal: (total) => t('expenses.totalItems', { total }),
               pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (_, size) => setPageSize(size),
+              showTotal: (total) => t('expenses.totalItems', { total }),
             }}
             size="middle"
             scroll={{ x: 1000 }}

@@ -41,7 +41,10 @@ export function ProductCategoryList() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<number | undefined>();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -278,10 +281,11 @@ export function ProductCategoryList() {
             loading={isLoading}
             rowKey="product_category_id"
             pagination={{
-              pageSize: 20,
+              pageSize: pageSize,
               showSizeChanger: true,
-              showTotal: (total) => t('products.totalCategories', { total }),
               pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (_, size) => setPageSize(size),
+              showTotal: (total) => t('products.totalCategories', { total }),
             }}
             scroll={{ x: 800 }}
             size="middle"

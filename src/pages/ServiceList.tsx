@@ -22,6 +22,7 @@ export function ServiceList() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingServiceOrderId, setEditingServiceOrderId] = useState<number | undefined>();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -409,8 +410,10 @@ export function ServiceList() {
             loading={isLoading}
             rowKey="service_order_id"
             pagination={{
-              pageSize: 20,
+              pageSize: pageSize,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (_, size) => setPageSize(size),
               showTotal: (total) => t('services.totalOrders', { total }),
               responsive: true,
             }}

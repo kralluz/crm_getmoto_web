@@ -15,6 +15,7 @@ export function UserList() {
   const [searchText, setSearchText] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | ''>('');
   const [selectedStatus, setSelectedStatus] = useState<'active' | 'inactive' | ''>('');
+  const [pageSize, setPageSize] = useState(10);
 
   // Mock data - substituir por chamada real à API
   const mockUsers: User[] = [
@@ -269,8 +270,10 @@ export function UserList() {
           loading={isLoading}
           rowKey="id"
           pagination={{
-            pageSize: 20,
+            pageSize: pageSize,
             showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            onShowSizeChange: (_, size) => setPageSize(size),
             showTotal: (total) => t('users.totalUsers', { total }),
           }}
           size="small"

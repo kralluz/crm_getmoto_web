@@ -20,10 +20,10 @@ export function MovimentacoesList() {
   const { formatCurrency, formatDate } = useFormat();
   const [searchText, setSearchText] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | CashFlowDirection>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'INCOME' | 'EXPENSE'>('all');
   const [dateRange, setDateRange] = useState<[string, string] | undefined>(undefined);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
+  const [pageSize, setPageSize] = useState(10);  useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -317,10 +317,11 @@ export function MovimentacoesList() {
           loading={isLoading}
           rowKey="cash_flow_id"
           pagination={{
-            pageSize: isMobile ? 10 : 20,
+            pageSize: pageSize,
             showSizeChanger: !isMobile,
-            showTotal: (total) => t('cashflow.totalMovements', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
+            onShowSizeChange: (_, size) => setPageSize(size),
+            showTotal: (total) => t('cashflow.totalMovements', { total }),
             simple: isMobile,
           }}
           size={isMobile ? 'middle' : 'small'}

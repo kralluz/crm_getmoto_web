@@ -22,6 +22,7 @@ export function VehicleList() {
   const [searchText, setSearchText] = useState('');
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -277,8 +278,10 @@ export function VehicleList() {
               rowKey="vehicle_id"
               loading={isLoading}
               pagination={{
-                pageSize: 20,
+                pageSize: pageSize,
                 showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                onShowSizeChange: (_, size) => setPageSize(size),
                 showTotal: (total) =>
                   t('vehicles.totalVehicles', { total: total }),
               }}

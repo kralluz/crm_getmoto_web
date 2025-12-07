@@ -502,8 +502,28 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
               <Form.Item
                 label={t('services.professionalName')}
                 name="professional_name"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      // Campo opcional, mas se preenchido deve ter mínimo de caracteres
+                      if (!value || value.trim().length === 0) {
+                        return Promise.resolve(); // Campo vazio é válido
+                      }
+                      if (value.trim().length < 3) {
+                        return Promise.reject(new Error('Nome do profissional deve ter no mínimo 3 caracteres'));
+                      }
+                      if (value.length > 255) {
+                        return Promise.reject(new Error('Nome do profissional deve ter no máximo 255 caracteres'));
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
               >
-                <Input placeholder={t('services.professionalPlaceholder')} />
+                <Input 
+                  placeholder={t('services.professionalPlaceholder')}
+                  maxLength={255}
+                />
               </Form.Item>
             </Col>
 
@@ -548,10 +568,29 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
           <Form.Item
             label={t('services.serviceDescription')}
             name="service_description"
+            rules={[
+              {
+                validator: (_, value) => {
+                  // Campo opcional, mas se preenchido deve ter mínimo de caracteres
+                  if (!value || value.trim().length === 0) {
+                    return Promise.resolve(); // Campo vazio é válido
+                  }
+                  if (value.trim().length < 5) {
+                    return Promise.reject(new Error('Descrição deve ter no mínimo 5 caracteres'));
+                  }
+                  if (value.length > 1000) {
+                    return Promise.reject(new Error('Descrição deve ter no máximo 1000 caracteres'));
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
             <TextArea
               rows={3}
               placeholder={t('services.serviceDescriptionPlaceholder')}
+              maxLength={1000}
+              showCount
             />
           </Form.Item>
 

@@ -39,12 +39,25 @@ export function EmployeeForm() {
       hourly_rate_pence: Math.round(values.hourly_rate_pounds * 100),
     };
 
-    if (isEdit) {
-      await updateEmployee.mutateAsync({ id: id!, data });
-    } else {
-      await createEmployee.mutateAsync(data);
+    try {
+      if (isEdit) {
+        await updateEmployee.mutateAsync({ id: id!, data });
+      } else {
+        await createEmployee.mutateAsync(data);
+      }
+      navigate('/employees');
+    } catch (error: any) {
+      console.error('❌ Error saving employee:', error);
+      
+      const apiErrors = error?.response?.data?.errors;
+      if (apiErrors && Array.isArray(apiErrors)) {
+        const fieldErrors = apiErrors.map((err: any) => ({
+          name: err.field,
+          errors: [err.message],
+        }));
+        form.setFields(fieldErrors);
+      }
     }
-    navigate('/employees');
   };
 
   return (

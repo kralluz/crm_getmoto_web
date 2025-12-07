@@ -109,6 +109,18 @@ export function ProductModal({ open, productId, onClose }: ProductModalProps) {
             onSuccess: () => {
               onClose();
             },
+            onError: (error: any) => {
+              console.error('❌ Error updating product:', error);
+              
+              const apiErrors = error?.response?.data?.errors;
+              if (apiErrors && Array.isArray(apiErrors)) {
+                const fieldErrors = apiErrors.map((err: any) => ({
+                  name: err.field,
+                  errors: [err.message],
+                }));
+                form.setFields(fieldErrors);
+              }
+            },
           }
         );
       } else {
@@ -124,6 +136,18 @@ export function ProductModal({ open, productId, onClose }: ProductModalProps) {
         createProduct(createData, {
           onSuccess: () => {
             onClose();
+          },
+          onError: (error: any) => {
+            console.error('❌ Error creating product:', error);
+            
+            const apiErrors = error?.response?.data?.errors;
+            if (apiErrors && Array.isArray(apiErrors)) {
+              const fieldErrors = apiErrors.map((err: any) => ({
+                name: err.field,
+                errors: [err.message],
+              }));
+              form.setFields(fieldErrors);
+            }
           },
         });
       }

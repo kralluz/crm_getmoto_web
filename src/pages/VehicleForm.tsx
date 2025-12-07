@@ -72,12 +72,48 @@ export function VehicleForm() {
               navigate('/veiculos');
             }, 100);
           },
+          onError: (error: any) => {
+            console.error('❌ Error updating vehicle:', error);
+            
+            // Se for erro de validação da API (backend)
+            const apiErrors = error?.response?.data?.errors;
+            if (apiErrors && Array.isArray(apiErrors)) {
+              console.log('📋 API validation errors:', apiErrors);
+              
+              // Mapear erros da API para os campos do formulário
+              const fieldErrors = apiErrors.map((err: any) => ({
+                name: err.field,
+                errors: [err.message],
+              }));
+              
+              // Aplicar os erros no formulário
+              form.setFields(fieldErrors);
+            }
+          },
         }
       );
     } else {
       createVehicle(values as CreateMotorcycleData, {
         onSuccess: () => {
           navigate('/veiculos');
+        },
+        onError: (error: any) => {
+          console.error('❌ Error creating vehicle:', error);
+          
+          // Se for erro de validação da API (backend)
+          const apiErrors = error?.response?.data?.errors;
+          if (apiErrors && Array.isArray(apiErrors)) {
+            console.log('📋 API validation errors:', apiErrors);
+            
+            // Mapear erros da API para os campos do formulário
+            const fieldErrors = apiErrors.map((err: any) => ({
+              name: err.field,
+              errors: [err.message],
+            }));
+            
+            // Aplicar os erros no formulário
+            form.setFields(fieldErrors);
+          }
         },
       });
     }
@@ -115,19 +151,29 @@ export function VehicleForm() {
                 rules={[
                   {
                     required: true,
-                    message: t('vehicles.plateRequiredError'),
+                    message: t('vehicles.plateRequired'),
                   },
                   {
-                    max: 12,
-                    message: t('vehicles.plateMaxLengthError'),
+                    pattern: /^[A-Z]{2}\d{2}\s?[A-Z]{3}$/,
+                    message: t('vehicles.plateInvalidFormat'),
                   },
                 ]}
               >
                 <Input
-                  placeholder={t('vehicles.platePlaceholder')}
-                  maxLength={12}
+                  placeholder="AB12 CDE"
+                  maxLength={8}
                   style={{ textTransform: 'uppercase' }}
                   disabled={isEditing}
+                  onChange={(e) => {
+                    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    
+                    // Aplicar máscara: AA00 AAA
+                    if (value.length > 4) {
+                      value = value.slice(0, 4) + ' ' + value.slice(4, 7);
+                    }
+                    
+                    form.setFieldValue('plate', value);
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -138,12 +184,22 @@ export function VehicleForm() {
                 name="brand"
                 rules={[
                   {
-                    min: 2,
-                    message: t('vehicles.brandMinLengthError'),
+                    required: true,
+                    message: t('vehicles.brandRequired'),
                   },
                   {
-                    max: 100,
-                    message: t('vehicles.brandMaxLengthError'),
+                    validator: (_, value) => {
+                      if (!value || value.trim().length === 0) {
+                        return Promise.reject(new Error(t('vehicles.brandRequired')));
+                      }
+                      if (value.trim().length < 2) {
+                        return Promise.reject(new Error(t('vehicles.brandMinLengthError')));
+                      }
+                      if (value.length > 100) {
+                        return Promise.reject(new Error(t('vehicles.brandMaxLengthError')));
+                      }
+                      return Promise.resolve();
+                    },
                   },
                 ]}
               >
@@ -161,12 +217,22 @@ export function VehicleForm() {
                 name="model"
                 rules={[
                   {
-                    min: 2,
-                    message: t('vehicles.modelMinLengthError'),
+                    required: true,
+                    message: t('vehicles.modelRequired'),
                   },
                   {
-                    max: 100,
-                    message: t('vehicles.modelMaxLengthError'),
+                    validator: (_, value) => {
+                      if (!value || value.trim().length === 0) {
+                        return Promise.reject(new Error(t('vehicles.modelRequired')));
+                      }
+                      if (value.trim().length < 2) {
+                        return Promise.reject(new Error(t('vehicles.modelMinLengthError')));
+                      }
+                      if (value.length > 100) {
+                        return Promise.reject(new Error(t('vehicles.modelMaxLengthError')));
+                      }
+                      return Promise.resolve();
+                    },
                   },
                 ]}
               >
@@ -184,12 +250,18 @@ export function VehicleForm() {
                 name="color"
                 rules={[
                   {
-                    min: 2,
-                    message: t('vehicles.colorMinLengthError'),
-                  },
-                  {
-                    max: 50,
-                    message: t('vehicles.colorMaxLengthError'),
+                    validator: (_, value) => {
+                      if (!value || value.trim().length === 0) {
+                        return Promise.resolve(); // Campo opcional
+                      }
+                      if (value.trim().length < 2) {
+                        return Promise.reject(new Error(t('vehicles.colorMinLengthError')));
+                      }
+                      if (value.length > 50) {
+                        return Promise.reject(new Error(t('vehicles.colorMaxLengthError')));
+                      }
+                      return Promise.resolve();
+                    },
                   },
                 ]}
               >
@@ -207,9 +279,13 @@ export function VehicleForm() {
                 name="year"
                 rules={[
                   {
+                    required: true,
+                    message: t('vehicles.yearRequired'),
+                  },
+                  {
                     validator: (_, value) => {
                       if (value === null || value === undefined) {
-                        return Promise.resolve();
+                        return Promise.reject(new Error(t('vehicles.yearRequired')));
                       }
                       if (value < 1900) {
                         return Promise.reject(new Error(t('vehicles.invalidYearError')));
@@ -245,9 +321,13 @@ export function VehicleForm() {
                 name="mile"
                 rules={[
                   {
+                    required: true,
+                    message: t('vehicles.mileRequired'),
+                  },
+                  {
                     validator: (_, value) => {
                       if (value === null || value === undefined) {
-                        return Promise.resolve();
+                        return Promise.reject(new Error(t('vehicles.mileRequired')));
                       }
                       if (value < 0) {
                         return Promise.reject(new Error(t('vehicles.mileMinError')));

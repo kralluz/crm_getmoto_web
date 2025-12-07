@@ -37,6 +37,7 @@ export function ServiceCategoryList() {
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<number | undefined>();
+  const [pageSize, setPageSize] = useState(10);
 
   const { data: categories, isLoading } = useServiceCategories({
     is_active: activeFilter,
@@ -198,10 +199,11 @@ export function ServiceCategoryList() {
           loading={isLoading}
           rowKey="service_id"
           pagination={{
-            pageSize: 20,
+            pageSize: pageSize,
             showSizeChanger: true,
-            showTotal: (total) => t('services.totalServices', { total }),
             pageSizeOptions: ['10', '20', '50', '100'],
+            onShowSizeChange: (_, size) => setPageSize(size),
+            showTotal: (total) => t('services.totalServices', { total }),
           }}
           size="small"
         />
