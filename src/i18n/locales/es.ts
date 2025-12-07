@@ -1052,6 +1052,74 @@ export default {
     match: 'Los campos no coinciden',
   },
 
+  // Time Entries
+  timeEntries: {
+    title: 'Registros de Tiempo',
+    newEntry: 'Nuevo Registro',
+    editEntry: 'Editar Registro',
+    clockIn: 'Entrada',
+    clockOut: 'Salida',
+    list: 'Registros de Tiempo',
+    noEntries: 'No se encontraron registros de tiempo',
+
+    // Campos
+    employee: 'Empleado',
+    clockInTime: 'Hora de Entrada',
+    clockOutTime: 'Hora de Salida',
+    clockOutOptional: 'Hora de Salida (Opcional)',
+    totalHours: 'Total de Horas',
+    regularHours: 'Horas Normales',
+    overtimeHours: 'Horas Extra',
+    notes: 'Observaciones',
+    inProgress: 'En Progreso',
+
+    // Actions
+    delete: 'Eliminar',
+
+    // Messages
+    createSuccess: 'Registro creado con éxito',
+    createError: 'Error al crear registro',
+    updateSuccess: 'Registro actualizado con éxito',
+    updateError: 'Error al actualizar registro',
+    deleteSuccess: 'Registro eliminado con éxito',
+    deleteError: 'Error al eliminar registro',
+
+    // Confirmations
+    confirmDelete: '¿Está seguro de que desea eliminar este registro?',
+
+    // Validations
+    requiredEmployee: 'Por favor seleccione un empleado',
+    requiredClockIn: 'Por favor seleccione la hora de entrada',
+    requiredClockOut: 'Por favor seleccione la hora de salida',
+
+    // Registration modes
+    registrationMode: 'Modo de Registro',
+    byTime: 'Por Horario',
+    byHours: 'Por Horas',
+    registerByTime: 'Registrar por Horario',
+    registerByHours: 'Registrar por Horas',
+    workDate: 'Fecha de Trabajo',
+    requiredWorkDate: 'Por favor seleccione la fecha',
+    totalHoursWorked: 'Total de Horas Trabajadas',
+    requiredTotalHours: 'Por favor ingrese el total de horas',
+    
+    // Validation
+    validation: {
+      clockOutBeforeClockIn: 'La hora de salida debe ser después de la hora de entrada',
+      hoursRange: 'Las horas deben estar entre 1 y 24',
+      mustBeWholeHour: 'Solo se permiten horas enteras (ej: 1, 2, 8, 24)',
+    },
+
+    // Notes
+    notesPlaceholder: 'Observaciones opcionales sobre este período de trabajo',
+    leaveEmpty: 'Dejar vacío si el trabajo aún está en progreso',
+    
+    // Filters
+    filterByEmployee: 'Filtrar por empleado',
+    startDate: 'Fecha Inicial',
+    endDate: 'Fecha Final',
+  },
+
   errors: {
     // Error Boundary
     boundary: {

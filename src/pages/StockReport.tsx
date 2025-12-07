@@ -166,7 +166,6 @@ export function StockReport() {
       title: t('inventory.productLabel'),
       dataIndex: 'product_name',
       key: 'product_name',
-      sorter: (a, b) => a.product_name.localeCompare(b.product_name),
     },
     {
       title: t('inventory.category'),
@@ -190,21 +189,18 @@ export function StockReport() {
           </span>
         );
       },
-      sorter: (a, b) => parseDecimal(a.quantity) - parseDecimal(b.quantity),
     },
     {
       title: t('inventory.costValue'),
       key: 'cost_value',
       align: 'right',
       render: (_, record) => formatCurrency(parseDecimal(record.quantity) * parseDecimal(record.buy_price)),
-      sorter: (a, b) => (parseDecimal(a.quantity) * parseDecimal(a.buy_price)) - (parseDecimal(b.quantity) * parseDecimal(b.buy_price)),
     },
     {
       title: t('inventory.saleValue'),
       key: 'sell_value',
       align: 'right',
       render: (_, record) => formatCurrency(parseDecimal(record.quantity) * parseDecimal(record.sell_price)),
-      sorter: (a, b) => (parseDecimal(a.quantity) * parseDecimal(a.sell_price)) - (parseDecimal(b.quantity) * parseDecimal(b.sell_price)),
     },
     {
       title: t('inventory.potentialProfit'),
@@ -218,11 +214,6 @@ export function StockReport() {
           </span>
         );
       },
-      sorter: (a, b) => {
-        const profitA = (parseDecimal(a.quantity) * parseDecimal(a.sell_price)) - (parseDecimal(a.quantity) * parseDecimal(a.buy_price));
-        const profitB = (parseDecimal(b.quantity) * parseDecimal(b.sell_price)) - (parseDecimal(b.quantity) * parseDecimal(b.buy_price));
-        return profitA - profitB;
-      },
     },
   ];
 
@@ -232,8 +223,6 @@ export function StockReport() {
       dataIndex: 'created_at',
       key: 'created_at',
       render: (date: string) => formatDateTime(date),
-      sorter: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      defaultSortOrder: 'descend',
     },
     {
       title: t('inventory.product'),

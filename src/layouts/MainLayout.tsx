@@ -50,6 +50,9 @@ export function MainLayout() {
       'estoque': 'estoque',
       'produtos': 'produtos',
       'servicos': 'servicos',
+      'employees': 'employees',
+      'time-entries': 'time-entries',
+      'payroll-payments': 'payroll-payments',
     };
 
     return routeMap[path] || path || 'dashboard';
@@ -70,6 +73,9 @@ export function MainLayout() {
     }
     if (path === 'produtos' || path === 'categorias-produtos' || path === 'estoque') {
       return ['produtos-submenu'];
+    }
+    if (path === 'employees' || path === 'time-entries' || path === 'payroll-payments') {
+      return ['employees-submenu'];
     }
 
     return [];

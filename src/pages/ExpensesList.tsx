@@ -135,7 +135,6 @@ export function ExpensesList() {
       dataIndex: 'expense_date',
       key: 'expense_date',
       width: 120,
-      sorter: (a, b) => new Date(a.expense_date).getTime() - new Date(b.expense_date).getTime(),
       render: (date: string) => formatDate(date, 'short'),
     },
     {
@@ -159,7 +158,6 @@ export function ExpensesList() {
       key: 'amount',
       width: 150,
       align: 'right',
-      sorter: (a, b) => a.amount - b.amount,
       render: (amount: number) => (
         <span style={{ color: '#ff4d4f', fontWeight: 600 }}>
           {formatCurrency(amount)}

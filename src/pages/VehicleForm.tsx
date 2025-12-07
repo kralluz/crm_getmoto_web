@@ -32,7 +32,7 @@ export function VehicleForm() {
 
   const [form] = Form.useForm();
 
-  const { data: vehicle, isLoading: vehicleLoading } = useVehicle(
+  const { data: vehicle, isLoading: vehicleLoading, refetch } = useVehicle(
     isEditing ? parseInt(id!) : undefined
   );
   const { mutate: createVehicle, isPending: isCreating } = useCreateVehicle();
@@ -64,8 +64,13 @@ export function VehicleForm() {
       updateVehicle(
         { id: parseInt(id!), data: updateData },
         {
-          onSuccess: () => {
-            navigate('/veiculos');
+          onSuccess: async () => {
+            // Recarregar dados do veículo para mostrar valores atualizados
+            await refetch();
+            // Pequeno delay para garantir que a UI atualize
+            setTimeout(() => {
+              navigate('/veiculos');
+            }, 100);
           },
         }
       );

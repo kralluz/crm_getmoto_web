@@ -24,6 +24,15 @@ import { VehicleDetail } from '../pages/VehicleDetail';
 import { VehicleForm } from '../pages/VehicleForm';
 import { SearchResults } from '../pages/SearchResults';
 import { Settings } from '../pages/Settings';
+import { EmployeeList } from '../pages/EmployeeList';
+import { EmployeeForm } from '../pages/EmployeeForm';
+import { EmployeeDetail } from '../pages/EmployeeDetail';
+import { TimeEntryList } from '../pages/TimeEntryList';
+import { TimeEntryNew } from '../pages/TimeEntryNew';
+import { TimeEntryEdit } from '../pages/TimeEntryEdit';
+import { PayrollPaymentList } from '../pages/PayrollPaymentList';
+import { PayrollPaymentForm } from '../pages/PayrollPaymentForm';
+import { PayrollPaymentDetail } from '../pages/PayrollPaymentDetail';
 
 export const router = createBrowserRouter([
   // Rota pública (apenas login)
@@ -140,6 +149,46 @@ export const router = createBrowserRouter([
       {
         path: 'configuracoes',
         element: <Settings />,
+      },
+      {
+        path: 'employees',
+        element: <EmployeeList />,
+      },
+      {
+        path: 'employees/new',
+        element: <EmployeeForm />,
+      },
+      {
+        path: 'employees/:id/edit',
+        element: <EmployeeForm />,
+      },
+      {
+        path: 'employees/:id',
+        element: <EmployeeDetail />,
+      },
+      {
+        path: 'time-entries',
+        element: <TimeEntryList />,
+      },
+      {
+        path: 'time-entries/new',
+        element: <TimeEntryNew />,
+      },
+      {
+        path: 'time-entries/:id/edit',
+        element: <TimeEntryEdit />,
+      },
+      {
+        path: 'payroll-payments',
+        element: <PayrollPaymentList />,
+      },
+      {
+        path: 'payroll-payments/new',
+        element: <PayrollPaymentForm />,
+      },
+      {
+        path: 'payroll-payments/:id',
+        element: <PayrollPaymentDetail />,
       },
       {
         path: '*',

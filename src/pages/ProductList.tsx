@@ -123,7 +123,6 @@ export function ProductList() {
       dataIndex: 'product_name',
       key: 'product_name',
       ellipsis: true,
-      sorter: (a, b) => a.product_name.localeCompare(b.product_name),
     },
     {
       title: t('products.category'),
@@ -131,9 +130,6 @@ export function ProductList() {
       key: 'category',
       width: 150,
       render: (category: string) => category && <Tag color="blue">{category}</Tag>,
-      filters: categories.map(cat => ({ text: cat, value: cat })),
-      onFilter: (value, record) =>
-        record.product_category?.product_category_name === value,
     },
     {
       title: t('products.purchasePrice'),
@@ -142,7 +138,6 @@ export function ProductList() {
       width: 130,
       align: 'right',
       render: (value: any) => formatCurrency(parseDecimal(value)),
-      sorter: (a, b) => parseDecimal(a.buy_price) - parseDecimal(b.buy_price),
     },
     {
       title: t('products.salesPriceColumn'),
@@ -155,7 +150,6 @@ export function ProductList() {
           {formatCurrency(parseDecimal(value))}
         </span>
       ),
-      sorter: (a, b) => parseDecimal(a.sell_price) - parseDecimal(b.sell_price),
     },
     {
       title: t('products.margin'),
@@ -171,15 +165,6 @@ export function ProductList() {
             {margin.toFixed(1)}%
           </Tag>
         );
-      },
-      sorter: (a, b) => {
-        const buyPriceA = parseDecimal(a.buy_price);
-        const sellPriceA = parseDecimal(a.sell_price);
-        const buyPriceB = parseDecimal(b.buy_price);
-        const sellPriceB = parseDecimal(b.sell_price);
-        const marginA = buyPriceA > 0 ? ((sellPriceA - buyPriceA) / buyPriceA) * 100 : 0;
-        const marginB = buyPriceB > 0 ? ((sellPriceB - buyPriceB) / buyPriceB) * 100 : 0;
-        return marginA - marginB;
       },
     },
     {
@@ -213,7 +198,6 @@ export function ProductList() {
           </Space>
         );
       },
-      sorter: (a, b) => parseDecimal(a.quantity) - parseDecimal(b.quantity),
     },
     {
       title: t('products.statusFilter'),
