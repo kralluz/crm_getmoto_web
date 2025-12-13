@@ -1,4 +1,5 @@
 import { Card } from 'antd';
+import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -14,6 +15,21 @@ interface CashFlowChartProps {
 
 export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
   const { t } = useTranslation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Não renderizar no mobile
+  if (isMobile) {
+    return null;
+  }
 
   // Agrupar transações por data
   const groupedData = Array.isArray(transactions) ? transactions.reduce(
@@ -69,7 +85,10 @@ export function CashFlowChart({ transactions, loading }: CashFlowChartProps) {
   };
 
   return (
-    <Card title={t('dashboard.cashFlowChart')} loading={loading}>
+    <Card 
+      title={t('dashboard.cashFlowChart')} 
+      loading={loading}
+    >
       {chartData && chartData.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>

@@ -1,4 +1,4 @@
-import { Form, Button, Card, DatePicker, Select, Space, Typography, Input, Switch, InputNumber, Row, Col } from 'antd';
+import { Form, Button, Card, DatePicker, Select, Space, Typography, Input, Switch, InputNumber, Row, Col, theme } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, ClockCircleOutlined, FieldTimeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useCreateTimeEntry } from '../hooks/useTimeEntries';
@@ -12,6 +12,7 @@ const { Title } = Typography;
 
 export function TimeEntryNew() {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [registerByTime, setRegisterByTime] = useState(true); // true = by time, false = by hours
@@ -70,22 +71,23 @@ export function TimeEntryNew() {
               <Title level={3} style={{ margin: 0 }}>{t('timeEntries.newEntry')}</Title>
             </div>
             
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: '12px',
               padding: '8px 16px',
-              background: '#f5f5f5',
+              background: token.colorBgContainer,
+              border: `1px solid ${token.colorBorder}`,
               borderRadius: '8px'
             }}>
-              <span style={{ 
-                fontSize: '14px', 
+              <span style={{
+                fontSize: '14px',
                 fontWeight: 500,
-                color: '#8c8c8c'
+                color: token.colorTextSecondary
               }}>
                 {t('timeEntries.registrationMode')}:
               </span>
-              
+
               <div
                 onClick={() => {
                   setRegisterByTime(true);
@@ -97,8 +99,8 @@ export function TimeEntryNew() {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  background: registerByTime ? '#1890ff' : 'transparent',
-                  color: registerByTime ? '#fff' : '#595959',
+                  background: registerByTime ? token.colorPrimary : 'transparent',
+                  color: registerByTime ? token.colorTextLightSolid : token.colorText,
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   fontWeight: registerByTime ? 600 : 400,
@@ -119,8 +121,8 @@ export function TimeEntryNew() {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  background: !registerByTime ? '#52c41a' : 'transparent',
-                  color: !registerByTime ? '#fff' : '#595959',
+                  background: !registerByTime ? token.colorSuccess : 'transparent',
+                  color: !registerByTime ? token.colorTextLightSolid : token.colorText,
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   fontWeight: !registerByTime ? 600 : 400,
@@ -167,10 +169,13 @@ export function TimeEntryNew() {
                   rules={[{ required: true, message: t('timeEntries.requiredClockIn') }]}
                 >
                   <DatePicker
-                    showTime
-                    format="DD/MM/YYYY HH:mm"
+                    showTime={{ format: 'HH' }}
+                    format="DD/MM/YYYY HH:00"
                     style={{ width: '100%' }}
                     disabledDate={(current) => {
+                      // Bloquear datas futuras
+                      if (current.isAfter(dayjs(), 'day')) return true;
+
                       if (!selectedEmployee) return false;
 
                       const startDate = dayjs(selectedEmployee.start_date).startOf('day');
@@ -182,6 +187,12 @@ export function TimeEntryNew() {
                       }
 
                       return false;
+                    }}
+                    onChange={(value) => {
+                      if (value) {
+                        // Zerar minutos e segundos
+                        form.setFieldValue('clock_in', value.startOf('hour'));
+                      }
                     }}
                   />
                 </Form.Item>
@@ -204,11 +215,14 @@ export function TimeEntryNew() {
                   ]}
                 >
                   <DatePicker
-                    showTime
-                    format="DD/MM/YYYY HH:mm"
+                    showTime={{ format: 'HH' }}
+                    format="DD/MM/YYYY HH:00"
                     style={{ width: '100%' }}
                     placeholder={t('timeEntries.clockOutOptional')}
                     disabledDate={(current) => {
+                      // Bloquear datas futuras
+                      if (current.isAfter(dayjs(), 'day')) return true;
+
                       if (!selectedEmployee) return false;
 
                       const startDate = dayjs(selectedEmployee.start_date).startOf('day');
@@ -220,6 +234,12 @@ export function TimeEntryNew() {
                       }
 
                       return false;
+                    }}
+                    onChange={(value) => {
+                      if (value) {
+                        // Zerar minutos e segundos
+                        form.setFieldValue('clock_out', value.startOf('hour'));
+                      }
                     }}
                   />
                 </Form.Item>
@@ -238,6 +258,9 @@ export function TimeEntryNew() {
                         format="DD/MM/YYYY"
                         style={{ width: '100%' }}
                         disabledDate={(current) => {
+                          // Bloquear datas futuras
+                          if (current.isAfter(dayjs(), 'day')) return true;
+
                           if (!selectedEmployee) return false;
 
                           const startDate = dayjs(selectedEmployee.start_date).startOf('day');

@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert, Row, Col } from 'antd';
+import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert, Row, Col, Modal } from 'antd';
 import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined, SwapOutlined, InfoCircleOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useProducts, useDeleteProduct } from '../hooks/useProducts';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
+import { FloatingActionButtonWithMenu } from '../components/common/FloatingActionButtonWithMenu';
 import { ProductModal } from '../components/products/ProductModal';
 import { StockMovementModal } from '../components/products/StockMovementModal';
 import type { Product } from '../types/product';
@@ -26,6 +27,7 @@ export function ProductList() {
   const [editingProductId, setEditingProductId] = useState<number | undefined>();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [pageSize, setPageSize] = useState(10);
+  const [productSelectionModalOpen, setProductSelectionModalOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -88,9 +90,14 @@ export function ProductList() {
 
   const handleOpenStockMovement = () => {
     // Abre modal com lista de produtos para selecionar
-    // Ou podemos abrir um modal intermediário de seleção
-    if (filteredProducts && filteredProducts.length > 0) {
-      setSelectedProduct(filteredProducts[0]);
+    setProductSelectionModalOpen(true);
+  };
+
+  const handleProductSelection = (productId: number) => {
+    const product = products?.find(p => p.product_id === productId);
+    if (product) {
+      setSelectedProduct(product);
+      setProductSelectionModalOpen(false);
       setStockMovementModalOpen(true);
     }
   };
@@ -226,27 +233,27 @@ export function ProductList() {
         subtitle={t('products.productListSubtitle')}
         helpText={t('products.pageHelp')}
         extra={
-          <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
-            <Button
-              type="default"
-              icon={<SwapOutlined />}
-              onClick={handleOpenStockMovement}
-              size={isMobile ? 'middle' : 'large'}
-              disabled={!filteredProducts || filteredProducts.length === 0}
-              block={isMobile}
-            >
-              {isMobile ? 'Movimentar' : t('stockAdjustment.title')}
-            </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreate}
-              size={isMobile ? 'middle' : 'large'}
-              block={isMobile}
-            >
-              {isMobile ? 'Novo' : t('products.newProduct')}
-            </Button>
-          </Space>
+          !isMobile && (
+            <Space direction="horizontal" style={{ width: 'auto' }}>
+              <Button
+                type="default"
+                icon={<SwapOutlined />}
+                onClick={handleOpenStockMovement}
+                size="large"
+                disabled={!filteredProducts || filteredProducts.length === 0}
+              >
+                {t('stockAdjustment.title')}
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreate}
+                size="large"
+              >
+                {t('products.newProduct')}
+              </Button>
+            </Space>
+          )
         }
       />
 
@@ -427,6 +434,38 @@ export function ProductList() {
           onSuccess={handleStockMovementSuccess}
         />
       )}
+
+      {/* Modal de seleção de produto para movimentação */}
+      <Modal
+        title={t('inventory.selectProduct')}
+        open={productSelectionModalOpen}
+        onCancel={() => setProductSelectionModalOpen(false)}
+        footer={null}
+        width={isMobile ? '95%' : 600}
+      >
+        <Select
+          showSearch
+          placeholder={t('inventory.searchProduct')}
+          style={{ width: '100%', marginBottom: 16 }}
+          options={products?.map(p => ({
+            value: p.product_id,
+            label: `${p.product_name} (${t('inventory.stock')}: ${parseDecimal(p.quantity)})`,
+          }))}
+          filterOption={(input, option) =>
+            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+          }
+          onChange={handleProductSelection}
+        />
+      </Modal>
+
+      {/* Floating Action Button com menu para mobile */}
+      <FloatingActionButtonWithMenu
+        onNew={handleCreate}
+        onMovement={handleOpenStockMovement}
+        newTooltip={t('products.newProduct')}
+        movementTooltip={t('inventory.stockMovement')}
+        mobileOnly
+      />
     </div>
   );
 }

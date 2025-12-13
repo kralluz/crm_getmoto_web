@@ -8,6 +8,8 @@ export function useTimeEntries(params?: { employee_id?: number; start_date?: str
   return useQuery({
     queryKey: ['time-entries', params],
     queryFn: () => timeEntryApi.getAll(params),
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: 'always', // Always refetch when component mounts
   });
 }
 

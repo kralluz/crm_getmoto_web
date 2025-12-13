@@ -35,6 +35,11 @@ export function useCreateServiceOrder() {
     mutationFn: (data: CreateServiceOrderData) => serviceOrderApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
     },
   });
 }
@@ -55,6 +60,11 @@ export function useCancelServiceOrder() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
       queryClient.invalidateQueries({ queryKey: ['service-order', id] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
     },
   });
 }
@@ -99,6 +109,11 @@ export function useDeleteServiceOrder() {
     mutationFn: (id: number) => serviceOrderApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
     },
     onError: (error: any) => {
       console.error('Erro ao deletar ordem de serviço:', error);

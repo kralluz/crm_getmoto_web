@@ -1,6 +1,50 @@
 import dayjs from 'dayjs';
 
 /**
+ * Obtém o formato de data baseado no idioma
+ */
+function getDateFormat(lang: string): string {
+  // Formatos de data por idioma
+  const formats: Record<string, string> = {
+    'pt-BR': 'DD/MM/YYYY',
+    'en': 'DD/MM/YYYY',      // UK format
+    'en-US': 'MM/DD/YYYY',   // US format
+    'es': 'DD/MM/YYYY',      // Spanish format
+  };
+  
+  return formats[lang] || 'DD/MM/YYYY';
+}
+
+/**
+ * Obtém o formato de data/hora baseado no idioma
+ */
+function getDateTimeFormat(lang: string): string {
+  // Formatos de data/hora por idioma
+  const formats: Record<string, string> = {
+    'pt-BR': 'DD/MM/YYYY HH:mm',
+    'en': 'DD/MM/YYYY HH:mm',
+    'en-US': 'MM/DD/YYYY HH:mm',
+    'es': 'DD/MM/YYYY HH:mm',
+  };
+  
+  return formats[lang] || 'DD/MM/YYYY HH:mm';
+}
+
+/**
+ * Obtém o formato de mês/dia baseado no idioma
+ */
+function getMonthDayFormat(lang: string): string {
+  const formats: Record<string, string> = {
+    'pt-BR': 'DD/MM',
+    'en': 'DD/MM',
+    'en-US': 'MM/DD',
+    'es': 'DD/MM',
+  };
+  
+  return formats[lang] || 'DD/MM';
+}
+
+/**
  * Converte valores Decimal do Prisma para número
  * Prisma retorna Decimal em formato especial: {s: sign, e: exponent, d: digits[]}
  */
@@ -31,19 +75,35 @@ export function formatCurrency(value: any): string {
 }
 
 /**
- * Formata data/hora para formato brasileiro
+ * Formata data/hora baseado no idioma
+ * @param date Data a ser formatada
+ * @param lang Idioma (pt-BR, en, es)
+ * @param customFormat Formato customizado opcional
  */
-export function formatDateTime(date?: string | Date, format: string = 'DD/MM/YYYY HH:mm'): string {
+export function formatDateTime(date?: string | Date, lang: string = 'pt-BR', customFormat?: string): string {
   if (!date) return '-';
+  const format = customFormat || getDateTimeFormat(lang);
   return dayjs(date).format(format);
 }
 
 /**
- * Formata apenas data (sem hora)
+ * Formata apenas data (sem hora) baseado no idioma
+ * @param date Data a ser formatada
+ * @param lang Idioma (pt-BR, en, es)
  */
-export function formatDate(date?: string | Date): string {
+export function formatDate(date?: string | Date, lang: string = 'pt-BR'): string {
   if (!date) return '-';
-  return dayjs(date).format('DD/MM/YYYY');
+  return dayjs(date).format(getDateFormat(lang));
+}
+
+/**
+ * Formata mês/dia baseado no idioma
+ * @param date Data a ser formatada
+ * @param lang Idioma (pt-BR, en, es)
+ */
+export function formatMonthDay(date?: string | Date, lang: string = 'pt-BR'): string {
+  if (!date) return '-';
+  return dayjs(date).format(getMonthDayFormat(lang));
 }
 
 /**

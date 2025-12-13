@@ -13,6 +13,7 @@ import { useFormat } from '../hooks/useFormat';
 import dayjs from 'dayjs';
 import { useHideCancelled } from '../hooks/useHideCancelled';
 import { HideCancelledCheckbox } from '../components/common/HideCancelledCheckbox';
+import { FloatingActionButton } from '../components/common/FloatingActionButton';
 
 const { RangePicker } = DatePicker;
 
@@ -88,6 +89,10 @@ export function ExpensesList() {
     setExpenseModalOpen(false);
   };
 
+  const handleCreateExpense = () => {
+    setExpenseModalOpen(true);
+  };
+
   const newExpenseMenuItems = [
     {
       key: 'purchase',
@@ -118,17 +123,17 @@ export function ExpensesList() {
     {
       title: t('cashflow.actions'),
       key: 'actions',
-      width: 100,
+      width: 80,
       align: 'center',
       fixed: 'left',
       render: (_, record) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => handleView(record.expense_id)}
-        >
-          {t('common.view')}
-        </Button>
+        <Tooltip title={t('common.view')}>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => handleView(record.expense_id)}
+          />
+        </Tooltip>
       ),
     },
     {
@@ -350,6 +355,14 @@ export function ExpensesList() {
       <PurchaseOrderModal
         open={purchaseModalOpen}
         onClose={() => setPurchaseModalOpen(false)}
+      />
+
+      {/* Floating Action Button para mobile */}
+      <FloatingActionButton
+        icon={<PlusOutlined />}
+        tooltip={t('expenses.newExpense')}
+        onClick={handleCreateExpense}
+        mobileOnly
       />
     </div>
   );

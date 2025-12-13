@@ -47,23 +47,34 @@ export function useCreateVehicle() {
       success(t('vehicles.vehicleRegisteredSuccess'));
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || '';
+      console.error('❌ Erro ao criar veículo:', error);
+      console.log('❌ Detalhes do erro:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message,
+        fullError: error,
+      });
+      
+      const errorMessage = error?.response?.data?.message || error?.message || '';
       const status = error?.response?.status;
       
-      // Detecta erro de placa duplicada (409 Conflict ou mensagem contendo 'placa' e 'existe/duplicada')
-      const isDuplicatePlate = 
-        status === 409 || 
-        errorMessage.toLowerCase().includes('placa') && 
-        (errorMessage.toLowerCase().includes('existe') || 
-         errorMessage.toLowerCase().includes('duplicad') ||
-         errorMessage.toLowerCase().includes('already') ||
-         errorMessage.toLowerCase().includes('duplicate'));
+      // Detecta erro de placa duplicada (409 Conflict)
+      if (status === 409) {
+        console.log('✅ Exibindo erro de placa duplicada (409)');
+        showError(t('vehicles.plateDuplicateError'));
+        return;
+      }
       
-      const message = isDuplicatePlate 
-        ? t('vehicles.plateDuplicateError')
-        : errorMessage || t('vehicles.vehicleRegistrationError');
+      // Se houver mensagem específica do backend, mostrar ela
+      if (errorMessage && errorMessage.trim() !== '') {
+        console.log('✅ Exibindo mensagem do backend:', errorMessage);
+        showError(errorMessage);
+        return;
+      }
       
-      showError(message);
+      // Fallback para mensagem genérica
+      console.log('⚠️ Exibindo mensagem genérica de erro');
+      showError(t('vehicles.vehicleRegistrationError'));
     },
   });
 }
@@ -86,23 +97,34 @@ export function useUpdateVehicle() {
       success(t('vehicles.vehicleUpdatedSuccess'));
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || '';
+      console.error('❌ Erro ao atualizar veículo:', error);
+      console.log('❌ Detalhes do erro:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message,
+        fullError: error,
+      });
+      
+      const errorMessage = error?.response?.data?.message || error?.message || '';
       const status = error?.response?.status;
       
-      // Detecta erro de placa duplicada
-      const isDuplicatePlate = 
-        status === 409 || 
-        errorMessage.toLowerCase().includes('placa') && 
-        (errorMessage.toLowerCase().includes('existe') || 
-         errorMessage.toLowerCase().includes('duplicad') ||
-         errorMessage.toLowerCase().includes('already') ||
-         errorMessage.toLowerCase().includes('duplicate'));
+      // Detecta erro de placa duplicada (409 Conflict)
+      if (status === 409) {
+        console.log('✅ Exibindo erro de placa duplicada (409)');
+        showError(t('vehicles.plateDuplicateError'));
+        return;
+      }
       
-      const message = isDuplicatePlate 
-        ? t('vehicles.plateDuplicateError')
-        : errorMessage || t('vehicles.vehicleUpdateError');
+      // Se houver mensagem específica do backend, mostrar ela
+      if (errorMessage && errorMessage.trim() !== '') {
+        console.log('✅ Exibindo mensagem do backend:', errorMessage);
+        showError(errorMessage);
+        return;
+      }
       
-      showError(message);
+      // Fallback para mensagem genérica
+      console.log('⚠️ Exibindo mensagem genérica de erro');
+      showError(t('vehicles.vehicleUpdateError'));
     },
   });
 }

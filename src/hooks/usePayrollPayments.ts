@@ -29,6 +29,7 @@ export function useCreatePayrollPayment() {
     mutationFn: (data: CreatePayrollPaymentData) => payrollPaymentApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payroll-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['paid-periods'] }); // Invalida períodos pagos
       queryClient.invalidateQueries({ queryKey: ['cashflow'] }); // Invalida cashflow
       success('Payment created successfully');
     },
@@ -63,5 +64,7 @@ export function usePaidPeriods(employee_id: number | undefined) {
     queryKey: ['paid-periods', employee_id],
     queryFn: () => payrollPaymentApi.getPaidPeriods(employee_id!),
     enabled: !!employee_id,
+    staleTime: 0, // Always fetch fresh data to avoid showing incorrect paid status
+    refetchOnMount: 'always', // Always refetch when component mounts
   });
 }

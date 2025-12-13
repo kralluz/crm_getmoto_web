@@ -1,10 +1,9 @@
-import { Card, Table, Tag } from 'antd';
+import { Card, Table, Tag, List } from 'antd';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-
-dayjs.extend(utc);
+import { formatDate } from '../../utils/format.util';
 import type { CashFlowTransaction } from '../../types/cashflow';
 
 interface RecentTransactionsTableProps {
@@ -17,6 +16,17 @@ export function RecentTransactionsTable({
   loading,
 }: RecentTransactionsTableProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const parseAmount = (value: unknown): number => {
     if (value === null || value === undefined) return 0;
@@ -57,7 +67,7 @@ export function RecentTransactionsTable({
       key: 'occurred_at',
       render: (date: string, record) => (
         <span style={{ textDecoration: isCancelled(record.note ?? null) ? 'line-through' : 'none' }}>
-          {dayjs.utc(date).format('DD/MM/YYYY')}
+          {formatDate(date)}
         </span>
       ),
       width: 120,
@@ -107,6 +117,61 @@ export function RecentTransactionsTable({
     },
   ];
 
+  // Versão mobile compacta
+  if (isMobile) {
+    return (
+      <Card title={t('dashboard.recentTransactions')} className="mobile-transactions-card">
+        <List
+          loading={loading}
+          dataSource={Array.isArray(transactions) ? transactions.slice(0, 10) : []}
+          renderItem={(item: CashFlowTransaction) => (
+            <List.Item
+              onClick={() => navigate(`/movimentacoes/${item.cash_flow_id}`)}
+              style={{
+                cursor: 'pointer',
+                padding: '8px 0',
+                borderBottom: '1px solid #f0f0f0',
+              }}
+            >
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: '#8c8c8c',
+                    marginBottom: '4px',
+                    textDecoration: isCancelled(item.note ?? null) ? 'line-through' : 'none'
+                  }}>
+                    {formatDate(item.occurred_at)}
+                  </div>
+                  <Tag
+                    color={item.direction === 'entrada' ? 'green' : 'red'}
+                    style={{ 
+                      fontSize: '11px',
+                      padding: '2px 8px',
+                      textDecoration: isCancelled(item.note ?? null) ? 'line-through' : 'none'
+                    }}
+                  >
+                    {item.direction === 'entrada' ? t('dashboard.income') : t('dashboard.expense')}
+                  </Tag>
+                </div>
+                <div style={{
+                  textAlign: 'right',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  color: item.direction === 'entrada' ? '#3f8600' : '#cf1322',
+                  textDecoration: isCancelled(item.note ?? null) ? 'line-through' : 'none'
+                }}>
+                  {item.direction === 'entrada' ? '+' : '-'} {formatCurrency(item.amount)}
+                </div>
+              </div>
+            </List.Item>
+          )}
+        />
+      </Card>
+    );
+  }
+
+  // Versão desktop
   return (
     <Card title={t('dashboard.recentTransactions')}>
       <Table

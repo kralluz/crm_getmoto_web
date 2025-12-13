@@ -69,7 +69,7 @@ export function ServiceOrderDetail() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Detectar se veio da página de busca
+  // Detectar se veio da página de busca ou de detalhes do veículo
   useEffect(() => {
     const fromSearch = location.state?.fromSearch;
     setCameFromSearch(fromSearch);
@@ -89,7 +89,12 @@ export function ServiceOrderDetail() {
   };
 
   const handleBack = () => {
-    if (cameFromSearch) {
+    const fromVehicleDetail = location.state?.fromVehicleDetail;
+    const vehicleId = location.state?.vehicleId;
+    
+    if (fromVehicleDetail && vehicleId) {
+      navigate(`/veiculos/${vehicleId}`); // Volta para a página de detalhes do veículo
+    } else if (cameFromSearch) {
       navigate(-1); // Volta para a página de busca
     } else {
       navigate('/servicos'); // Volta para a lista de serviços
@@ -190,24 +195,42 @@ export function ServiceOrderDetail() {
 
   // Calcular totais
   const calculateTotals = () => {
-    if (!serviceOrder) return { products: 0, services: 0, labor: 0, total: 0 };
+    if (!serviceOrder) return { products: 0, services: 0, labor: 0, total: 0, discount: 0, grandTotal: 0 };
 
+    // IMPORTANTE: Usar unit_price salvo no momento da venda, não o preço atual do cadastro
     const productsTotal = serviceOrder.service_products?.reduce((sum, product) => {
       const qty = parseDecimal(product.product_qtd);
-      const price = parseDecimal(product.products.sell_price);
+      const price = parseDecimal(product.unit_price); // unit_price do momento da venda
       return sum + (qty * price);
     }, 0) || 0;
 
     const servicesTotal = serviceOrder.services_realized?.reduce((sum, service) => {
       const qty = parseDecimal(service.service_qtd);
-      const cost = parseDecimal(service.service.service_cost);
+      const cost = parseDecimal(service.unit_price); // unit_price do momento da venda
       return sum + (qty * cost);
     }, 0) || 0;
 
     const laborTotal = parseDecimal(serviceOrder.estimated_labor_cost);
-    const total = productsTotal + servicesTotal + laborTotal;
+    const subtotal = productsTotal + servicesTotal + laborTotal;
 
-    return { products: productsTotal, services: servicesTotal, labor: laborTotal, total };
+    // Calcular desconto
+    let discountAmount = 0;
+    if (serviceOrder.discount_amount) {
+      discountAmount = parseDecimal(serviceOrder.discount_amount);
+    } else if (serviceOrder.discount_percent) {
+      discountAmount = subtotal * (parseDecimal(serviceOrder.discount_percent) / 100);
+    }
+
+    const grandTotal = subtotal - discountAmount;
+
+    return { 
+      products: productsTotal, 
+      services: servicesTotal, 
+      labor: laborTotal, 
+      total: subtotal,
+      discount: discountAmount,
+      grandTotal: grandTotal
+    };
   };
 
   // Colunas da tabela de produtos
@@ -216,29 +239,45 @@ export function ServiceOrderDetail() {
       title: <span style={{ color: '#1677ff' }}>{t('services.product')}</span>,
       dataIndex: ['products', 'product_name'],
       key: 'product_name',
+      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as any,
     },
     {
       title: <span style={{ color: '#1677ff' }}>{t('services.quantity')}</span>,
       dataIndex: 'product_qtd',
       key: 'product_qtd',
       align: 'center',
+      width: 100,
+      responsive: ['sm', 'md', 'lg', 'xl'] as any,
       render: (qty: any) => parseDecimal(qty).toFixed(2),
     },
     {
       title: <span style={{ color: '#1677ff' }}>{t('services.unitPrice')}</span>,
-      dataIndex: ['products', 'sell_price'],
-      key: 'sell_price',
+      dataIndex: 'unit_price',
+      key: 'unit_price',
       align: 'right',
+      width: 120,
+      responsive: ['md', 'lg', 'xl'] as any,
       render: (price: any) => formatCurrency(price),
     },
     {
       title: <span style={{ color: '#1677ff' }}>{t('common.total')}</span>,
       key: 'total',
       align: 'right',
+      width: 120,
+      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as any,
       render: (_, record) => {
         const qty = parseDecimal(record.product_qtd);
-        const price = parseDecimal(record.products.sell_price);
-        return formatCurrency(qty * price);
+        const price = parseDecimal(record.unit_price);
+        return (
+          <div>
+            <div style={{ fontWeight: 600 }}>{formatCurrency(qty * price)}</div>
+            {isMobile && (
+              <div style={{ fontSize: '11px', color: '#888' }}>
+                {parseDecimal(record.product_qtd).toFixed(2)} × {formatCurrency(record.unit_price)}
+              </div>
+            )}
+          </div>
+        );
       },
     },
   ];
@@ -249,29 +288,45 @@ export function ServiceOrderDetail() {
       title: <span style={{ color: '#1677ff' }}>{t('services.service')}</span>,
       dataIndex: ['service', 'service_name'],
       key: 'service_name',
+      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as any,
     },
     {
       title: <span style={{ color: '#1677ff' }}>{t('services.quantity')}</span>,
       dataIndex: 'service_qtd',
       key: 'service_qtd',
       align: 'center',
+      width: 100,
+      responsive: ['sm', 'md', 'lg', 'xl'] as any,
       render: (qty: any) => parseDecimal(qty),
     },
     {
       title: <span style={{ color: '#1677ff' }}>{t('services.unitPrice')}</span>,
-      dataIndex: ['service', 'service_cost'],
-      key: 'service_cost',
+      dataIndex: 'unit_price',
+      key: 'unit_price',
       align: 'right',
+      width: 120,
+      responsive: ['md', 'lg', 'xl'] as any,
       render: (cost: any) => formatCurrency(cost),
     },
     {
       title: <span style={{ color: '#1677ff' }}>{t('common.total')}</span>,
       key: 'total',
       align: 'right',
+      width: 120,
+      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as any,
       render: (_, record) => {
         const qty = parseDecimal(record.service_qtd);
-        const cost = parseDecimal(record.service.service_cost);
-        return formatCurrency(qty * cost);
+        const cost = parseDecimal(record.unit_price);
+        return (
+          <div>
+            <div style={{ fontWeight: 600 }}>{formatCurrency(qty * cost)}</div>
+            {isMobile && (
+              <div style={{ fontSize: '11px', color: '#888' }}>
+                {parseDecimal(record.service_qtd)} × {formatCurrency(record.unit_price)}
+              </div>
+            )}
+          </div>
+        );
       },
     },
   ];
@@ -282,6 +337,8 @@ export function ServiceOrderDetail() {
       title: <span style={{ color: '#1677ff' }}>{t('common.date')}</span>,
       dataIndex: 'occurred_at',
       key: 'occurred_at',
+      width: 140,
+      responsive: ['md', 'lg', 'xl'] as any,
       render: (date: string) => formatDateTime(date),
     },
     {
@@ -289,6 +346,8 @@ export function ServiceOrderDetail() {
       dataIndex: 'direction',
       key: 'direction',
       align: 'center',
+      width: 100,
+      responsive: ['sm', 'md', 'lg', 'xl'] as any,
       render: (direction: 'entrada' | 'saida') => (
         <Tag color={direction === 'entrada' ? 'green' : 'red'}>
           {direction === 'entrada' ? t('cashflow.income') : t('cashflow.expense')}
@@ -300,8 +359,10 @@ export function ServiceOrderDetail() {
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
+      width: 120,
+      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as any,
       render: (amount: any, record) => (
-        <Text style={{ color: record.direction === 'entrada' ? '#52c41a' : '#ff4d4f' }}>
+        <Text style={{ color: record.direction === 'entrada' ? '#52c41a' : '#ff4d4f', fontWeight: 600 }}>
           {formatCurrency(amount)}
         </Text>
       ),
@@ -310,6 +371,22 @@ export function ServiceOrderDetail() {
       title: <span style={{ color: '#1677ff' }}>{t('common.observations')}</span>,
       dataIndex: 'note',
       key: 'note',
+      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as any,
+      render: (note: string, record) => (
+        <div>
+          <div>{note}</div>
+          {isMobile && (
+            <div style={{ marginTop: 4 }}>
+              <Tag color={record.direction === 'entrada' ? 'green' : 'red'} style={{ fontSize: '10px' }}>
+                {record.direction === 'entrada' ? t('cashflow.income') : t('cashflow.expense')}
+              </Tag>
+              <Text type="secondary" style={{ fontSize: '11px', marginLeft: 4 }}>
+                {formatDateTime(record.occurred_at)}
+              </Text>
+            </div>
+          )}
+        </div>
+      ),
     },
   ];
 
@@ -419,30 +496,86 @@ export function ServiceOrderDetail() {
             bordered 
             column={{ xs: 1, sm: 1, md: 2 }}
             labelStyle={{ color: '#1677ff', fontWeight: 500 }}
+            size={isMobile ? 'small' : 'default'}
           >
-            <Descriptions.Item label={t('services.client')}>
-              <Text strong>{serviceOrder.customer_name || '-'}</Text>
+            <Descriptions.Item label={t('services.client')} span={2}>
+              <Text strong style={{ fontSize: '15px' }}>{serviceOrder.customer_name || '-'}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label={t('services.professionalLabel')}>
-              <Text strong>{serviceOrder.professional_name || '-'}</Text>
+            <Descriptions.Item label={t('services.statusLabel')}>
+              <Tag color={
+                serviceOrder.status === 'completed' ? 'success' :
+                serviceOrder.status === 'cancelled' ? 'error' :
+                serviceOrder.status === 'in_progress' ? 'processing' : 'default'
+              }>
+                {t(`services.status.${serviceOrder.status}`)}
+              </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label={t('services.vehicleLabel')}>
+            <Descriptions.Item label={t('services.createdIn')}>
+              <Text style={{ whiteSpace: 'nowrap' }}>{formatDateTime(serviceOrder.created_at)}</Text>
+            </Descriptions.Item>
+            <Descriptions.Item label={t('services.professionalLabel')} span={2}>
+              <Text strong style={{ color: serviceOrder.professional_name ? '#52c41a' : undefined }}>
+                {serviceOrder.professional_name || '-'}
+              </Text>
+            </Descriptions.Item>
+            <Descriptions.Item label={t('services.vehicleLabel')} span={2}>
               {serviceOrder.vehicles ? (
-                <div>
-                  <Text strong>
+                <Space direction="vertical" size={0}>
+                  <Text strong style={{ fontSize: '15px' }}>
                     {serviceOrder.vehicles.brand} {serviceOrder.vehicles.model}
                   </Text>
-                  <br />
-                  <Text type="secondary">
-                    {serviceOrder.vehicles.plate} - {serviceOrder.vehicles.year}
-                    {serviceOrder.vehicles.color && ` - ${serviceOrder.vehicles.color}`}
-                  </Text>
-                </div>
+                  <Space size="small" wrap>
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        border: '3px solid #000',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        height: '32px',
+                      }}
+                    >
+                      {/* Faixa azul à esquerda */}
+                      <div
+                        style={{
+                          width: '12px',
+                          backgroundColor: '#0066cc',
+                        }}
+                      />
+                      {/* Área branca com caracteres */}
+                      <div
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 8px',
+                          fontFamily: '"Courier New", Courier, monospace',
+                          fontSize: '15px',
+                          fontWeight: 'bold',
+                          letterSpacing: '2px',
+                          color: '#000',
+                          minWidth: '75px',
+                        }}
+                      >
+                        {(() => {
+                          const formattedPlate = serviceOrder.vehicles.plate?.toUpperCase().replace(/\s/g, '');
+                          return formattedPlate?.length >= 7
+                            ? `${formattedPlate.slice(0, 4)} ${formattedPlate.slice(4, 7)}`
+                            : serviceOrder.vehicles.plate?.toUpperCase() || '';
+                        })()}
+                      </div>
+                    </div>
+                    <Text type="secondary">{serviceOrder.vehicles.year}</Text>
+                    {serviceOrder.vehicles.color && <Tag>{serviceOrder.vehicles.color}</Tag>}
+                  </Space>
+                </Space>
               ) : (
                 '-'
               )}
             </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.mileAtService')}>
+            <Descriptions.Item label={t('vehicles.mileAtService')} span={serviceOrder.finalized_at ? 1 : 2}>
               {serviceOrder.vehicle_mile ? (
                 <Text strong style={{ fontSize: '16px', color: '#1677ff' }}>
                   {serviceOrder.vehicle_mile.toLocaleString('en-GB')} miles
@@ -451,6 +584,31 @@ export function ServiceOrderDetail() {
                 <Text type="secondary">-</Text>
               )}
             </Descriptions.Item>
+            {serviceOrder.finalized_at && (
+              <Descriptions.Item label={t('services.finalizedAt')}>
+                <Text type="success" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(serviceOrder.finalized_at)}</Text>
+              </Descriptions.Item>
+            )}
+            {(serviceOrder.discount_percent || serviceOrder.discount_amount) && (
+              <Descriptions.Item label={t('services.discountLabel')} span={2}>
+                <Space wrap>
+                  <Tag color="orange" icon={<DollarOutlined />} style={{ whiteSpace: 'nowrap' }}>
+                    {serviceOrder.discount_percent ? (
+                      <>
+                        {serviceOrder.discount_percent}% ({formatCurrency(totals.discount)})
+                      </>
+                    ) : (
+                      formatCurrency(serviceOrder.discount_amount!)
+                    )}
+                  </Tag>
+                  <Text type="secondary" style={{ whiteSpace: 'nowrap' }}>
+                    {serviceOrder.discount_percent 
+                      ? t('services.percentDiscount') 
+                      : t('services.fixedDiscount')}
+                  </Text>
+                </Space>
+              </Descriptions.Item>
+            )}
             <Descriptions.Item 
               label={
                 <Space>
@@ -500,16 +658,6 @@ export function ServiceOrderDetail() {
                 />
               </Descriptions.Item>
             )}
-            {serviceOrder.discount_percent && (
-              <Descriptions.Item label={t('services.discountPercentLabel')}>
-                {serviceOrder.discount_percent}%
-              </Descriptions.Item>
-            )}
-            {serviceOrder.discount_amount && (
-              <Descriptions.Item label={t('services.discountAmountLabel')}>
-                {formatCurrency(serviceOrder.discount_amount)}
-              </Descriptions.Item>
-            )}
           </Descriptions>
 
           {/* Resumo Financeiro */}
@@ -541,13 +689,45 @@ export function ServiceOrderDetail() {
               </Col>
               <Col xs={12} md={6}>
                 <Statistic
-                  title={t('services.grandTotalLabel')}
+                  title={t('services.subtotal')}
                   value={totals.total}
                   formatter={(value) => formatCurrency(Number(value))}
-                  valueStyle={{ color: '#52c41a', fontWeight: 'bold' }}
                 />
               </Col>
             </Row>
+            {totals.discount > 0 && (
+              <Row gutter={16} style={{ marginTop: 16 }}>
+                <Col xs={12} md={6}>
+                  <Statistic
+                    title={t('services.discountLabel')}
+                    value={totals.discount}
+                    formatter={(value) => formatCurrency(Number(value))}
+                    valueStyle={{ color: '#ff4d4f' }}
+                    prefix="-"
+                  />
+                </Col>
+                <Col xs={12} md={6}>
+                  <Statistic
+                    title={t('services.grandTotalLabel')}
+                    value={totals.grandTotal}
+                    formatter={(value) => formatCurrency(Number(value))}
+                    valueStyle={{ color: '#52c41a', fontWeight: 'bold', fontSize: '24px' }}
+                  />
+                </Col>
+              </Row>
+            )}
+            {totals.discount === 0 && (
+              <Row gutter={16} style={{ marginTop: 16 }}>
+                <Col xs={24} md={6}>
+                  <Statistic
+                    title={t('services.grandTotalLabel')}
+                    value={totals.grandTotal}
+                    formatter={(value) => formatCurrency(Number(value))}
+                    valueStyle={{ color: '#52c41a', fontWeight: 'bold', fontSize: '24px' }}
+                  />
+                </Col>
+              </Row>
+            )}
           </Card>
 
           {/* Produtos Utilizados */}
@@ -561,8 +741,8 @@ export function ServiceOrderDetail() {
                 dataSource={serviceOrder.service_products}
                 rowKey="service_product_id"
                 pagination={false}
-                size={isMobile ? 'middle' : 'small'}
-                scroll={{ x: 800 }}
+                size={isMobile ? 'small' : 'middle'}
+                scroll={isMobile ? undefined : { x: 'max-content' }}
               />
             </Card>
           )}
@@ -578,8 +758,8 @@ export function ServiceOrderDetail() {
                 dataSource={serviceOrder.services_realized}
                 rowKey="services_realized_id"
                 pagination={false}
-                size={isMobile ? 'middle' : 'small'}
-                scroll={{ x: 800 }}
+                size={isMobile ? 'small' : 'middle'}
+                scroll={isMobile ? undefined : { x: 'max-content' }}
               />
             </Card>
           )}
@@ -595,8 +775,8 @@ export function ServiceOrderDetail() {
                 dataSource={serviceOrder.cash_flow}
                 rowKey="cash_flow_id"
                 pagination={false}
-                size={isMobile ? 'middle' : 'small'}
-                scroll={{ x: 800 }}
+                size={isMobile ? 'small' : 'middle'}
+                scroll={isMobile ? undefined : { x: 'max-content' }}
               />
             </Card>
           )}

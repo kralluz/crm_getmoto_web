@@ -11,6 +11,8 @@ export function useProductCategories(params?: ProductCategoryFilters) {
   return useQuery({
     queryKey: ['product-categories', params],
     queryFn: () => productCategoryApi.getAll(params),
+    staleTime: 30 * 1000, // 30 segundos
+    refetchOnWindowFocus: true, // Revalida quando a janela ganha foco
   });
 }
 

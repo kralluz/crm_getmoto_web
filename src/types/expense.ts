@@ -13,6 +13,7 @@ export interface Expense {
   description: string;
   amount: number;
   expense_date: string;
+  notes?: string;
   is_active: boolean;
   cancelled_at?: string;
   cancelled_by?: number;

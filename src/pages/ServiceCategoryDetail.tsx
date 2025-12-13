@@ -131,27 +131,20 @@ export function ServiceCategoryDetail() {
 
       <Card title={t('services.stats')}>
         <Row gutter={16}>
-          <Col span={8}>
-            <Statistic
-              title={t('services.totalOrders')}
-              value={category.stats?.total_orders || 0}
-              valueStyle={{ color: '#3f8600' }}
-            />
-          </Col>
-          <Col span={8}>
+          <Col span={12}>
             <Statistic
               title={t('services.servicesRealized')}
               value={category.stats?.total_services_realized || 0}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#1890ff', fontWeight: 600 }}
             />
           </Col>
-          <Col span={8}>
+          <Col span={12}>
             <Statistic
               title={t('services.estimatedRevenue')}
               value={category.stats?.estimated_revenue || 0}
               prefix="£"
               precision={2}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: '#52c41a', fontWeight: 600 }}
             />
           </Col>
         </Row>

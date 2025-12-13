@@ -7,10 +7,27 @@ import { formatUKCurrency, penceToPounds } from '../types/employee';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { generatePayslipPDF, type PayslipData } from '../utils/reports';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatHours } from '../utils/format-hours';
 
 const { Title } = Typography;
+
+// Hook para detectar tamanho da tela
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [matches, query]);
+
+  return matches;
+};
 
 export function PayrollPaymentDetail() {
   const { t } = useTranslation();
@@ -19,6 +36,11 @@ export function PayrollPaymentDetail() {
   const { data: payment, isLoading } = usePayrollPayment(id);
   const { data: employee } = useEmployee(payment?.employee_id);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  
+  // Media queries para responsividade
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+
 
   const handleGeneratePayslip = async () => {
     if (!payment || !employee) return;
@@ -71,13 +93,28 @@ export function PayrollPaymentDetail() {
   const totalHours = payment.regular_hours + payment.overtime_hours;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ 
+      padding: isMobile ? '12px' : isTablet ? '16px' : '24px', 
+      maxWidth: '1000px', 
+      margin: '0 auto' 
+    }}>
       <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <Space direction="vertical" size={isMobile ? 'middle' : 'large'} style={{ width: '100%' }}>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between', 
+            alignItems: isMobile ? 'flex-start' : 'center',
+            gap: isMobile ? '12px' : 0
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: isMobile ? '8px' : '16px',
+              flexWrap: 'wrap'
+            }}>
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/payroll-payments')} />
-              <Title level={3} style={{ margin: 0 }}>
+              <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
                 {t('payroll.title')} #{payment.payment_id}
               </Title>
               <Tag color={payment.is_cancelled ? 'red' : 'green'}>
@@ -90,6 +127,7 @@ export function PayrollPaymentDetail() {
                 icon={<FilePdfOutlined />}
                 loading={isPdfLoading}
                 onClick={handleGeneratePayslip}
+                style={{ width: isMobile ? '100%' : 'auto' }}
               >
                 {t('payroll.downloadPayslip')}
               </Button>
@@ -106,7 +144,7 @@ export function PayrollPaymentDetail() {
           )}
 
           <Card title={t('payroll.employeeInformation')} size="small">
-            <Descriptions bordered column={2}>
+            <Descriptions bordered column={{ xs: 1, sm: 1, md: 2 }}>
               <Descriptions.Item label={t('payroll.employee')}>
                 {employee ? `${employee.first_name} ${employee.last_name}` : `ID: ${payment.employee_id}`}
               </Descriptions.Item>
@@ -120,7 +158,7 @@ export function PayrollPaymentDetail() {
           </Card>
 
           <Card title={t('payroll.paymentDetails')} size="small">
-            <Descriptions bordered column={2}>
+            <Descriptions bordered column={{ xs: 1, sm: 1, md: 2 }}>
               <Descriptions.Item label={t('payroll.paymentDate')}>
                 {dayjs(payment.payment_date).format('DD/MM/YYYY')}
               </Descriptions.Item>
@@ -166,7 +204,10 @@ export function PayrollPaymentDetail() {
                   : '£0.00'}
               </Descriptions.Item>
               <Descriptions.Item label={t('payroll.netAmount')}>
-                <strong style={{ fontSize: '18px', color: '#52c41a' }}>
+                <strong style={{ 
+                  fontSize: isMobile ? '16px' : '18px', 
+                  color: '#52c41a' 
+                }}>
                   {formatUKCurrency(payment.net_amount_pence)}
                 </strong>
               </Descriptions.Item>
@@ -175,7 +216,12 @@ export function PayrollPaymentDetail() {
 
           {payment.notes && (
             <Card title={t('common.notes')} size="small">
-              <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{payment.notes}</p>
+              <p style={{ 
+                margin: 0, 
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontSize: isMobile ? '14px' : '16px'
+              }}>{payment.notes}</p>
             </Card>
           )}
         </Space>

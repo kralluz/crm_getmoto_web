@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Card,
   Descriptions,
@@ -40,6 +41,15 @@ export function MovimentacaoDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { formatCurrency, formatDate, formatDateTime } = useFormat();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: transaction, isLoading } = useTransaction(id);
 
@@ -116,9 +126,9 @@ export function MovimentacaoDetail() {
       />
 
       {/* Card com estatísticas principais */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
+      <Row gutter={[8, 8]} style={{ marginBottom: isMobile ? 12 : 16 }}>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className={isMobile ? 'mobile-detail-card' : ''}>
             <Statistic
               title={t('cashflow.value')}
               value={transaction.amount}
@@ -126,34 +136,50 @@ export function MovimentacaoDetail() {
               prefix="£"
               valueStyle={{
                 color: isIncome ? '#52c41a' : '#ff4d4f',
-                fontWeight: 600
+                fontWeight: 600,
+                fontSize: isMobile ? 20 : 24
               }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className={isMobile ? 'mobile-detail-card' : ''}>
             <Statistic
               title={t('cashflow.type')}
               value={isIncome ? t('cashflow.income') : t('cashflow.expense')}
-              valueStyle={{ color: isIncome ? '#52c41a' : '#ff4d4f' }}
+              valueStyle={{ 
+                color: isIncome ? '#52c41a' : '#ff4d4f',
+                fontSize: isMobile ? 16 : 24
+              }}
               prefix={isIncome ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className={isMobile ? 'mobile-detail-card' : ''}>
             <Statistic
               title={t('cashflow.date')}
               value={formatDate(transaction.occurred_at)}
+              valueStyle={{
+                fontSize: isMobile ? 16 : 24
+              }}
             />
           </Card>
         </Col>
       </Row>
 
       {/* Card com informações detalhadas */}
-      <Card title={t('cashflow.generalInfo')} style={{ marginBottom: 16 }}>
-        <Descriptions column={{ xs: 1, sm: 2 }} bordered>
+      <Card 
+        title={t('cashflow.generalInfo')} 
+        style={{ marginBottom: isMobile ? 12 : 16 }}
+        className={isMobile ? 'mobile-detail-info-card' : ''}
+      >
+        <Descriptions 
+          column={{ xs: 1, sm: 2 }} 
+          bordered={!isMobile}
+          size={isMobile ? 'small' : 'default'}
+          layout={isMobile ? 'vertical' : 'horizontal'}
+        >
           <Descriptions.Item label={t('cashflow.type')}>
             <Tag
               color={isIncome ? 'green' : 'red'}
@@ -205,8 +231,9 @@ export function MovimentacaoDetail() {
                 <Text strong>#{String(sourceInfo.id)}</Text>
                 <Button 
                   type="primary" 
-                  size="small"
+                  size={isMobile ? 'small' : 'middle'}
                   onClick={() => navigate(sourceInfo.path)}
+                  block={isMobile}
                 >
                   {t('common.view')} {sourceInfo.label}
                 </Button>

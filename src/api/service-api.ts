@@ -1,8 +1,8 @@
 import { customAxiosInstance } from './axios-instance';
-import type { 
-  ServiceOrder, 
+import type {
+  ServiceOrder,
   CreateServiceOrderData,
-  ServiceOrderListParams 
+  ServiceOrderListParams
 } from '../types/service-order';
 
 const BASE_URL = '/api/services';
@@ -90,4 +90,4 @@ export const serviceOrderApi = {
       params: { customer_name },
     });
   },
-};
+}

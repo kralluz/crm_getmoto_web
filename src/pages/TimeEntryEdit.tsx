@@ -1,4 +1,4 @@
-import { Form, Button, Card, DatePicker, Select, Space, Typography, Input, InputNumber, Row, Col, Spin } from 'antd';
+import { Form, Button, Card, DatePicker, Select, Space, Typography, Input, InputNumber, Row, Col, Spin, theme } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, ClockCircleOutlined, FieldTimeOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTimeEntry, useUpdateTimeEntry } from '../hooks/useTimeEntries';
@@ -13,6 +13,7 @@ const { TextArea } = Input;
 
 export function TimeEntryEdit() {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   const { id } = useParams<{ id: string }>();
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -114,22 +115,23 @@ export function TimeEntryEdit() {
               <Title level={3} style={{ margin: 0 }}>{t('timeEntries.editEntry')}</Title>
             </div>
             
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: '12px',
               padding: '8px 16px',
-              background: '#f5f5f5',
+              background: token.colorBgContainer,
+              border: `1px solid ${token.colorBorder}`,
               borderRadius: '8px'
             }}>
-              <span style={{ 
-                fontSize: '14px', 
+              <span style={{
+                fontSize: '14px',
                 fontWeight: 500,
-                color: '#8c8c8c'
+                color: token.colorTextSecondary
               }}>
                 {t('timeEntries.registrationMode')}:
               </span>
-              
+
               <div
                 onClick={() => {
                   setRegisterByTime(true);
@@ -141,8 +143,8 @@ export function TimeEntryEdit() {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  background: registerByTime ? '#1890ff' : 'transparent',
-                  color: registerByTime ? '#fff' : '#595959',
+                  background: registerByTime ? token.colorPrimary : 'transparent',
+                  color: registerByTime ? token.colorTextLightSolid : token.colorText,
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   fontWeight: registerByTime ? 600 : 400,
@@ -163,8 +165,8 @@ export function TimeEntryEdit() {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  background: !registerByTime ? '#52c41a' : 'transparent',
-                  color: !registerByTime ? '#fff' : '#595959',
+                  background: !registerByTime ? token.colorSuccess : 'transparent',
+                  color: !registerByTime ? token.colorTextLightSolid : token.colorText,
                   cursor: 'pointer',
                   transition: 'all 0.3s',
                   fontWeight: !registerByTime ? 600 : 400,
@@ -206,10 +208,13 @@ export function TimeEntryEdit() {
                   rules={[{ required: true, message: t('timeEntries.requiredClockIn') }]}
                 >
                   <DatePicker
-                    showTime
-                    format="DD/MM/YYYY HH:mm"
+                    showTime={{ format: 'HH' }}
+                    format="DD/MM/YYYY HH:00"
                     style={{ width: '100%' }}
                     disabledDate={(current) => {
+                      // Bloquear datas futuras
+                      if (current.isAfter(dayjs(), 'day')) return true;
+
                       if (!selectedEmployee) return false;
 
                       const startDate = dayjs(selectedEmployee.start_date).startOf('day');
@@ -221,6 +226,12 @@ export function TimeEntryEdit() {
                       }
 
                       return false;
+                    }}
+                    onChange={(value) => {
+                      if (value) {
+                        // Zerar minutos e segundos
+                        form.setFieldValue('clock_in', value.startOf('hour'));
+                      }
                     }}
                   />
                 </Form.Item>
@@ -243,11 +254,14 @@ export function TimeEntryEdit() {
                   ]}
                 >
                   <DatePicker
-                    showTime
-                    format="DD/MM/YYYY HH:mm"
+                    showTime={{ format: 'HH' }}
+                    format="DD/MM/YYYY HH:00"
                     style={{ width: '100%' }}
                     placeholder={t('timeEntries.clockOutOptional')}
                     disabledDate={(current) => {
+                      // Bloquear datas futuras
+                      if (current.isAfter(dayjs(), 'day')) return true;
+
                       if (!selectedEmployee) return false;
 
                       const startDate = dayjs(selectedEmployee.start_date).startOf('day');
@@ -259,6 +273,12 @@ export function TimeEntryEdit() {
                       }
 
                       return false;
+                    }}
+                    onChange={(value) => {
+                      if (value) {
+                        // Zerar minutos e segundos
+                        form.setFieldValue('clock_out', value.startOf('hour'));
+                      }
                     }}
                   />
                 </Form.Item>
@@ -277,6 +297,9 @@ export function TimeEntryEdit() {
                         format="DD/MM/YYYY"
                         style={{ width: '100%' }}
                         disabledDate={(current) => {
+                          // Bloquear datas futuras
+                          if (current.isAfter(dayjs(), 'day')) return true;
+
                           if (!selectedEmployee) return false;
 
                           const startDate = dayjs(selectedEmployee.start_date).startOf('day');

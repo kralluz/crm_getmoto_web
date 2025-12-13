@@ -12,6 +12,7 @@ import {
   Row,
   Col,
   Statistic,
+  message,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -23,7 +24,7 @@ import {
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useVehicle, useVehicleStats } from '../hooks/useMotorcycles';
-import { formatCurrency } from '../utils/format.util';
+import { formatCurrency, formatDate, formatDateTime } from '../utils/format.util';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import { useState, useEffect } from 'react';
@@ -68,32 +69,38 @@ export function VehicleDetail() {
     navigate(`/veiculos/${id}/editar`);
   };
 
-  const handleGenerateReport = () => {
-    if (!vehicle) return;
-    
-    // Preparar dados para o relatório
-    const reportData = {
-      vehicle: {
+  const handleGenerateReport = async () => {
+    if (!vehicle || !statsData) return;
+
+    try {
+      const { generateVehicleReport } = await import('../utils/reports/vehicle.report');
+      
+      // Preparar dados para o relatório
+      const vehicleData = {
+        vehicle_id: vehicle.vehicle_id,
         plate: vehicle.plate,
-        brand: vehicle.brand || '-',
-        model: vehicle.model || '-',
-        year: vehicle.year || '-',
-        mile: vehicle.mile || '-',
-        color: vehicle.color || '-',
-      },
-      stats: statsData?.stats || {},
-      serviceOrders: vehicle.service_order || [],
-    };
-    
-    // Criar e baixar relatório em formato JSON (pode ser expandido para PDF)
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = `veiculo-${vehicle.plate}-${dayjs().format('YYYY-MM-DD')}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+        brand: vehicle.brand || undefined,
+        model: vehicle.model || undefined,
+        year: vehicle.year || undefined,
+        color: vehicle.color || undefined,
+        mile: vehicle.mile || undefined,
+        created_at: vehicle.created_at,
+        service_order: vehicle.service_order || [],
+      };
+
+      const stats = {
+        totalOrders: statsData.stats.totalOrders,
+        completedOrders: statsData.stats.completedOrders,
+        totalSpent: statsData.stats.totalSpent,
+        averagePerOrder: statsData.stats.averagePerOrder,
+        lastServiceDate: statsData.stats.lastService || undefined,
+      };
+
+      await generateVehicleReport(vehicleData, stats);
+    } catch (error) {
+      console.error('Error generating vehicle report:', error);
+      message.error(t('vehicles.reportError'));
+    }
   };
 
   if (isLoading) {
@@ -112,53 +119,128 @@ export function VehicleDetail() {
     );
   }
 
+  // Calcular total de uma ordem
+  const calculateOrderTotal = (order: any) => {
+    let subtotal = 0;
+
+    // Produtos
+    if (order.service_products) {
+      subtotal += order.service_products.reduce((sum: number, product: any) => {
+        const qty = parseFloat(product.product_qtd) || 0;
+        const price = parseFloat(product.unit_price) || 0;
+        return sum + (qty * price);
+      }, 0);
+    }
+
+    // Serviços
+    if (order.services_realized) {
+      subtotal += order.services_realized.reduce((sum: number, service: any) => {
+        const qty = parseFloat(service.service_qtd) || 0;
+        const price = parseFloat(service.unit_price) || 0;
+        return sum + (qty * price);
+      }, 0);
+    }
+
+    let discount = 0;
+    let discountPercent = 0;
+    
+    if (order.discount_amount) {
+      discount = parseFloat(order.discount_amount) || 0;
+    } else if (order.discount_percent) {
+      discountPercent = parseFloat(order.discount_percent) || 0;
+      discount = subtotal * (discountPercent / 100);
+    }
+
+    const total = subtotal - discount;
+
+    return { subtotal, discount, discountPercent, total };
+  };
+
   const serviceOrderColumns: ColumnsType<any> = [
     {
       title: t('common.actions'),
       key: 'actions',
-      width: 100,
+      width: isMobile ? 80 : 100,
       align: 'center',
+      fixed: isMobile ? 'left' : undefined,
       render: (_, record) => (
         <Button
           type="primary"
           icon={<EyeOutlined />}
           size="small"
-          onClick={() => navigate(`/servicos/${record.service_order_id}`)}
+          onClick={() => navigate(`/servicos/${record.service_order_id}`, {
+            state: { fromVehicleDetail: true, vehicleId: id }
+          })}
         >
-          {t('common.view')}
+          {isMobile ? '' : t('common.view')}
         </Button>
       ),
-    },
-    {
-      title: t('table.description'),
-      dataIndex: 'service_description',
-      key: 'service_description',
-      ellipsis: true,
-      render: (desc: string | null) => desc || '-',
-    },
-    {
-      title: t('vehicles.mile'),
-      dataIndex: 'vehicle_mile',
-      key: 'vehicle_mile',
-      width: 120,
-      align: 'right',
-      render: (mile: number | null) =>
-        mile ? `${mile.toLocaleString('en-GB')} miles` : '-',
     },
     {
       title: t('services.creationDate'),
       dataIndex: 'created_at',
       key: 'created_at',
-      width: 130,
+      width: isMobile ? 100 : 130,
       render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
     },
     {
-      title: t('services.finalizationDate'),
-      dataIndex: 'finalized_at',
-      key: 'finalized_at',
-      width: 130,
-      render: (date: string | null) =>
-        date ? dayjs.utc(date).format('DD/MM/YYYY') : '-',
+      title: t('timeEntries.employee'),
+      dataIndex: 'employee',
+      key: 'employee',
+      width: isMobile ? 120 : 150,
+      render: (employee: any) => employee?.name || '-',
+    },
+    {
+      title: t('vehicles.mile'),
+      dataIndex: 'vehicle_mile',
+      key: 'vehicle_mile',
+      width: isMobile ? 100 : 120,
+      align: 'left',
+      render: (mile: number | null) =>
+        mile ? `${mile.toLocaleString('en-GB')} ${isMobile ? 'mi' : 'miles'}` : '-',
+    },
+    {
+      title: t('common.total'),
+      key: 'total',
+      width: isMobile ? 150 : 180,
+      align: 'left',
+      render: (_, record) => {
+        const { subtotal, discount, discountPercent, total } = calculateOrderTotal(record);
+        
+        if (discount > 0) {
+          if (discountPercent > 0) {
+            return (
+              <span>
+                {isMobile ? (
+                  <>{formatCurrency(total)}</>
+                ) : (
+                  <>{formatCurrency(subtotal)} - {discountPercent.toFixed(2)}% = <strong>{formatCurrency(total)}</strong></>
+                )}
+              </span>
+            );
+          } else {
+            return (
+              <span>
+                {isMobile ? (
+                  <>{formatCurrency(total)}</>
+                ) : (
+                  <>{formatCurrency(subtotal)} - {formatCurrency(discount)} = <strong>{formatCurrency(total)}</strong></>
+                )}
+              </span>
+            );
+          }
+        }
+        
+        return <strong>{formatCurrency(total)}</strong>;
+      },
+    },
+    {
+      title: t('table.description'),
+      dataIndex: 'service_description',
+      key: 'service_description',
+      width: isMobile ? 150 : undefined,
+      ellipsis: true,
+      render: (desc: string | null) => desc || '-',
     },
   ];
 
@@ -184,6 +266,118 @@ export function VehicleDetail() {
           </Button>
         </Space>
       </div>
+
+      <Card style={{ marginBottom: 16 }}>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <div>
+            <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: '100%' }}>
+              <CarOutlined style={{ fontSize: isMobile ? 24 : 32, color: '#fa8c16' }} />
+              <div>
+                <Title level={isMobile ? 3 : 2} style={{ margin: 0, wordBreak: 'break-word' }}>
+                  #{vehicle.vehicle_id} {vehicle.brand || t('vehicles.noBrand')}{' '}
+                  {vehicle.model || t('vehicles.noModel')}
+                </Title>
+              </div>
+            </Space>
+          </div>
+
+          <Divider />
+
+          <Descriptions 
+            bordered 
+            column={{ xs: 1, sm: 1, md: 2 }}
+            labelStyle={{ 
+              fontWeight: 'bold', 
+              color: '#333',
+              backgroundColor: '#fafafa'
+            }}
+            contentStyle={{ 
+              color: '#333',
+              fontWeight: '500',
+              textAlign: 'left'
+            }}
+          >
+            <Descriptions.Item label={t('vehicles.plate')}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  border: '3px solid #000',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  height: isMobile ? '28px' : '32px',
+                  fontSize: isMobile ? '13px' : '15px',
+                }}
+              >
+                {/* Faixa azul à esquerda */}
+                <div
+                  style={{
+                    width: isMobile ? '10px' : '12px',
+                    backgroundColor: '#0066cc',
+                  }}
+                />
+                {/* Área branca com caracteres */}
+                <div
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: isMobile ? '0 6px' : '0 8px',
+                    fontFamily: '"Courier New", Courier, monospace',
+                    fontSize: isMobile ? '13px' : '15px',
+                    fontWeight: 'bold',
+                    letterSpacing: isMobile ? '1px' : '2px',
+                    color: '#000',
+                    minWidth: isMobile ? '60px' : '75px',
+                  }}
+                >
+                  {vehicle.plate}
+                </div>
+              </div>
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.brand')}>
+              {vehicle.brand || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.model')}>
+              {vehicle.model || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.year')}>
+              {vehicle.year || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={isMobile ? <span>Mile<br/>Odometer</span> : t('vehicles.mile')}>
+              {vehicle.mile ? `${vehicle.mile.toLocaleString('pt-BR')} miles` : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.color')}>
+              {vehicle.color || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('common.status')}>
+              <Tag color={vehicle.is_active ? 'green' : 'default'}>
+                {vehicle.is_active ? t('common.active') : t('common.inactive')}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.totalOrders')}>
+              <Tag color="orange">
+                {t('vehicles.serviceOrderCount', {
+                  count: vehicle._count?.service_order || 0,
+                })}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.createdAt')}>
+              {dayjs(vehicle.created_at).format('DD/MM/YYYY HH:mm')}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('vehicles.updatedAt')}>
+              {dayjs(vehicle.updated_at).format('DD/MM/YYYY HH:mm')}
+            </Descriptions.Item>
+            {statsData && statsData.stats.lastService && (
+              <Descriptions.Item label={t('vehicles.lastService')}>
+                {dayjs(statsData.stats.lastService).format('DD/MM/YYYY HH:mm')}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        </Space>
+      </Card>
 
       {/* Estatísticas */}
       {statsData && (
@@ -227,98 +421,19 @@ export function VehicleDetail() {
         </Row>
       )}
 
-      <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div>
-            <Space>
-              <CarOutlined style={{ fontSize: 32, color: '#fa8c16' }} />
-              <div>
-                <Title level={2} style={{ margin: 0 }}>
-                  {vehicle.brand || t('vehicles.noBrand')}{' '}
-                  {vehicle.model || t('vehicles.noModel')}
-                </Title>
-                <Text type="secondary">
-                  {t('vehicles.plate')}: {vehicle.plate}
-                </Text>
-              </div>
-            </Space>
-          </div>
-
-          <Divider />
-
-          <Descriptions bordered column={{ xs: 1, sm: 1, md: 2 }}>
-            <Descriptions.Item label={t('vehicles.id')}>
-              {vehicle.vehicle_id}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.plate')}>
-              <Text strong>{vehicle.plate}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.brand')}>
-              {vehicle.brand || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.model')}>
-              {vehicle.model || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.year')}>
-              {vehicle.year || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.mile')}>
-              {vehicle.mile ? `${vehicle.mile.toLocaleString('pt-BR')} km` : '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.color')}>
-              {vehicle.color || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('common.status')}>
-              <Tag color={vehicle.is_active ? 'green' : 'default'}>
-                {vehicle.is_active ? t('common.active') : t('common.inactive')}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.totalOrders')}>
-              <Tag color="orange">
-                {t('vehicles.serviceOrderCount', {
-                  count: vehicle._count?.service_order || 0,
-                })}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.createdAt')}>
-              {dayjs(vehicle.created_at).format('DD/MM/YYYY HH:mm')}
-            </Descriptions.Item>
-            <Descriptions.Item label={t('vehicles.updatedAt')}>
-              {dayjs(vehicle.updated_at).format('DD/MM/YYYY HH:mm')}
-            </Descriptions.Item>
-            {statsData && (
-              <>
-                <Descriptions.Item label={t('vehicles.lastService')}>
-                  {statsData.stats.lastService
-                    ? dayjs(statsData.stats.lastService).format('DD/MM/YYYY HH:mm')
-                    : '-'}
-                </Descriptions.Item>
-                <Descriptions.Item label={t('vehicles.lastFinalized')}>
-                  {statsData.stats.lastFinalized
-                    ? dayjs(statsData.stats.lastFinalized).format('DD/MM/YYYY HH:mm')
-                    : '-'}
-                </Descriptions.Item>
-              </>
-            )}
-          </Descriptions>
-
-          {vehicle.service_order && vehicle.service_order.length > 0 && (
-            <>
-              <Divider />
-              <div>
-                <Title level={4}>{t('vehicles.serviceHistory')}</Title>
-                <Table
-                  columns={serviceOrderColumns}
-                  dataSource={vehicle.service_order}
-                  rowKey="service_order_id"
-                  pagination={false}
-                  size="small"
-                />
-              </div>
-            </>
-          )}
-        </Space>
-      </Card>
+      {vehicle.service_order && vehicle.service_order.length > 0 && (
+        <Card>
+          <Title level={4}>{t('vehicles.serviceHistory')}</Title>
+          <Table
+            columns={serviceOrderColumns}
+            dataSource={vehicle.service_order}
+            rowKey="service_order_id"
+            pagination={false}
+            size="small"
+            scroll={{ x: 'max-content' }}
+          />
+        </Card>
+      )}
     </div>
   );
 }

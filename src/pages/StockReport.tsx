@@ -146,12 +146,6 @@ export function StockReport() {
             critical: t('inventory.statusCritical'),
             attention: t('inventory.statusAttention'),
           },
-          legend: t('inventory.statusLegend'),
-          legendItems: {
-            depleted: t('inventory.legendDepleted'),
-            critical: t('inventory.legendCritical'),
-            attention: t('inventory.legendAttention'),
-          },
         },
       });
     } catch (error) {
@@ -280,24 +274,25 @@ export function StockReport() {
         extra={
           <Button
             icon={<DownloadOutlined />}
-            size="large"
+            size={isMobile ? 'middle' : 'large'}
             onClick={handleGenerateLowStockPdf}
             loading={isPdfLoading}
             disabled={!stats || stats.lowStockProducts === 0}
+            block={isMobile}
           >
-            {t('inventory.lowStockAlert')}
+            {isMobile ? 'Alerta' : t('inventory.lowStockAlert')}
           </Button>
         }
       />
 
-      <Row gutter={16} style={{ marginBottom: 16 }}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title={t('inventory.totalProducts')}
               value={stats?.totalProducts || 0}
               prefix={<StockOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#1890ff', fontSize: isMobile ? 20 : 24 }}
             />
           </Card>
         </Col>
@@ -307,7 +302,7 @@ export function StockReport() {
               title={t('inventory.lowStock')}
               value={stats?.lowStockProducts || 0}
               prefix={<WarningOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
+              valueStyle={{ color: '#ff4d4f', fontSize: isMobile ? 20 : 24 }}
             />
           </Card>
         </Col>
@@ -318,7 +313,7 @@ export function StockReport() {
               value={stats?.totalStockValue || 0}
               precision={2}
               prefix="£"
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#52c41a', fontSize: isMobile ? 20 : 24 }}
             />
           </Card>
         </Col>
@@ -329,7 +324,7 @@ export function StockReport() {
               value={stats?.profitPotential || 0}
               precision={2}
               prefix="£"
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: '#faad14', fontSize: isMobile ? 20 : 24 }}
             />
           </Card>
         </Col>
@@ -337,8 +332,14 @@ export function StockReport() {
 
       <Card title={t('inventory.fullInventory')} style={{ marginBottom: 16 }}>
         {isMobile ? (
-          <Row gutter={[16, 16]}>
-            {(products || []).map((product) => {
+          <Row gutter={[12, 12]}>
+            {isLoadingProducts ? (
+              <Col xs={24}>
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  Carregando...
+                </div>
+              </Col>
+            ) : (products || []).map((product) => {
               const qtyNum = parseDecimal(product.quantity);
               const alertQty = parseDecimal(product.quantity_alert);
               const isLow = qtyNum <= alertQty;
@@ -348,34 +349,68 @@ export function StockReport() {
 
               return (
                 <Col xs={24} key={product.product_id}>
-                  <Card size="small">
-                    <div style={{ marginBottom: 8 }}>
-                      <strong>{product.product_name}</strong>
-                    </div>
-                    {product.product_category && (
-                      <div style={{ marginBottom: 8 }}>
-                        <Tag color="blue">{product.product_category.product_category_name}</Tag>
+                  <Card 
+                    size="small" 
+                    style={{ 
+                      borderLeft: isLow ? '4px solid #ff4d4f' : '4px solid #52c41a'
+                    }}
+                  >
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start',
+                        marginBottom: 6 
+                      }}>
+                        <strong style={{ flex: 1, fontSize: 14 }}>{product.product_name}</strong>
+                        {product.product_category && (
+                          <Tag color="blue" style={{ marginLeft: 8 }}>
+                            {product.product_category.product_category_name}
+                          </Tag>
+                        )}
                       </div>
-                    )}
-                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.stock')}:</span>
-                        <span style={{ color: isLow ? '#ff4d4f' : undefined, fontWeight: isLow ? 600 : 400 }}>
+                    </div>
+                    <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        padding: '6px 8px',
+                        backgroundColor: isLow ? '#fff1f0' : '#f6ffed',
+                        borderRadius: 4
+                      }}>
+                        <span style={{ fontSize: 12, fontWeight: 500 }}>{t('inventory.stock')}:</span>
+                        <span style={{ 
+                          color: isLow ? '#ff4d4f' : '#52c41a', 
+                          fontWeight: 700,
+                          fontSize: 16
+                        }}>
                           {isLow && <WarningOutlined style={{ marginRight: 4 }} />}
                           {qtyNum}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                         <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.costValue')}:</span>
-                        <span>{formatCurrency(costValue)}</span>
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{formatCurrency(costValue)}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                         <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.saleValue')}:</span>
-                        <span>{formatCurrency(sellValue)}</span>
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{formatCurrency(sellValue)}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.potentialProfit')}:</span>
-                        <span style={{ color: '#52c41a', fontWeight: 600 }}>{formatCurrency(profit)}</span>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        padding: '6px 8px',
+                        backgroundColor: '#fffbe6',
+                        borderRadius: 4,
+                        marginTop: 4
+                      }}>
+                        <span style={{ fontSize: 12, fontWeight: 500 }}>{t('inventory.potentialProfit')}:</span>
+                        <span style={{ 
+                          color: '#52c41a', 
+                          fontWeight: 700,
+                          fontSize: 14
+                        }}>{formatCurrency(profit)}</span>
                       </div>
                     </Space>
                   </Card>
@@ -403,10 +438,42 @@ export function StockReport() {
       <Card 
         title={t('inventory.stockMovements')}
         extra={
-          <Space>
+          isMobile ? null : (
+            <Space>
+              <Select
+                placeholder={t('inventory.allProducts')}
+                style={{ width: 200 }}
+                allowClear
+                showSearch
+                value={selectedProduct}
+                onChange={setSelectedProduct}
+                options={products?.map(p => ({
+                  value: p.product_id,
+                  label: p.product_name,
+                }))}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+              />
+              <RangePicker
+                value={dateRange}
+                onChange={(dates) => dates && setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs])}
+                format="DD/MM/YYYY"
+                presets={[
+                  { label: t('inventory.today'), value: [dayjs().startOf('day'), dayjs().endOf('day')] },
+                  { label: t('inventory.thisWeek'), value: [dayjs().startOf('week'), dayjs().endOf('week')] },
+                  { label: t('inventory.thisMonth'), value: [dayjs().startOf('month'), dayjs().endOf('month')] },
+                ]}
+              />
+            </Space>
+          )
+        }
+      >
+        {isMobile && (
+          <Space direction="vertical" size="middle" style={{ width: '100%', marginBottom: 16 }}>
             <Select
               placeholder={t('inventory.allProducts')}
-              style={{ width: 200 }}
+              style={{ width: '100%' }}
               allowClear
               showSearch
               value={selectedProduct}
@@ -423,6 +490,7 @@ export function StockReport() {
               value={dateRange}
               onChange={(dates) => dates && setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs])}
               format="DD/MM/YYYY"
+              style={{ width: '100%' }}
               presets={[
                 { label: t('inventory.today'), value: [dayjs().startOf('day'), dayjs().endOf('day')] },
                 { label: t('inventory.thisWeek'), value: [dayjs().startOf('week'), dayjs().endOf('week')] },
@@ -430,77 +498,123 @@ export function StockReport() {
               ]}
             />
           </Space>
-        }
-      >
+        )}
         {moveStats && (
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col xs={12} sm={6}>
-              <Statistic
-                title={t('inventory.totalMovements')}
-                value={moveStats.totalMovements}
-                prefix={<BarChartOutlined />}
-              />
+          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+            <Col xs={24} sm={12} md={6}>
+              <Card size="small">
+                <Statistic
+                  title={t('inventory.totalMovements')}
+                  value={moveStats.totalMovements}
+                  prefix={<BarChartOutlined />}
+                  valueStyle={{ fontSize: isMobile ? 18 : 24 }}
+                />
+              </Card>
             </Col>
-            <Col xs={12} sm={6}>
-              <Statistic
-                title={t('inventory.entries')}
-                value={moveStats.totalEntries.toFixed(1)}
-                valueStyle={{ color: '#52c41a' }}
-                suffix={`(${moveStats.entriesCount})`}
-              />
+            <Col xs={24} sm={12} md={6}>
+              <Card size="small">
+                <Statistic
+                  title={isMobile ? t('inventory.entries') : `${t('inventory.entries')} (${moveStats.entriesCount} ${t('inventory.movementsLabel')})`}
+                  value={moveStats.totalEntries.toFixed(0)}
+                  valueStyle={{ color: '#52c41a', fontSize: isMobile ? 18 : 24 }}
+                  suffix={t('inventory.unitsLabel')}
+                />
+              </Card>
             </Col>
-            <Col xs={12} sm={6}>
-              <Statistic
-                title={t('inventory.exits')}
-                value={moveStats.totalExits.toFixed(1)}
-                valueStyle={{ color: '#ff4d4f' }}
-                suffix={`(${moveStats.exitsCount})`}
-              />
+            <Col xs={24} sm={12} md={6}>
+              <Card size="small">
+                <Statistic
+                  title={isMobile ? t('inventory.exits') : `${t('inventory.exits')} (${moveStats.exitsCount} ${t('inventory.movementsLabel')})`}
+                  value={moveStats.totalExits.toFixed(0)}
+                  valueStyle={{ color: '#ff4d4f', fontSize: isMobile ? 18 : 24 }}
+                  suffix={t('inventory.unitsLabel')}
+                />
+              </Card>
             </Col>
-            <Col xs={12} sm={6}>
-              <Statistic
-                title={t('inventory.adjustments')}
-                value={moveStats.adjustmentsCount}
-                valueStyle={{ color: '#fa8c16' }}
-              />
+            <Col xs={24} sm={12} md={6}>
+              <Card size="small">
+                <Statistic
+                  title={t('inventory.adjustments')}
+                  value={moveStats.adjustmentsCount}
+                  valueStyle={{ color: '#fa8c16', fontSize: isMobile ? 18 : 24 }}
+                />
+              </Card>
             </Col>
           </Row>
         )}
 
         {isMobile ? (
-          <Row gutter={[16, 16]}>
-            {(stockMoves || []).map((move) => {
+          <Row gutter={[12, 12]}>
+            {isLoadingMoves ? (
+              <Col xs={24}>
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  Carregando...
+                </div>
+              </Col>
+            ) : (stockMoves || []).length === 0 ? (
+              <Col xs={24}>
+                <div style={{ textAlign: 'center', padding: '20px 0', color: '#8c8c8c' }}>
+                  {t('inventory.noMovementInPeriod')}
+                </div>
+              </Col>
+            ) : (stockMoves || []).map((move) => {
               const qtyNum = parseDecimal(move.quantity);
               const config = moveTypeLabels[move.move_type];
               const color = move.move_type === 'ENTRY' ? '#52c41a' :
                             move.move_type === 'EXIT' ? '#ff4d4f' : '#fa8c16';
               const prefix = move.move_type === 'ENTRY' ? '+' :
                              move.move_type === 'EXIT' ? '-' : '';
+              const bgColor = move.move_type === 'ENTRY' ? '#f6ffed' :
+                              move.move_type === 'EXIT' ? '#fff1f0' : '#fff7e6';
 
               return (
                 <Col xs={24} key={move.stock_move_id}>
-                  <Card size="small">
-                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong>{move.products?.product_name}</strong>
+                  <Card 
+                    size="small"
+                    style={{
+                      borderLeft: `4px solid ${color}`
+                    }}
+                  >
+                    <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: 6
+                      }}>
+                        <strong style={{ flex: 1, fontSize: 14 }}>{move.products?.product_name}</strong>
                         <Tag color={config?.color}>{config?.label || move.move_type}</Tag>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.quantity')}:</span>
-                        <Text strong style={{ color }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        padding: '6px 8px',
+                        backgroundColor: bgColor,
+                        borderRadius: 4
+                      }}>
+                        <span style={{ fontSize: 12, fontWeight: 500 }}>{t('inventory.quantity')}:</span>
+                        <Text strong style={{ color, fontSize: 16 }}>
                           {prefix}{qtyNum}
                         </Text>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                         <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('inventory.responsible')}:</span>
-                        <span>{move.users?.name || '-'}</span>
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{move.users?.name || '-'}</span>
                       </div>
-                      <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 4 }}>
+                      <div style={{ fontSize: 11, color: '#8c8c8c', padding: '4px 0' }}>
                         {formatDateTime(move.created_at)}
                       </div>
                       {move.notes && (
-                        <div style={{ fontSize: 12, fontStyle: 'italic', color: '#595959', marginTop: 4 }}>
-                          {move.notes}
+                        <div style={{ 
+                          fontSize: 12, 
+                          fontStyle: 'italic', 
+                          color: '#595959', 
+                          padding: '6px 8px',
+                          backgroundColor: '#fafafa',
+                          borderRadius: 4,
+                          marginTop: 4
+                        }}>
+                          "{move.notes}"
                         </div>
                       )}
                     </Space>

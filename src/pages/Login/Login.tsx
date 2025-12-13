@@ -23,13 +23,8 @@ export function Login() {
     try {
       const response = await loginMutation.mutateAsync(values);
 
-      // Atualiza estado global com dados do usuário e token
-      setAuthState(response.user, response.token);
-
-      // Armazena refresh token se existir
-      if (response.refreshToken) {
-        localStorage.setItem('refresh_token', response.refreshToken);
-      }
+      // Atualiza estado global com dados do usuário, token e refresh token
+      setAuthState(response.user, response.token, response.refreshToken || '');
 
       // Redireciona para a página original ou dashboard
       navigate(from, { replace: true });
@@ -43,7 +38,12 @@ export function Login() {
     <div className="login-container">
       <Card className="login-card">
         <div className="login-header">
-          <Title level={2}>GetMoto LTD</Title>
+          <img
+            src="/logo-getmoto-transparent.png"
+            alt="GetMoto LTD"
+            className="login-logo"
+          />
+          <Title level={2} style={{ marginTop: 24, marginBottom: 8 }}>GetMoto LTD</Title>
           <Text type="secondary">Faça login para continuar</Text>
         </div>
 

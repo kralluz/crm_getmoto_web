@@ -69,28 +69,19 @@ export function CategorySelect({ value, onChange, ...props }: CategorySelectProp
         <>
           {menu}
           <Divider style={{ margin: '8px 0' }} />
-          <Space style={{ padding: '0 8px 4px' }}>
-            {isAddingNew ? (
-              <Space.Compact style={{ width: '100%' }}>
-                <Input
-                  ref={inputRef}
-                  placeholder={t('products.newCategoryName') || 'Nome da categoria'}
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  maxLength={100}
-                  autoFocus
-                  disabled={isCreating}
-                />
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleAddCategory}
-                  loading={isCreating}
-                  disabled={!newCategoryName.trim()}
-                >
-                  {t('common.add') || 'Adicionar'}
-                </Button>
+          {isAddingNew ? (
+            <Space direction="vertical" style={{ padding: '8px', width: '100%' }}>
+              <Input
+                ref={inputRef}
+                placeholder={t('products.newCategoryName') || 'Nome da categoria'}
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                maxLength={100}
+                autoFocus
+                disabled={isCreating}
+              />
+              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
                 <Button
                   onClick={() => {
                     setIsAddingNew(false);
@@ -100,8 +91,19 @@ export function CategorySelect({ value, onChange, ...props }: CategorySelectProp
                 >
                   {t('common.cancel') || 'Cancelar'}
                 </Button>
-              </Space.Compact>
-            ) : (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddCategory}
+                  loading={isCreating}
+                  disabled={!newCategoryName.trim()}
+                >
+                  {t('common.add') || 'Adicionar'}
+                </Button>
+              </Space>
+            </Space>
+          ) : (
+            <div style={{ padding: '0 8px 4px' }}>
               <Button
                 type="text"
                 icon={<PlusOutlined />}
@@ -113,8 +115,8 @@ export function CategorySelect({ value, onChange, ...props }: CategorySelectProp
               >
                 {t('products.addNewCategory') || 'Adicionar nova categoria'}
               </Button>
-            )}
-          </Space>
+            </div>
+          )}
         </>
       )}
       {...props}

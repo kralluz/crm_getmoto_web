@@ -9,8 +9,12 @@ import {
   Alert,
   Button,
   Space,
+  Modal,
+  Form,
+  Input,
 } from 'antd';
-import { DollarOutlined, EditOutlined } from '@ant-design/icons';
+import { DollarOutlined, EditOutlined, StopOutlined, ExclamationCircleOutlined, FilePdfOutlined } from '@ant-design/icons';
+import { generateExpensePDF } from '../utils/reports';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../hooks/useFormat';
@@ -18,9 +22,11 @@ import { LoadingOverlay } from '../components/common/LoadingOverlay';
 import { PageHeader } from '../components/common/PageHeader';
 import { expenseApi } from '../api/expense-api';
 import { useQuery } from '@tanstack/react-query';
-import { useUpdateExpenseDescription } from '../hooks/useExpenses';
+import { useUpdateExpenseDescription, useCancelExpense } from '../hooks/useExpenses';
 import { EditTextModal } from '../components/common/EditTextModal';
 import { useState, useEffect } from 'react';
+import { useAuthStore } from '../store/auth-store';
+import { NotificationService } from '../services/notification.service';
 
 const { Text } = Typography;
 
@@ -41,7 +47,12 @@ export function ExpenseDetail() {
 
   const { data: expense, isLoading } = useExpense(id);
   const { mutate: updateDescription, isPending: isUpdatingDescription } = useUpdateExpenseDescription();
+  const { mutate: cancelExpense, isPending: isCancelling } = useCancelExpense();
+  const { user } = useAuthStore();
   const [isEditDescriptionModalOpen, setIsEditDescriptionModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [cancelForm] = Form.useForm();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -94,6 +105,104 @@ export function ExpenseDetail() {
     });
   };
 
+  const handleCancelExpense = () => {
+    if (expense?.cancelled_at) {
+      NotificationService.warning(t('expenses.alreadyCancelled'));
+      return;
+    }
+    setIsCancelModalOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      const values = await cancelForm.validateFields();
+
+      if (!user || !user.id) {
+        NotificationService.error(t('common.error'), t('auth.userNotFound'));
+        return;
+      }
+
+      const cancelledBy = parseInt(user.id, 10);
+
+      if (isNaN(cancelledBy)) {
+        NotificationService.error(t('common.error'), 'ID de usuário inválido');
+        return;
+      }
+
+      if (!id) return;
+
+      cancelExpense(
+        {
+          id,
+          data: {
+            cancelled_by: cancelledBy,
+            cancellation_reason: values.cancellation_reason,
+          },
+        },
+        {
+          onSuccess: () => {
+            NotificationService.success(t('expenses.cancelledSuccess'));
+            setIsCancelModalOpen(false);
+            cancelForm.resetFields();
+            setTimeout(() => navigate('/despesas'), 1000);
+          },
+          onError: (error: any) => {
+            NotificationService.error(
+              error?.response?.data?.message || t('expenses.cancelError')
+            );
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Validation failed:', error);
+    }
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!expense) return;
+
+    setIsPdfLoading(true);
+    try {
+      await generateExpensePDF(
+        {
+          expense_id: expense.expense_id,
+          description: expense.description,
+          category: getCategoryLabel(expense.category),
+          amount: expense.amount,
+          expense_date: expense.expense_date,
+          notes: expense.notes,
+          created_at: expense.created_at,
+          is_active: expense.is_active,
+          cancelled_at: expense.cancelled_at,
+          cancellation_reason: expense.cancellation_reason,
+        },
+        {
+          title: t('expenses.expenseDetails'),
+          expenseNumber: t('expenses.expenseNumber'),
+          category: t('expenses.category'),
+          description: t('expenses.description'),
+          amount: t('expenses.amount'),
+          expenseDate: t('expenses.expenseDate'),
+          status: t('common.status'),
+          active: t('common.active'),
+          cancelled: t('expenses.cancelled'),
+          notes: t('common.notes'),
+          cancelledAt: t('expenses.cancelledAt'),
+          cancellationReason: t('expenses.cancellationReason'),
+          createdAt: t('common.createdAt'),
+          cashImpact: t('expenses.cashImpactDescription'),
+          thankYou: t('common.thankYou'),
+        }
+      );
+      NotificationService.success(t('common.pdfGeneratedSuccess'));
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      NotificationService.error(t('common.error'));
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
   const getCategoryLabel = (category: string) => {
     const categoryMap: Record<string, string> = {
       salary: t('expenses.categories.salary'),
@@ -122,16 +231,44 @@ export function ExpenseDetail() {
           subtitle={`#${expense.expense_id}`}
           onBack={handleBack}
         />
-        {!expense.cancelled_at && (
+        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
           <Button
-            icon={<EditOutlined />}
-            onClick={handleEditDescription}
+            icon={<FilePdfOutlined />}
+            onClick={handleGeneratePDF}
+            loading={isPdfLoading}
+            type="primary"
             size="middle"
             block={isMobile}
           >
-            {isMobile ? 'Editar' : t('common.editDescription')}
+            {isMobile ? 'PDF' : t('common.generatePdf')}
           </Button>
-        )}
+          {!expense.cancelled_at && (
+            <>
+              <Button
+                danger
+                icon={<StopOutlined />}
+                onClick={handleCancelExpense}
+                size="middle"
+                block={isMobile}
+                style={{
+                  backgroundColor: '#ff4d4f',
+                  borderColor: '#ff4d4f',
+                  color: 'white'
+                }}
+              >
+                {isMobile ? 'Cancelar' : t('expenses.cancelExpense')}
+              </Button>
+              <Button
+                icon={<EditOutlined />}
+                onClick={handleEditDescription}
+                size="middle"
+                block={isMobile}
+              >
+                {isMobile ? 'Editar' : t('common.editDescription')}
+              </Button>
+            </>
+          )}
+        </Space>
       </div>
 
       {/* Card com estatísticas principais */}
@@ -243,6 +380,54 @@ export function ExpenseDetail() {
         multiline={true}
         rows={4}
       />
+
+      {/* Cancellation Modal */}
+      <Modal
+        title={
+          <Space>
+            <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+            {t('expenses.confirmCancellation')}
+          </Space>
+        }
+        open={isCancelModalOpen}
+        onCancel={() => {
+          setIsCancelModalOpen(false);
+          cancelForm.resetFields();
+        }}
+        onOk={handleConfirmCancel}
+        confirmLoading={isCancelling}
+        okText={t('expenses.confirmCancel')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ danger: true }}
+        width={600}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Alert
+            message={t('expenses.cancellationWarning')}
+            description={t('expenses.cancellationExplanation')}
+            type="warning"
+            showIcon
+          />
+
+          <Form form={cancelForm} layout="vertical">
+            <Form.Item
+              name="cancellation_reason"
+              label={t('expenses.cancellationReason')}
+              rules={[
+                { required: true, message: t('expenses.cancellationReasonRequired') },
+                { min: 10, message: t('expenses.cancellationReasonMinLength') }
+              ]}
+            >
+              <Input.TextArea
+                rows={4}
+                placeholder={t('expenses.cancellationReasonPlaceholder')}
+                maxLength={500}
+                showCount
+              />
+            </Form.Item>
+          </Form>
+        </Space>
+      </Modal>
     </div>
   );
 }

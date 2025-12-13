@@ -49,7 +49,7 @@ export interface CreatePayrollPaymentData {
   employee_id: number;
   period_start: string;
   period_end: string;
-  // payment_date removed - backend uses today's date automatically
+  payment_date: string; // Date of payment (YYYY-MM-DD format)
   regular_hours: number;
   overtime_hours?: number;
   bonuses_pence?: number;

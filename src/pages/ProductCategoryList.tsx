@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { useProductCategories, useDeleteProductCategory } from '../hooks/useProductCategories';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
+import { FloatingActionButton } from '../components/common/FloatingActionButton';
 import { ProductCategoryModal } from '../components/products/ProductCategoryModal';
 import type { ProductCategory } from '../types/product-category';
 import dayjs from 'dayjs';
@@ -184,14 +185,16 @@ export function ProductCategoryList() {
         subtitle={t('products.categorySubtitle')}
         helpText={t('products.categoryPageHelp')}
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-            size="large"
-          >
-            {t('products.newCategory')}
-          </Button>
+          !isMobile && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreate}
+              size="large"
+            >
+              {t('products.newCategory')}
+            </Button>
+          )
         }
       />
 
@@ -297,6 +300,14 @@ export function ProductCategoryList() {
         open={modalOpen}
         categoryId={editingCategoryId}
         onClose={handleCloseModal}
+      />
+
+      {/* Floating Action Button para mobile */}
+      <FloatingActionButton
+        icon={<PlusOutlined />}
+        tooltip={t('products.newCategory')}
+        onClick={handleCreate}
+        mobileOnly
       />
     </div>
   );

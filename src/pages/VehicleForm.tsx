@@ -72,48 +72,12 @@ export function VehicleForm() {
               navigate('/veiculos');
             }, 100);
           },
-          onError: (error: any) => {
-            console.error('❌ Error updating vehicle:', error);
-            
-            // Se for erro de validação da API (backend)
-            const apiErrors = error?.response?.data?.errors;
-            if (apiErrors && Array.isArray(apiErrors)) {
-              console.log('📋 API validation errors:', apiErrors);
-              
-              // Mapear erros da API para os campos do formulário
-              const fieldErrors = apiErrors.map((err: any) => ({
-                name: err.field,
-                errors: [err.message],
-              }));
-              
-              // Aplicar os erros no formulário
-              form.setFields(fieldErrors);
-            }
-          },
         }
       );
     } else {
       createVehicle(values as CreateMotorcycleData, {
         onSuccess: () => {
           navigate('/veiculos');
-        },
-        onError: (error: any) => {
-          console.error('❌ Error creating vehicle:', error);
-          
-          // Se for erro de validação da API (backend)
-          const apiErrors = error?.response?.data?.errors;
-          if (apiErrors && Array.isArray(apiErrors)) {
-            console.log('📋 API validation errors:', apiErrors);
-            
-            // Mapear erros da API para os campos do formulário
-            const fieldErrors = apiErrors.map((err: any) => ({
-              name: err.field,
-              errors: [err.message],
-            }));
-            
-            // Aplicar os erros no formulário
-            form.setFields(fieldErrors);
-          }
         },
       });
     }
@@ -148,7 +112,7 @@ export function VehicleForm() {
               <Form.Item
                 label={t('vehicles.plate')}
                 name="plate"
-                rules={[
+                rules={isEditing ? [] : [
                   {
                     required: true,
                     message: t('vehicles.plateRequired'),
@@ -173,6 +137,8 @@ export function VehicleForm() {
                     }
                     
                     form.setFieldValue('plate', value);
+                    // Validar o campo imediatamente após a mudança
+                    form.validateFields(['plate']).catch(() => {});
                   }}
                 />
               </Form.Item>
@@ -182,7 +148,7 @@ export function VehicleForm() {
               <Form.Item
                 label={t('vehicles.brand')}
                 name="brand"
-                rules={[
+                rules={isEditing ? [] : [
                   {
                     required: true,
                     message: t('vehicles.brandRequired'),
@@ -215,7 +181,7 @@ export function VehicleForm() {
               <Form.Item
                 label={t('vehicles.model')}
                 name="model"
-                rules={[
+                rules={isEditing ? [] : [
                   {
                     required: true,
                     message: t('vehicles.modelRequired'),
@@ -248,7 +214,7 @@ export function VehicleForm() {
               <Form.Item
                 label={t('vehicles.color')}
                 name="color"
-                rules={[
+                rules={isEditing ? [] : [
                   {
                     validator: (_, value) => {
                       if (!value || value.trim().length === 0) {
@@ -277,7 +243,7 @@ export function VehicleForm() {
               <Form.Item
                 label={t('vehicles.year')}
                 name="year"
-                rules={[
+                rules={isEditing ? [] : [
                   {
                     required: true,
                     message: t('vehicles.yearRequired'),
@@ -330,20 +296,21 @@ export function VehicleForm() {
                         return Promise.reject(new Error(t('vehicles.mileRequired')));
                       }
                       if (value < 0) {
-                        return Promise.reject(new Error(t('vehicles.mileMinError')));
+                        return Promise.reject(new Error(t('vehicles.mileNegativeError')));
                       }
                       return Promise.resolve();
                     },
                   },
                 ]}
+                validateTrigger={['onChange', 'onBlur']}
               >
                 <InputNumber
                   placeholder={t('vehicles.milePlaceholder')}
                   style={{ width: '100%' }}
-                  min={0}
-                  parser={(value) => {
-                    const parsed = Number(value);
-                    return isNaN(parsed) || parsed < 0 ? 0 : parsed;
+                  status={form.getFieldError('mile').length > 0 ? 'error' : undefined}
+                  keyboard={true}
+                  onBlur={() => {
+                    form.validateFields(['mile']);
                   }}
                 />
               </Form.Item>

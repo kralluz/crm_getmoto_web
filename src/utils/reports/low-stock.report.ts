@@ -53,12 +53,6 @@ export interface LowStockReportData {
       critical: string;
       attention: string;
     };
-    legend: string;
-    legendItems: {
-      depleted: string;
-      critical: string;
-      attention: string;
-    };
   };
 }
 
@@ -208,27 +202,6 @@ function createProductsSection(products: Product[], t: LowStockReportData['trans
 }
 
 /**
- * Cria seção de legenda
- */
-function createLegendSection(t: LowStockReportData['translations']): Content {
-  return [
-    {
-      text: '',
-      margin: [0, 15, 0, 5] as [number, number, number, number],
-    },
-    { text: t?.legend || 'Status Legend:', style: 'label', fontSize: 9 },
-    {
-      ul: [
-        { text: t?.legendItems?.depleted || 'DEPLETED: Stock completely depleted', fontSize: 8 },
-        { text: t?.legendItems?.critical || 'CRITICAL: Stock below 50% of minimum', fontSize: 8 },
-        { text: t?.legendItems?.attention || 'ATTENTION: Stock between 50% and 100% of minimum', fontSize: 8 },
-      ],
-      margin: [0, 5, 0, 0] as [number, number, number, number],
-    },
-  ];
-}
-
-/**
  * Gera o relatório de Alerta de Estoque Baixo em PDF
  */
 export async function generateLowStockReport(data: LowStockReportData): Promise<void> {
@@ -242,76 +215,20 @@ export async function generateLowStockReport(data: LowStockReportData): Promise<
     { text: t?.title || 'Low Stock Alert', style: 'header', alignment: 'center', margin: [0, 0, 0, 20] as [number, number, number, number] },
     ...(createSummarySection(products, t) as any[]),
     ...(createProductsSection(products, t) as any[]),
-    ...(createLegendSection(t) as any[]),
   ];
-
-  // Adicionar rodapé como parte do conteúdo
-  content.push({
-    table: {
-      widths: ['*'],
-      body: [
-        [
-          {
-            columns: [
-              {
-                text: 'If you have any questions concerning this report, Please contact us.',
-                fontSize: 8,
-                width: '*',
-              },
-              {
-                text: '                    ',
-                fontSize: 8,
-                width: 'auto',
-              },
-              {
-                text: 'Thank you for your business!',
-                fontSize: 8,
-                width: 'auto',
-              },
-            ],
-            margin: [4, 4, 4, 4] as [number, number, number, number],
-          },
-        ],
-        [
-          {
-            text: `Company Registration No. ${COMPANY_INFO.registration.number}`,
-            alignment: 'center',
-            bold: true,
-            fontSize: 8,
-            margin: [4, 4, 4, 4] as [number, number, number, number],
-          },
-        ],
-        [
-          {
-            text: `Bank Details. ${COMPANY_INFO.bank.name} Sort Code ${COMPANY_INFO.bank.sortCode}. Account No ${COMPANY_INFO.bank.accountNo}`,
-            alignment: 'center',
-            fontSize: 8,
-            margin: [4, 4, 4, 4] as [number, number, number, number],
-          },
-        ],
-      ],
-    },
-    layout: {
-      hLineWidth: () => 1,
-      vLineWidth: () => 1,
-      hLineColor: () => '#000000',
-      vLineColor: () => '#000000',
-    },
-    margin: [0, 0, 0, 10] as [number, number, number, number],
-  });
 
   // Data do relatório
   content.push({
     columns: [
       {
-        text: `REPORT DATE ${new Date().toLocaleDateString('en-GB')}`,
+        text: `${new Date().toLocaleDateString('en-GB')}`,
         bold: true,
         fontSize: 9,
         width: '100%',
-        alignment: 'center',
+        alignment: 'right',
       },
     ],
-    margin: [0, 0, 0, 0] as [number, number, number, number],
+    margin: [0, 20, 0, 0] as [number, number, number, number],
   });
 
   const docDefinition: any = {

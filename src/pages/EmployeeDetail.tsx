@@ -6,7 +6,7 @@ import { useEmployee, useDisableEmployee, useEnableEmployee } from '../hooks/use
 import { useTimeEntries } from '../hooks/useTimeEntries';
 import { usePayrollPayments } from '../hooks/usePayrollPayments';
 import { formatUKCurrency, penceToPounds } from '../types/employee';
-import dayjs from 'dayjs';
+import { formatDate, formatDateTime, formatMonthDay } from '../utils/format.util';
 import type { ColumnsType } from 'antd/es/table';
 import type { TimeEntry } from '../types/time-entry';
 import type { PayrollPayment } from '../types/payroll-payment';
@@ -63,14 +63,14 @@ export function EmployeeDetail() {
       title: t('timeEntries.clockInTime'),
       dataIndex: 'clock_in',
       key: 'clock_in',
-      render: (datetime) => dayjs(datetime).format('DD/MM/YYYY HH:mm'),
-      sorter: (a, b) => dayjs(a.clock_in).unix() - dayjs(b.clock_in).unix(),
+      render: (datetime) => formatDateTime(datetime),
+      sorter: (a, b) => new Date(a.clock_in).getTime() - new Date(b.clock_in).getTime(),
     },
     {
       title: t('timeEntries.clockOutTime'),
       dataIndex: 'clock_out',
       key: 'clock_out',
-      render: (datetime) => datetime ? dayjs(datetime).format('DD/MM/YYYY HH:mm') : '-',
+      render: (datetime) => datetime ? formatDateTime(datetime) : '-',
     },
     {
       title: t('timeEntries.totalHours'),
@@ -103,14 +103,14 @@ export function EmployeeDetail() {
       title: t('payroll.paymentDate'),
       dataIndex: 'payment_date',
       key: 'payment_date',
-      render: (date) => dayjs(date).format('DD/MM/YYYY'),
-      sorter: (a, b) => dayjs(a.payment_date).unix() - dayjs(b.payment_date).unix(),
+      render: (date) => formatDate(date),
+      sorter: (a, b) => new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime(),
     },
     {
       title: t('payroll.payPeriod'),
       key: 'period',
       render: (_, record) =>
-        `${dayjs(record.period_start).format('DD/MM')} - ${dayjs(record.period_end).format('DD/MM/YYYY')}`,
+        `${formatMonthDay(record.period_start)} - ${formatDate(record.period_end)}`,
     },
     {
       title: t('payroll.totalHours'),
@@ -219,10 +219,10 @@ export function EmployeeDetail() {
               {employee.weekly_hours}
             </Descriptions.Item>
             <Descriptions.Item label={t('employees.startDate')}>
-              {dayjs(employee.start_date).format('DD/MM/YYYY')}
+              {formatDate(employee.start_date)}
             </Descriptions.Item>
             <Descriptions.Item label={t('employees.endDate')}>
-              {employee.end_date ? dayjs(employee.end_date).format('DD/MM/YYYY') : t('common.active')}
+              {employee.end_date ? formatDate(employee.end_date) : t('common.active')}
             </Descriptions.Item>
             {employee.address && (
               <Descriptions.Item label={t('employees.address')} span={2}>

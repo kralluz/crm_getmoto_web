@@ -10,6 +10,18 @@ export interface PurchaseOrder {
   cancellation_reason?: string;
   created_at: string;
   updated_at: string;
+  stock_moves?: Array<{
+    stock_move_id: number;
+    product_id: number;
+    quantity: number;
+    notes?: string;
+    products: {
+      product_id: number;
+      product_name: string;
+      sell_price: number;
+      buy_price: number;
+    };
+  }>;
 }
 
 export interface PurchaseOrderProduct {

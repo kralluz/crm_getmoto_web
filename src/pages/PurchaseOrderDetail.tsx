@@ -8,8 +8,15 @@ import {
   Statistic,
   Alert,
   Button,
+  Table,
+  Modal,
+  Form,
+  Input,
+  Space,
 } from 'antd';
-import { ShoppingCartOutlined, EditOutlined } from '@ant-design/icons';
+import { ShoppingCartOutlined, EditOutlined, StopOutlined, ExclamationCircleOutlined, FilePdfOutlined } from '@ant-design/icons';
+import { generatePurchaseOrderPDF } from '../utils/reports';
+import type { ColumnsType } from 'antd/es/table';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../hooks/useFormat';
@@ -18,8 +25,10 @@ import { PageHeader } from '../components/common/PageHeader';
 import { purchaseOrderApi } from '../api/purchase-order-api';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { useUpdatePurchaseOrderNotes } from '../hooks/usePurchaseOrders';
+import { useUpdatePurchaseOrderNotes, useCancelPurchaseOrder } from '../hooks/usePurchaseOrders';
 import { EditTextModal } from '../components/common/EditTextModal';
+import { useAuthStore } from '../store/auth-store';
+import { NotificationService } from '../services/notification.service';
 
 const { Text } = Typography;
 
@@ -41,9 +50,14 @@ export function PurchaseOrderDetail() {
   const { formatCurrency, formatDate, formatDateTime } = useFormat();
   const [cameFromSearch, setCameFromSearch] = useState(false);
   const [isEditNotesModalOpen, setIsEditNotesModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [cancelForm] = Form.useForm();
 
   const { data: purchaseOrder, isLoading } = usePurchaseOrder(id);
   const { mutate: updateNotes, isPending: isUpdatingNotes } = useUpdatePurchaseOrderNotes();
+  const { mutate: cancelOrder, isPending: isCancelling } = useCancelPurchaseOrder();
+  const { user } = useAuthStore();
 
   // Detectar se veio da página de busca
   useEffect(() => {
@@ -105,6 +119,120 @@ export function PurchaseOrderDetail() {
     });
   };
 
+  const handleCancelOrder = () => {
+    if (purchaseOrder?.cancelled_at) {
+      NotificationService.warning(t('purchaseOrder.alreadyCancelled'));
+      return;
+    }
+    setIsCancelModalOpen(true);
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!purchaseOrder) return;
+
+    setIsPdfLoading(true);
+    try {
+      // Extrair produtos dos stock_moves
+      const products = purchaseOrder.stock_moves?.map(move => {
+        const match = move.notes?.match(/@\s*R?\$?\s*([\d.,]+)/);
+        const unitPrice = match ? parseFloat(match[1].replace(',', '.')) : 0;
+        return {
+          product_name: move.products.product_name,
+          quantity: move.quantity,
+          unit_price: unitPrice,
+          subtotal: move.quantity * unitPrice,
+        };
+      }) || [];
+
+      await generatePurchaseOrderPDF(
+        {
+          purchase_order_id: purchaseOrder.purchase_order_id,
+          supplier_name: purchaseOrder.supplier_name,
+          purchase_date: purchaseOrder.purchase_date,
+          total_amount: purchaseOrder.total_amount,
+          notes: purchaseOrder.notes,
+          products,
+          created_at: purchaseOrder.created_at,
+          is_active: purchaseOrder.is_active,
+          cancelled_at: purchaseOrder.cancelled_at,
+          cancellation_reason: purchaseOrder.cancellation_reason,
+        },
+        {
+          title: t('purchaseOrder.orderDetails'),
+          orderNumber: t('purchaseOrder.orderNumber'),
+          supplier: t('purchaseOrder.supplier'),
+          purchaseDate: t('purchaseOrder.purchaseDate'),
+          status: t('common.status'),
+          active: t('common.active'),
+          cancelled: t('purchaseOrder.cancelled'),
+          products: t('purchaseOrder.products'),
+          product: t('purchaseOrder.product'),
+          quantity: t('purchaseOrder.quantity'),
+          unitPrice: t('purchaseOrder.unitPrice'),
+          subtotal: t('purchaseOrder.subtotal'),
+          total: t('common.total'),
+          notes: t('common.notes'),
+          cancelledAt: t('purchaseOrder.cancelledAt'),
+          cancellationReason: t('purchaseOrder.cancellationReason'),
+          createdAt: t('common.createdAt'),
+          stockImpact: t('purchaseOrder.stockImpactDescription'),
+          thankYou: t('common.thankYou'),
+        }
+      );
+      NotificationService.success(t('common.pdfGeneratedSuccess'));
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      NotificationService.error(t('common.error'));
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      const values = await cancelForm.validateFields();
+
+      if (!user || !user.id) {
+        NotificationService.error(t('common.error'), t('auth.userNotFound'));
+        return;
+      }
+
+      const cancelledBy = parseInt(user.id, 10);
+
+      if (isNaN(cancelledBy)) {
+        NotificationService.error(t('common.error'), 'ID de usuário inválido');
+        return;
+      }
+
+      if (!id) return;
+
+      cancelOrder(
+        {
+          id,
+          data: {
+            cancelled_by: cancelledBy,
+            cancellation_reason: values.cancellation_reason,
+          },
+        },
+        {
+          onSuccess: () => {
+            NotificationService.success(t('purchaseOrder.cancelledSuccess'));
+            setIsCancelModalOpen(false);
+            cancelForm.resetFields();
+            setTimeout(() => navigate('/dashboard'), 1000);
+          },
+          onError: (error: any) => {
+            NotificationService.error(
+              error?.response?.data?.message || t('purchaseOrder.cancelError')
+            );
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Validation failed:', error);
+    }
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -113,14 +241,38 @@ export function PurchaseOrderDetail() {
           subtitle={`#${purchaseOrder.purchase_order_id}`}
           onBack={handleBack}
         />
-        {!purchaseOrder.cancelled_at && (
+        <Space>
           <Button
-            icon={<EditOutlined />}
-            onClick={handleEditNotes}
+            icon={<FilePdfOutlined />}
+            onClick={handleGeneratePDF}
+            loading={isPdfLoading}
+            type="primary"
           >
-            {t('common.editNotes')}
+            {t('common.generatePdf')}
           </Button>
-        )}
+          {!purchaseOrder.cancelled_at && (
+            <>
+              <Button
+                danger
+                icon={<StopOutlined />}
+                onClick={handleCancelOrder}
+                style={{
+                  backgroundColor: '#ff4d4f',
+                  borderColor: '#ff4d4f',
+                  color: 'white'
+                }}
+              >
+                {t('purchaseOrder.cancelOrder')}
+              </Button>
+              <Button
+                icon={<EditOutlined />}
+                onClick={handleEditNotes}
+              >
+                {t('common.editNotes')}
+              </Button>
+            </>
+          )}
+        </Space>
       </div>
 
       {/* Card com estatísticas principais */}
@@ -225,6 +377,94 @@ export function PurchaseOrderDetail() {
         </Descriptions>
       </Card>
 
+      {/* Tabela de Produtos */}
+      {purchaseOrder.stock_moves && purchaseOrder.stock_moves.length > 0 && (
+        <Card title={t('purchaseOrder.products')} style={{ marginBottom: 16 }}>
+          <Table
+            columns={[
+              {
+                title: t('purchaseOrder.product'),
+                dataIndex: ['products', 'product_name'],
+                key: 'product',
+              },
+              {
+                title: t('purchaseOrder.quantity'),
+                dataIndex: 'quantity',
+                key: 'quantity',
+                align: 'center',
+                render: (qty: number) => (
+                  <Text strong style={{ color: '#52c41a' }}>
+                    +{qty}
+                  </Text>
+                ),
+              },
+              {
+                title: t('purchaseOrder.unitPrice'),
+                key: 'unit_price',
+                align: 'right',
+                render: (_, record) => {
+                  // Extrair preço unitário das notas (formato: "Compra de X - 10x @ R$ 50.00")
+                  const match = record.notes?.match(/@\s*R?\$?\s*([\d.,]+)/);
+                  const unitPrice = match ? parseFloat(match[1].replace(',', '.')) : 0;
+                  return formatCurrency(unitPrice);
+                },
+              },
+              {
+                title: t('common.total'),
+                key: 'subtotal',
+                align: 'right',
+                render: (_, record) => {
+                  const match = record.notes?.match(/@\s*R?\$?\s*([\d.,]+)/);
+                  const unitPrice = match ? parseFloat(match[1].replace(',', '.')) : 0;
+                  const subtotal = record.quantity * unitPrice;
+                  return (
+                    <Text strong style={{ color: '#ff4d4f' }}>
+                      {formatCurrency(subtotal)}
+                    </Text>
+                  );
+                },
+              },
+            ] as ColumnsType<any>}
+            dataSource={purchaseOrder.stock_moves}
+            rowKey="stock_move_id"
+            pagination={false}
+            size="middle"
+            summary={(pageData) => {
+              let totalQuantity = 0;
+              let totalAmount = 0;
+
+              pageData.forEach((record) => {
+                totalQuantity += record.quantity;
+                const match = record.notes?.match(/@\s*R?\$?\s*([\d.,]+)/);
+                const unitPrice = match ? parseFloat(match[1].replace(',', '.')) : 0;
+                totalAmount += record.quantity * unitPrice;
+              });
+
+              return (
+                <Table.Summary fixed>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell index={0}>
+                      <Text strong>{t('common.total')}</Text>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={1} align="center">
+                      <Text strong style={{ color: '#52c41a' }}>
+                        +{totalQuantity}
+                      </Text>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={2} />
+                    <Table.Summary.Cell index={3} align="right">
+                      <Text strong style={{ fontSize: 16, color: '#ff4d4f' }}>
+                        {formatCurrency(totalAmount)}
+                      </Text>
+                    </Table.Summary.Cell>
+                  </Table.Summary.Row>
+                </Table.Summary>
+              );
+            }}
+          />
+        </Card>
+      )}
+
       {/* Info sobre impacto no estoque */}
       <Alert
         message={t('purchaseOrder.stockImpact')}
@@ -249,6 +489,54 @@ export function PurchaseOrderDetail() {
         multiline={true}
         rows={4}
       />
+
+      {/* Cancellation Modal */}
+      <Modal
+        title={
+          <Space>
+            <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+            {t('purchaseOrder.confirmCancellation')}
+          </Space>
+        }
+        open={isCancelModalOpen}
+        onCancel={() => {
+          setIsCancelModalOpen(false);
+          cancelForm.resetFields();
+        }}
+        onOk={handleConfirmCancel}
+        confirmLoading={isCancelling}
+        okText={t('purchaseOrder.confirmCancel')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ danger: true }}
+        width={600}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Alert
+            message={t('purchaseOrder.cancellationWarning')}
+            description={t('purchaseOrder.cancellationExplanation')}
+            type="warning"
+            showIcon
+          />
+
+          <Form form={cancelForm} layout="vertical">
+            <Form.Item
+              name="cancellation_reason"
+              label={t('purchaseOrder.cancellationReason')}
+              rules={[
+                { required: true, message: t('purchaseOrder.cancellationReasonRequired') },
+                { min: 10, message: t('purchaseOrder.cancellationReasonMinLength') }
+              ]}
+            >
+              <Input.TextArea
+                rows={4}
+                placeholder={t('purchaseOrder.cancellationReasonPlaceholder')}
+                maxLength={500}
+                showCount
+              />
+            </Form.Item>
+          </Form>
+        </Space>
+      </Modal>
     </div>
   );
 }

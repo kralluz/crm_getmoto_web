@@ -32,7 +32,11 @@ export function useCreateExpense() {
     mutationFn: (data: CreateExpenseData) => expenseApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['cashflow'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
     },
   });
 }
@@ -51,6 +55,11 @@ export function useUpdateExpense() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense', id] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
     },
   });
 }
@@ -62,6 +71,11 @@ export function useDeleteExpense() {
     mutationFn: (id: number | string) => expenseApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
     },
   });
 }
@@ -79,7 +93,11 @@ export function useCancelExpense() {
     }) => expenseApi.cancel(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['cashflow'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
     },
   });
 }

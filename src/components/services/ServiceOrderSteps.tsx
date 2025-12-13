@@ -16,6 +16,7 @@ import {
   Table,
   Alert,
   Tooltip,
+  theme,
 } from 'antd';
 import { DeleteOutlined, PlusOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +24,7 @@ import { VehicleSelect } from './VehicleSelect';
 import { ServiceSelect } from './ServiceSelect';
 import { ProductSelect } from '../products/ProductSelect';
 import { CurrencyInput } from '../common/CurrencyInput';
+import { ProfessionalAutoComplete } from './ProfessionalAutoComplete';
 import { useFormat } from '../../hooks/useFormat';
 
 const { Title, Text } = Typography;
@@ -111,6 +113,8 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
     handleProductChange,
   } = props;
 
+  const { token } = theme.useToken();
+
   // Debug logs preserved from original component
   useEffect(() => {
     console.log('Step:', currentStep);
@@ -173,7 +177,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                           return Promise.resolve();
                         }
                         if (value < 0) {
-                          return Promise.reject(new Error(t('vehicles.mileMinError')));
+                          return Promise.reject(new Error(t('vehicles.mileNegativeError')));
                         }
                         if (value < minMile) {
                           return Promise.reject(new Error(t('vehicles.mileCannotDecrease')));
@@ -182,15 +186,15 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                       },
                     },
                   ]}
+                  validateTrigger={['onChange', 'onBlur']}
                 >
                   <InputNumber
                     placeholder={t('vehicles.milePlaceholder')}
                     style={{ width: '100%' }}
-                    min={selectedVehicle.mile || 0}
-                    parser={(value) => {
-                      const parsed = Number(value);
-                      const minMile = selectedVehicle.mile || 0;
-                      return isNaN(parsed) || parsed < minMile ? minMile : parsed;
+                    status={form.getFieldError('vehicle_mile').length > 0 ? 'error' : undefined}
+                    keyboard={true}
+                    onBlur={() => {
+                      form.validateFields(['vehicle_mile']);
                     }}
                   />
                 </Form.Item>
@@ -205,8 +209,8 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
           <Title level={5}>{t('services.servicesRealized')}</Title>
           {!serviceCategories || serviceCategories.length === 0 ? (
             <Alert
-              message="Atenção"
-              description="Nenhum serviço disponível. Cadastre serviços antes de adicionar à ordem de serviço."
+              message={t('common.attention')}
+              description={t('services.noServicesAvailableDescription')}
               type="warning"
               showIcon
               style={{ marginBottom: 16 }}
@@ -214,8 +218,8 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
           ) : null}
           {services.length === 0 && (
             <Alert
-              message="Serviços opcionais"
-              description="Você pode adicionar serviços aqui ou pular para adicionar produtos. Uma ordem de serviço deve ter pelo menos um produto OU um serviço."
+              message={t('services.optionalServices')}
+              description={t('services.optionalServicesDescription')}
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
@@ -227,7 +231,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                 (s) => s.service_id === service.service_id
               );
               const defaultPrice = serviceData ? (Number(serviceData.service_cost) || 0) : 0;
-              
+
               return (
                 <Card key={service.key} size="small">
                   <Row gutter={[16, 16]} align="middle">
@@ -317,7 +321,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
       <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
         <div>
           <Title level={5}>{t('services.productsSold')}</Title>
-          
+
           <Alert
             message={
               <Space>
@@ -359,7 +363,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
               const availableStock = productData ? Number(productData.quantity) : 0;
               const isOutOfStock = product.product_id && availableStock === 0;
               const hasInsufficientStock = product.product_id && (product.product_qtd > availableStock || isOutOfStock);
-              
+
               return (
                 <Card
                   key={product.key}
@@ -504,23 +508,21 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                 name="professional_name"
                 rules={[
                   {
-                    validator: (_, value) => {
-                      // Campo opcional, mas se preenchido deve ter mínimo de caracteres
-                      if (!value || value.trim().length === 0) {
-                        return Promise.resolve(); // Campo vazio é válido
-                      }
-                      if (value.trim().length < 3) {
-                        return Promise.reject(new Error('Nome do profissional deve ter no mínimo 3 caracteres'));
-                      }
-                      if (value.length > 255) {
-                        return Promise.reject(new Error('Nome do profissional deve ter no máximo 255 caracteres'));
-                      }
-                      return Promise.resolve();
-                    },
+                    required: true,
+                    message: t('services.professionalRequired'),
+                  },
+                  {
+                    min: 3,
+                    message: 'Nome do profissional deve ter no mínimo 3 caracteres',
+                  },
+                  {
+                    max: 255,
+                    message: 'Nome do profissional deve ter no máximo 255 caracteres',
                   },
                 ]}
+                tooltip={t('services.professionalTooltip')}
               >
-                <Input 
+                <ProfessionalAutoComplete
                   placeholder={t('services.professionalPlaceholder')}
                   maxLength={255}
                 />
@@ -610,13 +612,13 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                       onChange={(e) => setApplyDiscount(e.target.checked)}
                       id="apply-discount"
                     />
-                    <label htmlFor="apply-discount" style={{ marginLeft: 8 }}>
+                    <label htmlFor="apply-discount" style={{ marginLeft: 8, color: token.colorText }}>
                       {t('services.applyDiscount')}
                     </label>
                   </div>
-                  
+
                   {applyDiscount && (
-                    <Card size="small" style={{ backgroundColor: '#fff7e6' }}>
+                    <Card size="small" style={{ backgroundColor: token.colorWarningBg }}>
                       <Space direction="vertical" style={{ width: '100%' }}>
                         <Select
                           value={discountType}
@@ -705,7 +707,7 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
       <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
         <div>
           <Title level={5}>{t('services.orderConfirmation')}</Title>
-          
+
           <Card title={t('services.vehicleClientInfo')} size="small" style={{ marginBottom: 16 }}>
             <Space direction="vertical" style={{ width: '100%' }}>
               <Row justify="space-between">

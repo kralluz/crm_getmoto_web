@@ -33,14 +33,48 @@ export class FormatService {
     };
     dayjsDate.locale(localeMap[locale] || 'pt-br');
 
-    // Formatos predefinidos
-    const formats: Record<DateFormat, string> = {
-      short: 'DD/MM/YYYY',
-      medium: 'DD/MM/YYYY HH:mm',
-      long: 'DD [de] MMMM [de] YYYY',
-      full: 'dddd, DD [de] MMMM [de] YYYY [às] HH:mm',
+    // Formatos predefinidos baseados no idioma
+    const getFormats = (loc: string): Record<DateFormat, string> => {
+      // Português brasileiro
+      if (loc === 'pt-BR') {
+        return {
+          short: 'DD/MM/YYYY',
+          medium: 'DD/MM/YYYY HH:mm',
+          long: 'DD [de] MMMM [de] YYYY',
+          full: 'dddd, DD [de] MMMM [de] YYYY [às] HH:mm',
+        };
+      }
+      
+      // Inglês UK
+      if (loc === 'en') {
+        return {
+          short: 'DD/MM/YYYY',
+          medium: 'DD/MM/YYYY HH:mm',
+          long: 'DD MMMM YYYY',
+          full: 'dddd, DD MMMM YYYY [at] HH:mm',
+        };
+      }
+      
+      // Espanhol
+      if (loc === 'es') {
+        return {
+          short: 'DD/MM/YYYY',
+          medium: 'DD/MM/YYYY HH:mm',
+          long: 'DD [de] MMMM [de] YYYY',
+          full: 'dddd, DD [de] MMMM [de] YYYY [a las] HH:mm',
+        };
+      }
+      
+      // Default
+      return {
+        short: 'DD/MM/YYYY',
+        medium: 'DD/MM/YYYY HH:mm',
+        long: 'DD MMMM YYYY',
+        full: 'dddd, DD MMMM YYYY HH:mm',
+      };
     };
 
+    const formats = getFormats(locale);
     const formatString = formats[format as DateFormat] || format;
     
     // Para formato 'short' (apenas data), usa UTC para evitar conversão de timezone

@@ -3,12 +3,13 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ClockCircleOutlined, UserOu
 import { useNavigate } from 'react-router-dom';
 import { useTimeEntries, useDeleteTimeEntry } from '../hooks/useTimeEntries';
 import { useEmployees } from '../hooks/useEmployees';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import type { TimeEntry } from '../types/time-entry';
 import { useTranslation } from 'react-i18next';
 import { formatHours } from '../utils/format-hours';
+import { FloatingActionButton } from '../components/common/FloatingActionButton';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -22,6 +23,13 @@ export function TimeEntryList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEntry, setSelectedEntry] = useState<TimeEntry | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: employees = [] } = useEmployees(true);
   const { data: timeEntries = [], isLoading } = useTimeEntries({
@@ -60,94 +68,54 @@ export function TimeEntryList() {
     return (
       <Card
         key={entry.time_entry_id}
-        style={{ marginBottom: '16px', cursor: 'pointer' }}
-        hoverable
-        onClick={() => navigate(`/time-entries/${entry.time_entry_id}/edit`)}
+        size="small"
+        style={{ marginBottom: '12px' }}
+        actions={[
+          <Tooltip title={t('common.view')} key="view">
+            <EyeOutlined onClick={() => handleViewDetails(entry)} />
+          </Tooltip>,
+          <Tooltip title={t('common.edit')} key="edit">
+            <EditOutlined onClick={() => navigate(`/time-entries/${entry.time_entry_id}/edit`)} />
+          </Tooltip>,
+        ]}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-          <UserOutlined style={{ color: '#1890ff' }} />
-          <Text strong style={{ fontSize: '16px', whiteSpace: 'normal', wordBreak: 'normal' }}>{employeeName}</Text>
-        </div>
-        
-        <Space direction="vertical" size="small" style={{ width: '100%', marginBottom: '12px' }}>
-          <div>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {t('timeEntries.clockInTime')}:
-            </Text>
-            <br />
-            <ClockCircleOutlined style={{ marginRight: '6px', color: '#52c41a' }} />
-            <Text>{dayjs(entry.clock_in).format('DD/MM/YYYY HH:mm')}</Text>
-          </div>
-
-          <div>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {t('timeEntries.clockOutTime')}:
-            </Text>
-            <br />
-            {entry.clock_out ? (
-              <>
-                <ClockCircleOutlined style={{ marginRight: '6px', color: '#ff4d4f' }} />
-                <Text>{dayjs(entry.clock_out).format('DD/MM/YYYY HH:mm')}</Text>
-              </>
-            ) : (
-              <Text style={{ marginLeft: '22px' }}>-</Text>
-            )}
-          </div>
-
-          <div>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {t('timeEntries.totalHours')}:
-            </Text>
-            <br />
-            <Tag color={entry.total_hours ? 'green' : 'orange'} style={{ marginTop: '4px' }}>
+        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <UserOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
+              <Text strong style={{ fontSize: '14px' }}>{employeeName}</Text>
+            </div>
+            <Tag color={entry.total_hours ? 'green' : 'orange'}>
               {entry.total_hours ? formatHours(entry.total_hours) : '-'} hrs
             </Tag>
           </div>
 
+          <div style={{ marginTop: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                <ClockCircleOutlined style={{ marginRight: '4px', color: '#52c41a' }} />
+                {t('timeEntries.clockIn')}:
+              </span>
+              <Text style={{ fontSize: '12px' }}>{dayjs(entry.clock_in).format('DD/MM/YYYY HH:mm')}</Text>
+            </div>
+
+            {entry.clock_out && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                  <ClockCircleOutlined style={{ marginRight: '4px', color: '#ff4d4f' }} />
+                  {t('timeEntries.clockOut')}:
+                </span>
+                <Text style={{ fontSize: '12px' }}>{dayjs(entry.clock_out).format('DD/MM/YYYY HH:mm')}</Text>
+              </div>
+            )}
+          </div>
+
           {entry.notes && (
-            <div>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                {t('common.notes')}:
-              </Text>
-              <br />
-              <Text style={{ fontSize: '13px' }}>{entry.notes}</Text>
+            <div style={{ fontSize: '12px', color: '#8c8c8c', marginTop: 8, fontStyle: 'italic' }}>
+              {entry.notes}
             </div>
           )}
         </Space>
-
-        <div 
-          style={{ 
-            display: 'flex', 
-            gap: '8px', 
-            paddingTop: '12px', 
-            borderTop: '1px solid #f0f0f0',
-            justifyContent: 'flex-end'
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/time-entries/${entry.time_entry_id}/edit`);
-            }}
-          >
-            {t('common.edit')}
-          </Button>
-          <Button
-            danger
-            size="small"
-            icon={<DeleteOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(entry.time_entry_id);
-            }}
-            loading={deleteTimeEntry.isPending}
-          >
-            {t('common.delete')}
-          </Button>
-        </div>
       </Card>
     );
   };
@@ -249,13 +217,15 @@ export function TimeEntryList() {
             gap: '12px'
           }}>
             <Title level={3} style={{ margin: 0 }}>{t('timeEntries.title')}</Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/time-entries/new')}
-            >
-              <span style={{ display: 'inline' }}>{t('timeEntries.newEntry')}</span>
-            </Button>
+            {!isMobile && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/time-entries/new')}
+              >
+                <span style={{ display: 'inline' }}>{t('timeEntries.newEntry')}</span>
+              </Button>
+            )}
           </div>
 
           <Space 
@@ -459,6 +429,14 @@ export function TimeEntryList() {
           </Space>
         )}
       </Modal>
+
+      {/* Floating Action Button para mobile */}
+      <FloatingActionButton
+        icon={<PlusOutlined />}
+        tooltip={t('timeEntries.newEntry')}
+        onClick={() => navigate('/time-entries/new')}
+        mobileOnly
+      />
     </div>
   );
 }

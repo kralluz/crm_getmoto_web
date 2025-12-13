@@ -33,6 +33,7 @@ import { TimeEntryEdit } from '../pages/TimeEntryEdit';
 import { PayrollPaymentList } from '../pages/PayrollPaymentList';
 import { PayrollPaymentForm } from '../pages/PayrollPaymentForm';
 import { PayrollPaymentDetail } from '../pages/PayrollPaymentDetail';
+import { EmployeePayrollDetail } from '../pages/EmployeePayrollDetail';
 
 export const router = createBrowserRouter([
   // Rota pública (apenas login)
@@ -181,6 +182,10 @@ export const router = createBrowserRouter([
       {
         path: 'payroll-payments',
         element: <PayrollPaymentList />,
+      },
+      {
+        path: 'payroll-payments/employee/:employeeId',
+        element: <EmployeePayrollDetail />,
       },
       {
         path: 'payroll-payments/new',

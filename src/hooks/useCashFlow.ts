@@ -7,6 +7,8 @@ export function useCashFlowSummary(startDate?: string, endDate?: string) {
   return useQuery({
     queryKey: ['cashflow', 'summary', startDate, endDate],
     queryFn: () => cashFlowApi.getSummary({ startDate, endDate }),
+    refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
+    staleTime: 0, // Sempre considera dados obsoletos para refetch imediato
   });
 }
 
@@ -15,6 +17,8 @@ export function useCategorySummary(startDate?: string, endDate?: string) {
   return useQuery({
     queryKey: ['cashflow', 'categories', startDate, endDate],
     queryFn: () => cashFlowApi.getCategorySummary({ startDate, endDate }),
+    refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
+    staleTime: 0, // Sempre considera dados obsoletos para refetch imediato
   });
 }
 
@@ -28,6 +32,8 @@ export function useCashFlowTransactions(params?: {
   return useQuery({
     queryKey: ['cashflow', 'transactions', params],
     queryFn: () => cashFlowApi.getTransactions(params),
+    refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
+    staleTime: 0, // Sempre considera dados obsoletos para refetch imediato
   });
 }
 
@@ -52,9 +58,9 @@ export function useDeleteTransaction() {
 
 // Hook para obter dados do dashboard com período customizável
 export function useDashboardData(startDate?: string, endDate?: string) {
-  // Se não passar datas, usa últimos 30 dias por padrão
+  // Se não passar datas, usa o mês atual por padrão (sincronizado com PeriodSelector)
   const defaultEndDate = dayjs().format('YYYY-MM-DD');
-  const defaultStartDate = dayjs().subtract(30, 'days').format('YYYY-MM-DD');
+  const defaultStartDate = dayjs().startOf('month').format('YYYY-MM-DD');
 
   const finalStartDate = startDate || defaultStartDate;
   const finalEndDate = endDate || defaultEndDate;

@@ -3,15 +3,72 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2391E5 !important;
   padding: 20px;
 }
 
 .login-card {
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: #ffffff !important;
+}
+
+/* Força tema claro na tela de login */
+.login-card * {
+  color-scheme: light !important;
+}
+
+.login-card .ant-card-body {
+  background-color: #ffffff !important;
+}
+
+.login-card .ant-form-item-label > label {
+  color: rgba(0, 0, 0, 0.88) !important;
+}
+
+.login-card .ant-input,
+.login-card .ant-input-password,
+.login-card .ant-input-affix-wrapper {
+  background-color: #ffffff !important;
+  border-color: #d9d9d9 !important;
+  color: rgba(0, 0, 0, 0.88) !important;
+}
+
+.login-card .ant-input::placeholder,
+.login-card .ant-input-password input::placeholder {
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.login-card .ant-input-affix-wrapper .anticon {
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.login-card .ant-input-password-icon {
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.login-card .ant-input:hover,
+.login-card .ant-input-affix-wrapper:hover,
+.login-card .ant-input-password:hover {
+  border-color: #4096ff !important;
+}
+
+.login-card .ant-input:focus,
+.login-card .ant-input-affix-wrapper:focus,
+.login-card .ant-input-affix-wrapper-focused {
+  border-color: #4096ff !important;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1) !important;
+}
+
+.login-card .ant-typography {
+  color: rgba(0, 0, 0, 0.88) !important;
+}
+
+.login-card .ant-typography-secondary {
+  color: rgba(0, 0, 0, 0.45) !important;
 }
 
 .login-header {
@@ -19,9 +76,18 @@
   margin-bottom: 32px;
 }
 
+.login-logo {
+  width: 180px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
 .login-header h2 {
   margin-bottom: 8px;
-  color: #1890ff;
+  color: #2391E5;
+  font-weight: 700;
 }
 
 .login-footer {
@@ -31,4 +97,15 @@
 
 .login-footer a {
   font-weight: 600;
+}
+
+/* Responsividade */
+@media (max-width: 576px) {
+  .login-logo {
+    width: 140px;
+  }
+
+  .login-card {
+    border-radius: 12px;
+  }
 }

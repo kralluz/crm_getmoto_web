@@ -54,13 +54,28 @@ export function PayrollPaymentForm() {
     // Filter out time entries that are already paid
     const unpaidEntries = timeEntries.filter(entry => !entry.payroll_payment_id);
 
-    // Calculate total hours from UNPAID time entries using total_hours
+    // Calculate total hours from UNPAID time entries
     // Note: regular_hours and overtime_hours are calculated by backend during payment
     let totalHours = 0;
     for (const entry of unpaidEntries) {
+      let entryHours = 0;
+
+      // Priority 1: Use total_hours if available (for entries registered by hours)
       if (entry.total_hours) {
-        totalHours += Number(entry.total_hours);
+        entryHours = Number(entry.total_hours);
       }
+      // Priority 2: Calculate from clock_in and clock_out (for entries registered by time)
+      else if (entry.clock_in && entry.clock_out) {
+        const clockIn = dayjs(entry.clock_in);
+        const clockOut = dayjs(entry.clock_out);
+        entryHours = clockOut.diff(clockIn, 'hour', true); // true for decimal hours
+      }
+      // Priority 3: Sum regular_hours and overtime_hours if available
+      else if (entry.regular_hours || entry.overtime_hours) {
+        entryHours = Number(entry.regular_hours || 0) + Number(entry.overtime_hours || 0);
+      }
+
+      totalHours += entryHours;
     }
 
     // In UK model: first 40 hours/week are regular, rest is overtime
@@ -92,6 +107,7 @@ export function PayrollPaymentForm() {
       employee_id: selectedEmployeeId!,
       period_start: dateRange[0].format('YYYY-MM-DD'),
       period_end: dateRange[1].format('YYYY-MM-DD'),
+      payment_date: dateRange[1].format('YYYY-MM-DD'),
       regular_hours: calculation.regularHours,
       overtime_hours: calculation.overtimeHours,
       bonuses_pence: 0,

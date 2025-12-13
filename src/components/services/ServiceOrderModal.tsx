@@ -53,6 +53,15 @@ export function ServiceOrderModal({
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent');
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const isEditing = !!serviceOrderId;
 
@@ -351,7 +360,7 @@ export function ServiceOrderModal({
         const newMile = values.vehicle_mile;
 
         if (newMile !== currentMile && newMile > currentMile) {
-          console.log(`🚗 Atualizando quilometragem do veículo ${values.vehicle_id}: ${currentMile}km -> ${newMile}km`);
+          console.log(`🚗 Atualizando quilometragem do veículo ${values.vehicle_id}: ${currentMile}miles -> ${newMile}miles`);
           try {
             await new Promise<void>((resolve, reject) => {
               updateVehicle(
@@ -472,17 +481,14 @@ export function ServiceOrderModal({
             
             if (milValue !== null && milValue !== undefined) {
               if (milValue < 0) {
-                NotificationService.error(t('vehicles.mileMinError') || 'Quilometragem não pode ser negativa');
                 return;
               }
               if (milValue < minMile) {
-                NotificationService.error(t('vehicles.mileCannotDecrease') || 'Quilometragem não pode diminuir');
                 return;
               }
             }
           } catch (error) {
             console.error('❌ Vehicle mile validation failed:', error);
-            NotificationService.warning('Por favor, corrija a quilometragem do veículo');
             return;
           }
         }
@@ -507,6 +513,13 @@ export function ServiceOrderModal({
         console.log('✅ Validation passed, moving to next step');
       }
       
+      // Validar campos do step 3 (detalhes da ordem)
+      if (currentStep === 3) {
+        console.log('Validating step 3 fields...');
+        await form.validateFields(['professional_name']);
+        console.log('✅ Step 3 validation passed');
+      }
+      
       console.log('✅ Moving to step:', currentStep + 1);
       setCurrentStep(currentStep + 1);
     } catch (error: unknown) {
@@ -521,24 +534,19 @@ export function ServiceOrderModal({
 
   const steps = [
     {
-      title: t('services.vehicleStep'),
-      description: t('services.vehicleStepDescription'),
+      title: isMobile ? t('services.vehicle') : t('services.vehicleStep'),
     },
     {
-      title: t('services.servicesStep'),
-      description: t('services.servicesStepDescription'),
+      title: isMobile ? t('services.services') : t('services.servicesStep'),
     },
     {
-      title: t('services.productsStep'),
-      description: t('services.productsStepDescription'),
+      title: isMobile ? t('services.products') : t('services.productsStep'),
     },
     {
-      title: t('services.finalizationStep'),
-      description: t('services.finalizationStepDescription'),
+      title: isMobile ? t('services.finalization') : t('services.finalizationStep'),
     },
     {
-      title: t('services.confirmationStep'),
-      description: t('services.confirmationStepDescription'),
+      title: isMobile ? t('services.confirm') : t('services.confirmationStep'),
     },
   ];
 
@@ -588,9 +596,12 @@ export function ServiceOrderModal({
           <Steps
             current={currentStep}
             items={steps}
-            style={{ marginBottom: 24 }}
+            size="small"
+            className="compact-steps"
+            responsive={false}
+            style={{ marginBottom: 16 }}
           />
-          <Divider />
+          <Divider style={{ margin: '12px 0' }} />
         </>
       )}
 

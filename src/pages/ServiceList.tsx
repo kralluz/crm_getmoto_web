@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Table, Card, Input, Typography, Select, Button, Alert, Row, Col, Space, Tag } from 'antd';
+import { Table, Card, Input, Typography, Select, Button, Alert, Row, Col, Space, Tag, Tooltip } from 'antd';
 import { SearchOutlined, PlusOutlined, EyeOutlined, UserOutlined, CarOutlined, CalendarOutlined, ToolOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useServiceOrders } from '../hooks/useServices';
 import { ServiceOrderModal } from '../components/services/ServiceOrderModal';
 import { PageHeader } from '../components/common/PageHeader';
+import { FloatingActionButton } from '../components/common/FloatingActionButton';
 import type { ServiceOrder, ServiceOrderStatus } from '../types/service-order';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
@@ -110,27 +111,35 @@ export function ServiceList() {
   };
 
   const calculateTotal = (order: ServiceOrder) => {
-    let total = parseDecimal(order.estimated_labor_cost);
+    let subtotal = parseDecimal(order.estimated_labor_cost);
     
-    // Somar produtos
+    // Somar produtos (usando unit_price do momento da venda)
     if (order.service_products) {
-      total += order.service_products.reduce((sum, product) => {
+      subtotal += order.service_products.reduce((sum, product) => {
         const qty = parseDecimal(product.product_qtd);
-        const price = parseDecimal(product.products.sell_price);
+        const price = parseDecimal(product.unit_price); // unit_price salvo
         return sum + (qty * price);
       }, 0);
     }
 
-    // Somar serviços realizados
+    // Somar serviços realizados (usando unit_price do momento da venda)
     if (order.services_realized) {
-      total += order.services_realized.reduce((sum, service) => {
+      subtotal += order.services_realized.reduce((sum, service) => {
         const qty = parseDecimal(service.service_qtd);
-        const cost = parseDecimal(service.service.service_cost);
+        const cost = parseDecimal(service.unit_price); // unit_price salvo
         return sum + (qty * cost);
       }, 0);
     }
 
-    return total;
+    // Aplicar desconto
+    let discountAmount = 0;
+    if (order.discount_amount) {
+      discountAmount = parseDecimal(order.discount_amount);
+    } else if (order.discount_percent) {
+      discountAmount = subtotal * (parseDecimal(order.discount_percent) / 100);
+    }
+
+    return subtotal - discountAmount;
   };
 
   const columns: ColumnsType<ServiceOrder> = [
@@ -199,9 +208,21 @@ export function ServiceList() {
       title: 'Order ID',
       dataIndex: 'service_order_id',
       key: 'service_order_id',
-      width: 100,
+      width: 120,
       align: 'center',
-      render: (id: number) => `#${id}`,
+      render: (id: number, record: ServiceOrder) => {
+        const hasDiscount = record.discount_percent || record.discount_amount;
+        return (
+          <Space size={4}>
+            <span>#{id}</span>
+            {hasDiscount && (
+              <Tag color="orange" style={{ fontSize: '10px', padding: '0 4px', lineHeight: '16px' }}>
+                %
+              </Tag>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -258,43 +279,49 @@ export function ServiceList() {
           <Card
             key={order.service_order_id}
             size="small"
-            style={{ borderRadius: 8 }}
-            bodyStyle={{ padding: '12px 16px' }}
+            actions={[
+              <Tooltip title={t('common.view')} key="view">
+                <EyeOutlined onClick={() => handleView(order.service_order_id)} />
+              </Tooltip>,
+            ]}
           >
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              {/* Header com Order ID, Status e Botão */}
+              {/* Header com Order ID e Status */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Space size="small">
-                  <span style={{ fontWeight: 600, color: '#1890ff' }}>#{order.service_order_id}</span>
-                  <Tag color={getStatusColor(order.status)}>
-                    {getStatusLabel(order.status)}
-                  </Tag>
+                <Space size={4}>
+                  <span style={{ fontWeight: 600, color: '#1890ff', fontSize: '14px' }}>#{order.service_order_id}</span>
+                  {(order.discount_percent || order.discount_amount) && (
+                    <Tag color="orange" style={{ fontSize: '10px', padding: '0 4px', lineHeight: '16px' }}>
+                      %
+                    </Tag>
+                  )}
                 </Space>
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<EyeOutlined />}
-                  onClick={() => handleView(order.service_order_id)}
-                >
-                  {t('common.view')}
-                </Button>
+                <Tag color={getStatusColor(order.status)}>
+                  {getStatusLabel(order.status)}
+                </Tag>
               </div>
 
               {/* Cliente */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <UserOutlined style={{ color: '#1890ff' }} />
-                <span style={{ fontWeight: 500 }}>{order.customer_name || '-'}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                  <UserOutlined style={{ marginRight: '4px' }} />
+                  {t('services.customer')}:
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: 500 }}>{order.customer_name || '-'}</span>
               </div>
 
               {/* Veículo */}
               {order.vehicles && (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <CarOutlined style={{ color: '#52c41a', marginTop: 2 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                    <CarOutlined style={{ marginRight: '4px' }} />
+                    {t('services.vehicle')}:
+                  </span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 500 }}>
                       {order.vehicles.brand} {order.vehicles.model}
                     </div>
-                    <div style={{ fontSize: 12, color: '#888' }}>
+                    <div style={{ fontSize: 11, color: '#888' }}>
                       {order.vehicles.plate} - {order.vehicles.year}
                     </div>
                   </div>
@@ -303,9 +330,12 @@ export function ServiceList() {
 
               {/* Descrição */}
               {order.service_description && (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <ToolOutlined style={{ color: '#faad14', marginTop: 2 }} />
-                  <div style={{ fontSize: 13, color: '#666', flex: 1 }}>
+                <div>
+                  <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                    <ToolOutlined style={{ marginRight: '4px' }} />
+                    {t('services.description')}:
+                  </span>
+                  <div style={{ fontSize: 12, color: '#666', marginTop: 4, fontStyle: 'italic' }}>
                     {order.service_description}
                   </div>
                 </div>
@@ -313,25 +343,21 @@ export function ServiceList() {
 
               {/* Profissional */}
               {order.professional_name && (
-                <div style={{ fontSize: 12, color: '#888' }}>
-                  <strong>{t('services.professional')}:</strong> {order.professional_name}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                    {t('services.professional')}:
+                  </span>
+                  <span style={{ fontSize: '12px' }}>{order.professional_name}</span>
                 </div>
               )}
 
-              {/* Footer com Data e Valor */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingTop: 8,
-                borderTop: '1px solid #f0f0f0',
-                marginTop: 4
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#888' }}>
+              {/* Data e Valor */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#888' }}>
                   <CalendarOutlined />
                   {formatDate(order.created_at)}
                 </div>
-                <div style={{ fontWeight: 600, fontSize: 15, color: '#1890ff' }}>
+                <div style={{ fontWeight: 600, fontSize: 16, color: '#52c41a' }}>
                   {formatCurrency(calculateTotal(order))}
                 </div>
               </div>
@@ -343,20 +369,22 @@ export function ServiceList() {
   };
 
   return (
-    <div>
+    <div style={{ width: '100%', overflow: 'hidden' }}>
       <PageHeader
         title={t('services.ordersList')}
         subtitle={t('services.subtitle')}
         helpText={t('services.serviceOrdersPageHelp')}
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-            size={isMobile ? 'middle' : 'large'}
-          >
-            {isMobile ? 'Novo' : t('services.newOrder')}
-          </Button>
+          !isMobile && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreate}
+              size="large"
+            >
+              {t('services.newOrder')}
+            </Button>
+          )
         }
       />
 
@@ -428,6 +456,14 @@ export function ServiceList() {
         open={modalOpen}
         serviceOrderId={editingServiceOrderId}
         onClose={handleCloseModal}
+      />
+
+      {/* Floating Action Button para mobile */}
+      <FloatingActionButton
+        icon={<PlusOutlined />}
+        tooltip={t('services.newOrder')}
+        onClick={handleCreate}
+        mobileOnly={false}
       />
     </div>
   );

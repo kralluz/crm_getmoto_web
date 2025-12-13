@@ -28,7 +28,7 @@ export function FinancialSummaryCards({
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} sm={12} lg={8}>
-        <Card loading={loading}>
+        <Card loading={loading} className="mobile-compact-card">
           <Statistic
             title={t('dashboard.currentBalance')}
             value={summary?.balance || 0}
@@ -42,7 +42,7 @@ export function FinancialSummaryCards({
         </Card>
       </Col>
       <Col xs={24} sm={12} lg={8}>
-        <Card loading={loading}>
+        <Card loading={loading} className="mobile-compact-card">
           <Statistic
             title={t('dashboard.periodIncome')}
             value={summary?.totalIncome || 0}
@@ -54,7 +54,7 @@ export function FinancialSummaryCards({
         </Card>
       </Col>
       <Col xs={24} sm={12} lg={8}>
-        <Card loading={loading}>
+        <Card loading={loading} className="mobile-compact-card">
           <Statistic
             title={t('dashboard.periodExpenses')}
             value={summary?.totalExpense || 0}

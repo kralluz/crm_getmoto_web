@@ -32,8 +32,13 @@ export function useCreatePurchaseOrder() {
       purchaseOrderApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['cashflow'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
     },
   });
 }
@@ -52,6 +57,13 @@ export function useUpdatePurchaseOrder() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       queryClient.invalidateQueries({ queryKey: ['purchase-order', id] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
     },
   });
 }
@@ -63,6 +75,13 @@ export function useDeletePurchaseOrder() {
     mutationFn: (id: number | string) => purchaseOrderApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
     },
   });
 }
@@ -80,8 +99,13 @@ export function useCancelPurchaseOrder() {
     }) => purchaseOrderApi.cancel(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['cashflow'] });
+      // Invalidar TODAS as queries do cashflow (recursivo)
+      queryClient.invalidateQueries({ 
+        queryKey: ['cashflow'], 
+        refetchType: 'all' // Força refetch ativo e inativo
+      });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-moves'] });
     },
   });
 }

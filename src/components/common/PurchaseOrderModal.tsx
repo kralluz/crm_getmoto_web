@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { NotificationService } from '../../services/notification.service';
 import { useCreatePurchaseOrder } from '../../hooks/usePurchaseOrders';
-import { useProducts } from '../../hooks/useProducts';
+import { useProducts, useUpdateProduct } from '../../hooks/useProducts';
 import { CurrencyInput } from './CurrencyInput';
 import type { PurchaseOrderProduct } from '../../types/purchase-order';
 
@@ -45,6 +45,7 @@ export function PurchaseOrderModal({
   const [form] = Form.useForm<PurchaseOrderFormData>();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const createPurchaseOrder = useCreatePurchaseOrder();
+  const { mutate: updateProduct } = useUpdateProduct();
   const { data: availableProducts } = useProducts();
   const { t } = useTranslation();
 
@@ -70,7 +71,7 @@ export function PurchaseOrderModal({
     setProducts(products.filter((p) => p.key !== key));
   };
 
-  const updateProduct = (
+  const updateProductRow = (
     key: string,
     field: keyof ProductRow,
     value: any
@@ -80,12 +81,16 @@ export function PurchaseOrderModal({
         if (p.key === key) {
           const updated = { ...p, [field]: value };
 
-          // Atualizar nome do produto
+          // Atualizar nome do produto e preço ao selecionar
           if (field === 'product_id') {
             const product = availableProducts?.find(
               (ap) => ap.product_id === value
             );
             updated.product_name = product?.product_name;
+            // Preencher automaticamente com o preço de custo do produto
+            if (product?.buy_price) {
+              updated.unit_price = parseFloat(String(product.buy_price));
+            }
           }
 
           return updated;
@@ -126,6 +131,31 @@ export function PurchaseOrderModal({
         notes: values.notes,
       });
 
+      // Atualizar o preço de custo dos produtos no banco
+      for (const p of products) {
+        const currentProduct = availableProducts?.find(
+          (ap) => ap.product_id === p.product_id
+        );
+        if (currentProduct && currentProduct.buy_price !== p.unit_price) {
+          try {
+            updateProduct({
+              id: p.product_id,
+              data: {
+                buy_price: p.unit_price,
+                // Manter os outros campos
+                category_id: currentProduct.category_id,
+                product_name: currentProduct.product_name,
+                sell_price: parseFloat(String(currentProduct.sell_price)),
+                quantity_alert: parseFloat(String(currentProduct.quantity_alert)),
+                is_active: currentProduct.is_active,
+              },
+            });
+          } catch (updateError) {
+            console.error('Erro ao atualizar preço do produto:', updateError);
+          }
+        }
+      }
+
       NotificationService.success(t('purchaseOrder.successMessage'));
       form.resetFields();
       setProducts([]);
@@ -154,7 +184,7 @@ export function PurchaseOrderModal({
           placeholder={t('purchaseOrder.selectProduct')}
           style={{ width: '100%' }}
           options={productOptions}
-          onChange={(val) => updateProduct(record.key, 'product_id', val)}
+          onChange={(val) => updateProductRow(record.key, 'product_id', val)}
           showSearch
           filterOption={(input, option) =>
             (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -173,7 +203,7 @@ export function PurchaseOrderModal({
           min={1}
           step={1}
           style={{ width: '100%' }}
-          onChange={(val) => updateProduct(record.key, 'quantity', val || 1)}
+          onChange={(val) => updateProductRow(record.key, 'quantity', val || 1)}
           parser={(value) => {
             const parsed = Number(value);
             return isNaN(parsed) || parsed < 1 ? 1 : Math.floor(parsed);
@@ -190,7 +220,7 @@ export function PurchaseOrderModal({
         <CurrencyInput
           value={value}
           style={{ width: '100%' }}
-          onChange={(val) => updateProduct(record.key, 'unit_price', val || 0)}
+          onChange={(val) => updateProductRow(record.key, 'unit_price', val || 0)}
         />
       ),
     },

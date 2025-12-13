@@ -17,21 +17,23 @@ import {
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined,
   KeyOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useChangePassword } from '../../hooks/useUsers';
 import type { User, UserRole, CreateUserInput, UpdateUserInput } from '../../types/user';
-import dayjs from 'dayjs';
+import { formatDate } from '../../utils/format.util';
 import { useTranslation } from 'react-i18next';
 import { NotificationService } from '../../services/notification.service';
-
-const { confirm } = Modal;
+import { DeleteConfirmButton } from '../common/DeleteConfirmButton';
+import { useThemeStore } from '../../store/theme-store';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function UsersSettings() {
   const { t } = useTranslation();
+  const { mode } = useThemeStore();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -89,25 +91,23 @@ export function UsersSettings() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (user: User) => {
-    confirm({
-      title: t('users.deleteUser'),
-      icon: <ExclamationCircleOutlined />,
-      content: t('users.deleteUserConfirm', { name: user.name }),
-      okText: t('users.yesDelete'),
-      okType: 'danger',
-      cancelText: t('users.cancel'),
-      onOk() {
-        deleteUser(user.id, {
-          onSuccess: () => {
-            NotificationService.success(t('users.userDeletedSuccess'));
-          },
-          onError: (error: any) => {
-            NotificationService.error(error?.response?.data?.message || t('users.userDeleteError'));
-          },
-        });
-      },
-    });
+  const handleDelete = async (userId: string) => {
+    try {
+      deleteUser(userId, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['users'] });
+          NotificationService.success(t('users.userDeletedSuccess'));
+        },
+        onError: (error: any) => {
+          console.error('Delete user error:', error);
+          const errorMessage = error?.response?.data?.message || error?.message || t('users.userDeleteError');
+          NotificationService.error(errorMessage);
+        },
+      });
+    } catch (error: any) {
+      console.error('Delete user catch error:', error);
+      NotificationService.error(error?.response?.data?.message || t('users.userDeleteError'));
+    }
   };
 
   const handleChangePassword = (userId: string) => {
@@ -123,6 +123,7 @@ export function UsersSettings() {
           { id: passwordUserId, data: { newPassword: values.password, confirmPassword: values.confirmPassword } },
           {
             onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ['users'] });
               NotificationService.success(t('users.passwordChangedSuccess'));
               setIsPasswordModalOpen(false);
               passwordForm.resetFields();
@@ -152,6 +153,7 @@ export function UsersSettings() {
           { id: editingUser.id, data: updateData },
           {
             onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ['users'] });
               NotificationService.success(t('users.userUpdatedSuccess'));
               setIsModalOpen(false);
               form.resetFields();
@@ -173,6 +175,7 @@ export function UsersSettings() {
 
         createUser(createData, {
           onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
             NotificationService.success(t('users.userCreatedSuccess'));
             setIsModalOpen(false);
             form.resetFields();
@@ -210,15 +213,13 @@ export function UsersSettings() {
               onClick={() => handleChangePassword(record.id)}
             />
           </Tooltip>
-          <Tooltip title={t('users.delete')}>
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record)}
-            />
-          </Tooltip>
+          <DeleteConfirmButton
+            onConfirm={() => handleDelete(record.id)}
+            title={t('users.deleteUser')}
+            description={t('users.deleteUserConfirm', { name: record.name })}
+            buttonSize="small"
+            iconOnly
+          />
         </Space>
       ),
     },
@@ -262,8 +263,8 @@ export function UsersSettings() {
       key: 'createdAt',
       width: 130,
       align: 'center',
-      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
-      sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
+      render: (date: string) => formatDate(date),
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     },
   ];
 
@@ -293,12 +294,16 @@ export function UsersSettings() {
                     <Tooltip title={t('users.changePassword')} key="password">
                       <KeyOutlined onClick={() => handleChangePassword(user.id)} />
                     </Tooltip>,
-                    <Tooltip title={t('users.delete')} key="delete">
-                      <DeleteOutlined
-                        style={{ color: '#ff4d4f' }}
-                        onClick={() => handleDelete(user)}
+                    <div key="delete" style={{ display: 'inline-block' }}>
+                      <DeleteConfirmButton
+                        onConfirm={() => handleDelete(user.id)}
+                        title={t('users.deleteUser')}
+                        description={t('users.deleteUserConfirm', { name: user.name })}
+                        buttonSize="small"
+                        buttonType="link"
+                        iconOnly
                       />
-                    </Tooltip>,
+                    </div>,
                   ]}
                 >
                   <div style={{ marginBottom: 8 }}>
@@ -316,7 +321,7 @@ export function UsersSettings() {
                     </Tag>
                   </Space>
                   <div style={{ marginTop: 8, fontSize: 11, color: '#8c8c8c' }}>
-                    {t('users.createdAt')}: {dayjs.utc(user.createdAt).format('DD/MM/YYYY')}
+                    {t('users.createdAt')}: {formatDate(user.createdAt)}
                   </div>
                 </Card>
               </Col>
@@ -487,13 +492,13 @@ export function UsersSettings() {
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <div style={{ 
             padding: '16px', 
-            backgroundColor: '#fff7e6', 
-            border: '1px solid #ffd666',
+            backgroundColor: mode === 'dark' ? '#2b2111' : '#fff7e6', 
+            border: mode === 'dark' ? '1px solid #d48806' : '1px solid #ffd666',
             borderRadius: '6px'
           }}>
             <Space direction="vertical" size="small">
-              <strong style={{ color: '#d48806' }}>⚠️ {t('users.permissionsWarningTitle')}</strong>
-              <p style={{ margin: 0, color: '#595959' }}>
+              <strong style={{ color: mode === 'dark' ? '#ffa940' : '#d48806' }}>⚠️ {t('users.permissionsWarningTitle')}</strong>
+              <p style={{ margin: 0, color: mode === 'dark' ? '#bfbfbf' : '#595959' }}>
                 {t('users.permissionsWarningMessage')}
               </p>
             </Space>

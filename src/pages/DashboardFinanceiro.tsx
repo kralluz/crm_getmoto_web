@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { Space, Typography, Alert, Row, Col, Tabs, Card, Table, Input, Select, Button, DatePicker, Tag } from 'antd';
-import { SearchOutlined, FilterOutlined, ArrowUpOutlined, ArrowDownOutlined, DashboardOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { useState, useMemo, useEffect } from 'react';
+import { Space, Alert, Row, Col, Tabs, Card, Table, Input, Select, Button, DatePicker, Tag, List } from 'antd';
+import { SearchOutlined, FilterOutlined, ArrowUpOutlined, ArrowDownOutlined, DashboardOutlined, UnorderedListOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
@@ -12,9 +12,8 @@ import { FinancialSummaryCards } from '../components/dashboard/FinancialSummaryC
 import { CashFlowChart } from '../components/dashboard/CashFlowChart';
 import { RecentTransactionsTable } from '../components/dashboard/RecentTransactionsTable';
 import { PageHeader } from '../components/common/PageHeader';
-import { useDashboardData, useDeleteTransaction } from '../hooks/useCashFlow';
+import { useDashboardData } from '../hooks/useCashFlow';
 import { generateCashFlowReport } from '../utils/reports';
-import { ActionButtons } from '../components/common/ActionButtons';
 import type { CashFlowTransaction, CashFlowDirection } from '../types/cashflow';
 import { getTransactionSource } from '../types/cashflow';
 import { useFormat } from '../hooks/useFormat';
@@ -24,7 +23,6 @@ import { HideCancelledCheckbox } from '../components/common/HideCancelledCheckbo
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 export function DashboardFinanceiro() {
@@ -33,6 +31,16 @@ export function DashboardFinanceiro() {
   const { formatCurrency, formatDate } = useFormat();
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Hook para detectar mudanças no tamanho da tela
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Hook para ocultar cancelamentos
   const { hideCancelled, setHideCancelled } = useHideCancelled('dashboard');
@@ -41,17 +49,17 @@ export function DashboardFinanceiro() {
   const [searchText, setSearchText] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | CashFlowDirection>('all');
   const [movementDateRange, setMovementDateRange] = useState<[string, string] | undefined>(undefined);
+  const [pageSize, setPageSize] = useState(20);
 
   // Estado para controlar o período selecionado (usado na visão geral)
+  // Sincronizado com o período padrão do PeriodSelector ('thisMonth')
   const [dateRange, setDateRange] = useState({
-    startDate: dayjs().subtract(30, 'days').format('YYYY-MM-DD'),
-    endDate: dayjs().format('YYYY-MM-DD'),
+    startDate: dayjs().startOf('month').format('YYYY-MM-DD'), // Início do mês atual
+    endDate: dayjs().format('YYYY-MM-DD'), // Hoje
   });
 
   const { summary, transactions, isLoading, isError } =
     useDashboardData(dateRange.startDate, dateRange.endDate);
-
-  const { mutate: deleteTransaction } = useDeleteTransaction();
 
   const handlePeriodChange = (startDate: string, endDate: string) => {
     setDateRange({ startDate, endDate });
@@ -128,14 +136,6 @@ export function DashboardFinanceiro() {
     return filtered;
   }, [transactions, searchText, directionFilter, movementDateRange, hideCancelled]);
 
-  const handleView = (id: number | string) => {
-    navigate(`/movimentacoes/${id}`);
-  };
-
-  const handleDelete = async (id: number | string) => {
-    deleteTransaction(String(id));
-  };
-
   const handleDateRangeChange = (dates: any) => {
     if (dates && dates[0] && dates[1]) {
       setMovementDateRange([
@@ -175,14 +175,11 @@ export function DashboardFinanceiro() {
       align: 'center',
       fixed: 'left',
       render: (_, record) => (
-        <ActionButtons
-          onView={() => handleView(record.cash_flow_id)}
-          onDelete={() => handleDelete(record.cash_flow_id)}
-          showView
-          showEdit={false}
-          deleteTitle={t('cashflow.deleteMovement')}
-          deleteDescription={t('cashflow.deleteMovementConfirm')}
-          iconOnly
+        <Button
+          type="link"
+          icon={<SearchOutlined />}
+          onClick={() => navigate(`/movimentacoes/${record.cash_flow_id}`)}
+          title={t('common.view')}
         />
       ),
     },
@@ -358,14 +355,14 @@ export function DashboardFinanceiro() {
             ),
             children: (
               <div>
-                <Card style={{ marginBottom: 16 }}>
+                <Card style={{ marginBottom: 16 }} className={isMobile ? 'mobile-filters-card' : ''}>
                   <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap' }}>
                     <Input
                       placeholder={t('cashflow.searchMovements')}
                       prefix={<SearchOutlined />}
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
-                      style={{ width: 300 }}
+                      style={{ width: isMobile ? '100%' : 300 }}
                       allowClear
                     />
 
@@ -373,7 +370,7 @@ export function DashboardFinanceiro() {
                       placeholder={t('cashflow.typeFilter')}
                       value={directionFilter}
                       onChange={setDirectionFilter}
-                      style={{ width: 150 }}
+                      style={{ width: isMobile ? '100%' : 150 }}
                       options={[
                         { value: 'all', label: t('cashflow.allTypes') },
                         { value: 'entrada', label: t('cashflow.incomes') },
@@ -385,7 +382,7 @@ export function DashboardFinanceiro() {
                       format="DD/MM/YYYY"
                       placeholder={[t('cashflow.startDate'), t('cashflow.endDate')]}
                       onChange={handleDateRangeChange}
-                      style={{ width: 280 }}
+                      style={{ width: isMobile ? '100%' : 280 }}
                     />
 
                     <HideCancelledCheckbox
@@ -401,6 +398,7 @@ export function DashboardFinanceiro() {
                           setDirectionFilter('all');
                           setMovementDateRange(undefined);
                         }}
+                        style={{ width: isMobile ? '100%' : 'auto' }}
                       >
                         {t('common.clearFilters')}
                       </Button>
@@ -408,25 +406,55 @@ export function DashboardFinanceiro() {
                   </Space>
                 </Card>
 
-                <Card style={{ marginBottom: 16 }}>
-                  <Space size="large" style={{ width: '100%', justifyContent: 'space-around' }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.totalIncome')}</div>
-                      <div style={{ color: '#52c41a', fontSize: 24, fontWeight: 600 }}>
+                <Card style={{ marginBottom: 16 }} className={isMobile ? 'mobile-totals-card' : ''}>
+                  <Space 
+                    size={isMobile ? 'small' : 'large'} 
+                    direction={isMobile ? 'vertical' : 'horizontal'}
+                    style={{ width: '100%', justifyContent: isMobile ? 'flex-start' : 'space-around' }}
+                  >
+                    <div style={{ textAlign: isMobile ? 'left' : 'center', width: isMobile ? '100%' : 'auto' }}>
+                      <div style={{ 
+                        color: '#8c8c8c', 
+                        fontSize: isMobile ? 12 : 14, 
+                        marginBottom: isMobile ? 2 : 4 
+                      }}>
+                        {t('cashflow.totalIncome')}
+                      </div>
+                      <div style={{ 
+                        color: '#52c41a', 
+                        fontSize: isMobile ? 18 : 24, 
+                        fontWeight: 600 
+                      }}>
                         {formatCurrency(totals.income)}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.totalExpense')}</div>
-                      <div style={{ color: '#ff4d4f', fontSize: 24, fontWeight: 600 }}>
+                    <div style={{ textAlign: isMobile ? 'left' : 'center', width: isMobile ? '100%' : 'auto' }}>
+                      <div style={{ 
+                        color: '#8c8c8c', 
+                        fontSize: isMobile ? 12 : 14, 
+                        marginBottom: isMobile ? 2 : 4 
+                      }}>
+                        {t('cashflow.totalExpense')}
+                      </div>
+                      <div style={{ 
+                        color: '#ff4d4f', 
+                        fontSize: isMobile ? 18 : 24, 
+                        fontWeight: 600 
+                      }}>
                         {formatCurrency(totals.expense)}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ color: '#8c8c8c', fontSize: 14, marginBottom: 4 }}>{t('cashflow.balanceLabel')}</div>
+                    <div style={{ textAlign: isMobile ? 'left' : 'center', width: isMobile ? '100%' : 'auto' }}>
+                      <div style={{ 
+                        color: '#8c8c8c', 
+                        fontSize: isMobile ? 12 : 14, 
+                        marginBottom: isMobile ? 2 : 4 
+                      }}>
+                        {t('cashflow.balanceLabel')}
+                      </div>
                       <div style={{
                         color: totals.balance >= 0 ? '#52c41a' : '#ff4d4f',
-                        fontSize: 24,
+                        fontSize: isMobile ? 18 : 24,
                         fontWeight: 600
                       }}>
                         {formatCurrency(totals.balance)}
@@ -435,22 +463,138 @@ export function DashboardFinanceiro() {
                   </Space>
                 </Card>
 
-                <Card>
-                  <Table
-                    columns={columns}
-                    dataSource={filteredTransactions}
-                    loading={isLoading}
-                    rowKey="cash_flow_id"
-                    pagination={{
-                      pageSize: 20,
-                      showSizeChanger: true,
-                      showTotal: (total) => t('cashflow.totalMovements', { total }),
-                      pageSizeOptions: ['10', '20', '50', '100'],
-                    }}
-                    size="small"
-                    scroll={{ x: 1200 }}
-                  />
-                </Card>
+                {isMobile ? (
+                  // Versão mobile - Lista compacta
+                  <Card className="mobile-movements-list">
+                    <List
+                      loading={isLoading}
+                      dataSource={filteredTransactions}
+                      pagination={{
+                        pageSize: pageSize,
+                        showSizeChanger: true,
+                        showTotal: (total) => t('cashflow.totalMovements', { total }),
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        onChange: (page, newPageSize) => {
+                          if (newPageSize !== pageSize) setPageSize(newPageSize);
+                        },
+                      }}
+                      renderItem={(item: CashFlowTransaction) => {
+                        const isIncome = item.direction === 'entrada';
+                        const source = getTransactionSource(item);
+                        const sourceLabels = {
+                          service_order: t('cashflow.sources.service_order'),
+                          service_realized: t('cashflow.sources.service_realized'),
+                          service_product: t('cashflow.sources.service_product'),
+                          purchase_order: t('cashflow.sources.purchase_order'),
+                          expense: t('cashflow.sources.expense'),
+                          orphan: t('cashflow.sources.orphan'),
+                        };
+
+                        return (
+                          <List.Item
+                            style={{
+                              padding: '12px 0',
+                              borderBottom: '1px solid #f0f0f0',
+                            }}
+                            onClick={() => navigate(`/movimentacoes/${item.cash_flow_id}`)}
+                          >
+                            <div style={{ width: '100%', cursor: 'pointer' }}>
+                              {/* Linha 1: Data e Valor */}
+                              <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center',
+                                marginBottom: '8px'
+                              }}>
+                                <span style={{ 
+                                  fontSize: '12px', 
+                                  color: '#8c8c8c',
+                                  textDecoration: isCancelled(item.note ?? null) ? 'line-through' : 'none'
+                                }}>
+                                  {formatDate(item.occurred_at, 'short')}
+                                </span>
+                                <span style={{
+                                  fontWeight: 'bold',
+                                  fontSize: '16px',
+                                  color: isIncome ? '#52c41a' : '#ff4d4f',
+                                  textDecoration: isCancelled(item.note ?? null) ? 'line-through' : 'none'
+                                }}>
+                                  {isIncome ? '+' : '-'} {formatCurrency(Math.abs(item.amount))}
+                                </span>
+                              </div>
+                              
+                              {/* Linha 2: Tipo e Source */}
+                              <div style={{ marginBottom: '6px' }}>
+                                <Tag
+                                  color={isIncome ? 'green' : 'red'}
+                                  icon={isIncome ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+                                  style={{ 
+                                    fontSize: '11px',
+                                    marginRight: '8px',
+                                    textDecoration: isCancelled(item.note ?? null) ? 'line-through' : 'none'
+                                  }}
+                                >
+                                  {isIncome ? t('cashflow.income') : t('cashflow.expense')}
+                                </Tag>
+                                <Tag
+                                  style={{ 
+                                    fontSize: '10px',
+                                    textDecoration: isCancelled(item.note ?? null) ? 'line-through' : 'none'
+                                  }}
+                                >
+                                  {sourceLabels[source]}
+                                </Tag>
+                              </div>
+                              
+                              {/* Linha 3: Descrição (se existir) */}
+                              {item.note && (
+                                <div style={{ 
+                                  fontSize: '12px', 
+                                  color: '#595959',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textDecoration: isCancelled(item.note) ? 'line-through' : 'none'
+                                }}>
+                                  {item.note}
+                                </div>
+                              )}
+                              
+                              {/* Ícone de visualização */}
+                              <div style={{ 
+                                marginTop: '8px', 
+                                textAlign: 'right',
+                                fontSize: '11px',
+                                color: '#1890ff'
+                              }}>
+                                <EyeOutlined /> {t('common.view')}
+                              </div>
+                            </div>
+                          </List.Item>
+                        );
+                      }}
+                    />
+                  </Card>
+                ) : (
+                  // Versão desktop - Tabela
+                  <Card>
+                    <Table
+                      columns={columns}
+                      dataSource={filteredTransactions}
+                      loading={isLoading}
+                      rowKey="cash_flow_id"
+                      pagination={{
+                        pageSize: pageSize,
+                        showSizeChanger: true,
+                        showTotal: (total) => t('cashflow.totalMovements', { total }),
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                        onShowSizeChange: (_, size) => setPageSize(size),
+                      }}
+                      size="small"
+                      scroll={{ x: 1200 }}
+                    />
+                  </Card>
+                )}
               </div>
             ),
           },

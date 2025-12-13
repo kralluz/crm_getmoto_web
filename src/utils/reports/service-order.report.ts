@@ -26,18 +26,14 @@ function calculateTotals(serviceOrder: ServiceOrder) {
   const productsTotal =
     serviceOrder.service_products?.reduce((sum, product) => {
       const qty = parseDecimal(product.product_qtd);
-      const price = (product as any).unit_price !== undefined
-        ? parseDecimal((product as any).unit_price)
-        : parseDecimal(product.products.sell_price);
+      const price = parseDecimal(product.unit_price); // Usar unit_price salvo
       return sum + qty * price;
     }, 0) || 0;
 
   const servicesTotal =
     serviceOrder.services_realized?.reduce((sum, service) => {
       const qty = parseDecimal(service.service_qtd);
-      const cost = (service as any).unit_price !== undefined
-        ? parseDecimal((service as any).unit_price)
-        : parseDecimal(service.service.service_cost);
+      const cost = parseDecimal(service.unit_price); // Usar unit_price salvo
       return sum + qty * cost;
     }, 0) || 0;
 
@@ -130,9 +126,7 @@ function createItemsTable(serviceOrder: ServiceOrder): Content {
   if (serviceOrder.service_products && serviceOrder.service_products.length > 0) {
     serviceOrder.service_products.forEach((product) => {
       const qty = parseDecimal(product.product_qtd);
-      const price = (product as any).unit_price !== undefined
-        ? parseDecimal((product as any).unit_price)
-        : parseDecimal(product.products.sell_price);
+      const price = parseDecimal(product.unit_price); // Usar unit_price salvo
       const total = qty * price;
 
       rows.push([
@@ -148,9 +142,7 @@ function createItemsTable(serviceOrder: ServiceOrder): Content {
   if (serviceOrder.services_realized && serviceOrder.services_realized.length > 0) {
     serviceOrder.services_realized.forEach((service) => {
       const qty = parseDecimal(service.service_qtd);
-      const cost = (service as any).unit_price !== undefined
-        ? parseDecimal((service as any).unit_price)
-        : parseDecimal(service.service.service_cost);
+      const cost = parseDecimal(service.unit_price); // Usar unit_price salvo
       const total = qty * cost;
 
       rows.push([

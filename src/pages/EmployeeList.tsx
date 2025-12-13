@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Table, Card, Input, Tag, Typography, Space, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, CheckCircleOutlined, StopOutlined, UserOutlined, MailOutlined, CalendarOutlined, DollarOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { useEmployees, useDisableEmployee, useEnableEmployee } from '../hooks/useEmployees';
+import { FloatingActionButton } from '../components/common/FloatingActionButton';
 import type { Employee } from '../types/employee';
 import { formatUKCurrency } from '../types/employee';
-import dayjs from 'dayjs';
+import { formatDate } from '../utils/format.util';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -21,6 +22,13 @@ export function EmployeeList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: employees = [], isLoading } = useEmployees(showInactive ? undefined : true);
   const { mutate: disableEmployee, isPending: isDisabling } = useDisableEmployee();
@@ -77,98 +85,65 @@ export function EmployeeList() {
     return (
       <Card
         key={employee.employee_id}
-        style={{ marginBottom: '16px', cursor: 'pointer' }}
-        hoverable
-        onClick={() => navigate(`/employees/${employee.employee_id}`)}
+        style={{ marginBottom: '16px' }}
+        size="small"
+        actions={[
+          <Tooltip title={t('common.view')} key="view">
+            <EyeOutlined onClick={() => navigate(`/employees/${employee.employee_id}`)} />
+          </Tooltip>,
+          <Tooltip title={t('common.edit')} key="edit">
+            <EditOutlined onClick={() => navigate(`/employees/${employee.employee_id}/edit`)} />
+          </Tooltip>,
+        ]}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-          <UserOutlined style={{ color: '#1890ff', fontSize: '18px' }} />
-          <Text strong style={{ fontSize: '18px', whiteSpace: 'nowrap' }}>
-            {employee.first_name} {employee.last_name}
-          </Text>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <UserOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
+            <Text strong style={{ fontSize: '14px' }}>
+              {employee.first_name} {employee.last_name}
+            </Text>
+          </div>
           <Tag color={employee.is_active ? 'green' : 'red'}>
             {employee.is_active ? t('common.active') : t('common.inactive')}
           </Tag>
         </div>
 
-        <Space direction="vertical" size="small" style={{ width: '100%', marginBottom: '12px' }}>
-          <div>
+        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <Text type="secondary" style={{ fontSize: '12px' }}>
               {t('employees.jobTitle')}:
             </Text>
-            <br />
-            <Text>{employee.job_title}</Text>
+            <Text style={{ fontSize: '13px' }}>{employee.job_title}</Text>
           </div>
 
           {employee.email && (
-            <div>
-              <MailOutlined style={{ marginRight: '6px', color: '#8c8c8c' }} />
-              <Text style={{ fontSize: '13px' }}>{employee.email}</Text>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                <MailOutlined style={{ marginRight: '4px' }} />
+                Email:
+              </span>
+              <Text style={{ fontSize: '12px' }}>{employee.email}</Text>
             </div>
           )}
 
-          <div>
-            <DollarOutlined style={{ marginRight: '6px', color: '#52c41a' }} />
-            <Text strong style={{ color: '#52c41a' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+              <DollarOutlined style={{ marginRight: '4px' }} />
+              {t('employees.hourlyRate')}:
+            </span>
+            <Text strong style={{ color: '#52c41a', fontSize: '13px' }}>
               {formatUKCurrency(employee.hourly_rate_pence)}/hr
             </Text>
           </div>
 
-          <div>
-            <CalendarOutlined style={{ marginRight: '6px', color: '#8c8c8c' }} />
-            <Text type="secondary" style={{ fontSize: '13px' }}>
-              {t('employees.startDate')}: {dayjs(employee.start_date).format('DD/MM/YYYY')}
-            </Text>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+              <CalendarOutlined style={{ marginRight: '4px' }} />
+              {t('employees.startDate')}:
+            </span>
+            <Text style={{ fontSize: '12px' }}>{formatDate(employee.start_date)}</Text>
           </div>
         </Space>
-
-        <div 
-          style={{ 
-            display: 'flex', 
-            gap: '8px', 
-            paddingTop: '12px', 
-            borderTop: '1px solid #f0f0f0',
-            justifyContent: 'flex-end'
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/employees/${employee.employee_id}/edit`);
-            }}
-          >
-            {t('common.edit')}
-          </Button>
-          {employee.is_active ? (
-            <Button
-              danger
-              size="small"
-              icon={<StopOutlined />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDisable(employee.employee_id);
-              }}
-              loading={isDisabling}
-            >
-              {t('employees.disable')}
-            </Button>
-          ) : (
-            <Button
-              size="small"
-              icon={<CheckCircleOutlined />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEnable(employee.employee_id);
-              }}
-              loading={isEnabling}
-            >
-              {t('employees.enable')}
-            </Button>
-          )}
-        </div>
       </Card>
     );
   };
@@ -255,7 +230,7 @@ export function EmployeeList() {
       key: 'start_date',
       width: 150,
       align: 'center' as const,
-      render: (_, record) => dayjs(record.start_date).format('DD/MM/YYYY'),
+      render: (_, record) => formatDate(record.start_date),
       responsive: ['lg'] as any,
     },
   ];
@@ -272,13 +247,15 @@ export function EmployeeList() {
             gap: '12px'
           }}>
             <Title level={3} style={{ margin: 0 }}>{t('employees.title')}</Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/employees/new')}
-            >
-              <span style={{ display: 'inline' }}>{t('employees.newEmployee')}</span>
-            </Button>
+            {!isMobile && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/employees/new')}
+              >
+                <span style={{ display: 'inline' }}>{t('employees.newEmployee')}</span>
+              </Button>
+            )}
           </div>
 
           <Space 
@@ -419,7 +396,7 @@ export function EmployeeList() {
                   {t('employees.startDate')}:
                 </Text>
                 <br />
-                <Text>{dayjs(selectedEmployee.start_date).format('DD/MM/YYYY')}</Text>
+                <Text>{formatDate(selectedEmployee.start_date)}</Text>
               </div>
 
               {selectedEmployee.end_date && (
@@ -429,7 +406,7 @@ export function EmployeeList() {
                     {t('employees.endDate')}:
                   </Text>
                   <br />
-                  <Text>{dayjs(selectedEmployee.end_date).format('DD/MM/YYYY')}</Text>
+                  <Text>{formatDate(selectedEmployee.end_date)}</Text>
                 </div>
               )}
             </Space>
@@ -475,6 +452,14 @@ export function EmployeeList() {
           </Space>
         )}
       </Modal>
+
+      {/* Floating Action Button para mobile */}
+      <FloatingActionButton
+        icon={<PlusOutlined />}
+        tooltip={t('employees.newEmployee')}
+        onClick={() => navigate('/employees/new')}
+        mobileOnly
+      />
     </div>
   );
 }

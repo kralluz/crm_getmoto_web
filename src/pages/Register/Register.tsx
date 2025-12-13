@@ -21,13 +21,8 @@ export function Register() {
 
       const response = await registerMutation.mutateAsync(registerData);
 
-      // Atualiza estado global com dados do usuário e token
-      setAuthState(response.user, response.token);
-
-      // Armazena refresh token se existir
-      if (response.refreshToken) {
-        localStorage.setItem('refresh_token', response.refreshToken);
-      }
+      // Atualiza estado global com dados do usuário, token e refresh token
+      setAuthState(response.user, response.token, response.refreshToken || '');
 
       // Redireciona para dashboard
       navigate('/dashboard', { replace: true });

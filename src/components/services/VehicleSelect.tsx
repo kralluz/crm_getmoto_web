@@ -149,7 +149,7 @@ export function VehicleSelect({ value, onChange, onVehicleCreated, ...props }: V
           </Form.Item>
 
           <Form.Item
-            label="Quilometragem (km)"
+            label="Mileage (miles)"
             name="mile"
           >
             <InputNumber

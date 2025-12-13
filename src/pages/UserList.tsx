@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Table, Card, Input, Tag, Typography, Space, Select, Button, Tooltip } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, KeyOutlined } from '@ant-design/icons';
+import { SearchOutlined, PlusOutlined, EditOutlined, EyeOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import type { User, UserRole } from '../types/user';
 import dayjs from 'dayjs';
+import { useUsers, useDeleteUser } from '../hooks/useUsers';
+import { DeleteConfirmButton } from '../components/common/DeleteConfirmButton';
 
 const { Title } = Typography;
 
@@ -17,63 +19,26 @@ export function UserList() {
   const [selectedStatus, setSelectedStatus] = useState<'active' | 'inactive' | ''>('');
   const [pageSize, setPageSize] = useState(10);
 
-  // Mock data - substituir por chamada real à API
-  const mockUsers: User[] = [
-    {
-      id: '1',
-      name: 'Admin Sistema',
-      email: 'admin@getmoto.com',
-      role: 'ADMIN',
-      active: true,
-      createdAt: '2024-01-10',
-      updatedAt: '2024-10-20',
-    },
-    {
-      id: '2',
-      name: 'Carlos Gerente',
-      email: 'carlos@getmoto.com',
-      role: 'MANAGER',
-      active: true,
-      createdAt: '2024-02-15',
-      updatedAt: '2024-10-20',
-    },
-    {
-      id: '3',
-      name: 'João Mecânico',
-      email: 'joao@getmoto.com',
-      role: 'MECHANIC',
-      active: true,
-      createdAt: '2024-03-20',
-      updatedAt: '2024-10-20',
-    },
-    {
-      id: '4',
-      name: 'Maria Atendente',
-      email: 'maria@getmoto.com',
-      role: 'ATTENDANT',
-      active: false,
-      createdAt: '2024-04-05',
-      updatedAt: '2024-09-10',
-    },
-  ];
-
-  const isLoading = false;
+  // Buscar usuários da API
+  const activeFilter = selectedStatus === 'active' ? true : selectedStatus === 'inactive' ? false : undefined;
+  const { data: users, isLoading } = useUsers({
+    active: activeFilter,
+    role: selectedRole || undefined,
+  });
+  const { mutate: deleteUser } = useDeleteUser();
 
   // Filtrar usuários
   const filteredUsers = useMemo(() => {
-    return mockUsers.filter(user => {
+    if (!Array.isArray(users)) return [];
+
+    return users.filter(user => {
       const matchesSearch = searchText === '' ||
         user.name.toLowerCase().includes(searchText.toLowerCase()) ||
         user.email.toLowerCase().includes(searchText.toLowerCase());
 
-      const matchesRole = selectedRole === '' || user.role === selectedRole;
-      const matchesStatus = selectedStatus === '' ||
-        (selectedStatus === 'active' && user.active) ||
-        (selectedStatus === 'inactive' && !user.active);
-
-      return matchesSearch && matchesRole && matchesStatus;
+      return matchesSearch;
     });
-  }, [mockUsers, searchText, selectedRole, selectedStatus]);
+  }, [users, searchText]);
 
   const formatDate = (date: string) => {
     return dayjs.utc(date).format('DD/MM/YYYY');
@@ -111,9 +76,8 @@ export function UserList() {
     navigate(`/usuarios/${id}/alterar-senha`);
   };
 
-  const handleDelete = (id: string) => {
-    // TODO: Implementar modal de confirmação e chamada à API
-    console.log('Delete user:', id);
+  const handleDelete = async (id: string) => {
+    deleteUser(id);
   };
 
   const columns: ColumnsType<User> = [
@@ -149,15 +113,13 @@ export function UserList() {
               onClick={() => handleChangePassword(record.id)}
             />
           </Tooltip>
-          <Tooltip title={t('users.delete')}>
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.id)}
-            />
-          </Tooltip>
+          <DeleteConfirmButton
+            onConfirm={() => handleDelete(record.id)}
+            title={t('users.deleteUser')}
+            description={t('users.deleteUserConfirm', { name: record.name })}
+            buttonSize="small"
+            iconOnly
+          />
         </Space>
       ),
     },

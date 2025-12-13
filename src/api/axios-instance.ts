@@ -148,10 +148,21 @@ axiosInstance.interceptors.response.use(
 
           const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
 
-          // Atualiza tokens no storage
+          // Atualiza tokens no storage e na store
           StorageService.setAuthToken(newAccessToken);
           if (newRefreshToken) {
             localStorage.setItem('refresh_token', newRefreshToken);
+          }
+          
+          // Atualiza a store Zustand para manter sincronizado
+          try {
+            const { useAuthStore } = await import('../store/auth-store');
+            useAuthStore.getState().setToken(newAccessToken);
+            if (newRefreshToken) {
+              useAuthStore.getState().setRefreshToken(newRefreshToken);
+            }
+          } catch (error) {
+            console.error('Error updating auth store:', error);
           }
 
           // Atualiza header da requisição original

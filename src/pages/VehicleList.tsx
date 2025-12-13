@@ -13,8 +13,9 @@ import { useTranslation } from 'react-i18next';
 import { useVehicles } from '../hooks/useMotorcycles';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
+import { FloatingActionButton } from '../components/common/FloatingActionButton';
 import type { Motorcycle } from '../types/motorcycle';
-import dayjs from 'dayjs';
+import { formatDate } from '../utils/format.util';
 
 export function VehicleList() {
   const { t } = useTranslation();
@@ -30,14 +31,18 @@ export function VehicleList() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { data: vehicles, isLoading } = useVehicles({
-    is_active: activeFilter,
-  });
+  const { data: vehicles, isLoading } = useVehicles();
 
   const filteredVehicles = useMemo(() => {
     if (!Array.isArray(vehicles)) return [];
 
     return vehicles.filter((vehicle) => {
+      // Filtro de status ativo/inativo
+      if (activeFilter !== undefined && vehicle.is_active !== activeFilter) {
+        return false;
+      }
+
+      // Filtro de busca por texto
       if (searchText === '') return true;
 
       const search = searchText.toLowerCase();
@@ -47,7 +52,7 @@ export function VehicleList() {
         vehicle.model?.toLowerCase().includes(search)
       );
     });
-  }, [vehicles, searchText]);
+  }, [vehicles, searchText, activeFilter]);
 
   const handleEdit = (id: number) => {
     navigate(`/veiculos/${id}/editar`);
@@ -82,11 +87,50 @@ export function VehicleList() {
       title: t('vehicles.plate'),
       dataIndex: 'plate',
       key: 'plate',
-      width: 130,
+      width: 140,
       render: (plate: string) => (
-        <Tag color="blue" style={{ fontSize: '13px', fontWeight: 600 }}>
-          {plate}
-        </Tag>
+        <div
+          style={{
+            display: 'inline-flex',
+            border: '3px solid #000',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            height: '32px',
+          }}
+        >
+          {/* Faixa azul à esquerda */}
+          <div
+            style={{
+              width: '12px',
+              backgroundColor: '#0066cc',
+            }}
+          />
+          {/* Área branca com caracteres */}
+          <div
+            style={{
+              flex: 1,
+              backgroundColor: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 8px',
+              fontFamily: '"Courier New", Courier, monospace',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              letterSpacing: '2px',
+              color: '#000',
+              minWidth: '75px',
+            }}
+          >
+            {(() => {
+              const formattedPlate = plate?.toUpperCase().replace(/\s/g, '');
+              return formattedPlate?.length >= 7
+                ? `${formattedPlate.slice(0, 4)} ${formattedPlate.slice(4, 7)}`
+                : plate?.toUpperCase() || '';
+            })()}
+          </div>
+        </div>
       ),
     },
     {
@@ -108,16 +152,16 @@ export function VehicleList() {
       dataIndex: 'year',
       key: 'year',
       width: 90,
-      align: 'center',
+      align: 'left',
       render: (year: number | null) => year || '-',
     },
     {
-      title: t('vehicles.mile'),
+      title: isMobile ? <span>Mile<br />Odometer</span> : t('vehicles.mile'),
       dataIndex: 'mile',
       key: 'mile',
       width: 120,
-      align: 'right',
-      render: (mile: number | null) => mile ? `${mile.toLocaleString('pt-BR')} km` : '-',
+      align: 'left',
+      render: (mile: number | null) => mile ? `${mile.toLocaleString('pt-BR')} miles` : '-',
     },
     {
       title: t('vehicles.color'),
@@ -130,7 +174,7 @@ export function VehicleList() {
       title: t('vehicles.serviceOrders'),
       key: 'service_orders_count',
       width: 150,
-      align: 'center',
+      align: 'left',
       render: (_, record) => (
         <Tag color="orange">
           {t('vehicles.serviceOrderCount', {
@@ -140,24 +184,12 @@ export function VehicleList() {
       ),
     },
     {
-      title: t('common.status'),
-      dataIndex: 'is_active',
-      key: 'is_active',
-      width: 100,
-      align: 'center',
-      render: (active: boolean) => (
-        <Tag color={active ? 'green' : 'default'}>
-          {active ? t('common.active') : t('common.inactive')}
-        </Tag>
-      ),
-    },
-    {
       title: t('vehicles.createdAt'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 130,
-      align: 'center',
-      render: (date: string) => dayjs.utc(date).format('DD/MM/YYYY'),
+      align: 'left',
+      render: (date: string) => formatDate(date),
     },
   ];
 
@@ -168,14 +200,16 @@ export function VehicleList() {
         subtitle={t('vehicles.subtitle')}
         helpText={t('vehicles.pageHelp')}
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-            size={isMobile ? 'middle' : 'large'}
-          >
-            {isMobile ? 'Novo' : t('vehicles.newVehicle')}
-          </Button>
+          !isMobile && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreate}
+              size="large"
+            >
+              {t('vehicles.newVehicle')}
+            </Button>
+          )
         }
       />
 
@@ -224,9 +258,48 @@ export function VehicleList() {
                     ]}
                   >
                     <div style={{ marginBottom: 8 }}>
-                      <Tag color="blue" style={{ fontSize: '14px', fontWeight: 600 }}>
-                        {vehicle.plate}
-                      </Tag>
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          border: '3px solid #000',
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          height: '32px',
+                        }}
+                      >
+                        {/* Faixa azul à esquerda */}
+                        <div
+                          style={{
+                            width: '12px',
+                            backgroundColor: '#0066cc',
+                          }}
+                        />
+                        {/* Área branca com caracteres */}
+                        <div
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 8px',
+                            fontFamily: '"Courier New", Courier, monospace',
+                            fontSize: '15px',
+                            fontWeight: 'bold',
+                            letterSpacing: '2px',
+                            color: '#000',
+                            minWidth: '75px',
+                          }}
+                        >
+                          {(() => {
+                            const formattedPlate = vehicle.plate?.toUpperCase().replace(/\s/g, '');
+                            return formattedPlate?.length >= 7
+                              ? `${formattedPlate.slice(0, 4)} ${formattedPlate.slice(4, 7)}`
+                              : vehicle.plate?.toUpperCase() || '';
+                          })()}
+                        </div>
+                      </div>
                     </div>
                     <Space direction="vertical" size="small" style={{ width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -242,9 +315,10 @@ export function VehicleList() {
                         <span>{vehicle.year || '-'}</span>
                       </div>
                       {vehicle.mile && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 12, color: '#8c8c8c' }}>{t('vehicles.mile')}:</span>
-                          <span>{vehicle.mile.toLocaleString('pt-BR')} km</span>
+                        <div>
+                          <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+                            Mile<br />Odometer: {vehicle.mile.toLocaleString('pt-BR')} miles
+                          </span>
                         </div>
                       )}
                       {vehicle.color && (
@@ -255,17 +329,12 @@ export function VehicleList() {
                       )}
                     </Space>
                     <div style={{ marginTop: 8 }}>
-                      <Space wrap>
-                        <Tag color="orange">
-                          {t('vehicles.serviceOrderCount', { count: vehicle._count?.service_order || 0 })}
-                        </Tag>
-                        <Tag color={vehicle.is_active ? 'green' : 'default'}>
-                          {vehicle.is_active ? t('common.active') : t('common.inactive')}
-                        </Tag>
-                      </Space>
+                      <Tag color="orange">
+                        {t('vehicles.serviceOrderCount', { count: vehicle._count?.service_order || 0 })}
+                      </Tag>
                     </div>
                     <div style={{ marginTop: 8, fontSize: 11, color: '#8c8c8c' }}>
-                      {t('vehicles.createdAt')}: {dayjs.utc(vehicle.created_at).format('DD/MM/YYYY')}
+                      {t('vehicles.createdAt')}: {formatDate(vehicle.created_at)}
                     </div>
                   </Card>
                 </Col>
@@ -291,6 +360,14 @@ export function VehicleList() {
           )}
         </Space>
       </Card>
+
+      {/* Floating Action Button para mobile */}
+      <FloatingActionButton
+        icon={<PlusOutlined />}
+        tooltip={t('vehicles.newVehicle')}
+        onClick={handleCreate}
+        mobileOnly
+      />
     </div>
   );
 }

@@ -24,13 +24,13 @@ export interface ConsolidatedServicesReportData {
 function calculateOrderTotals(order: ServiceOrder) {
   const productsTotal = (order.service_products || []).reduce((sum, sp) => {
     const qty = parseDecimal(sp.product_qtd);
-    const price = parseDecimal(sp.products.sell_price);
+    const price = parseDecimal(sp.unit_price); // Usar unit_price salvo
     return sum + qty * price;
   }, 0);
 
   const servicesTotal = (order.services_realized || []).reduce((sum, sr) => {
     const qty = parseDecimal(sr.service_qtd);
-    const cost = parseDecimal(sr.service.service_cost);
+    const cost = parseDecimal(sr.unit_price); // Usar unit_price salvo
     return sum + qty * cost;
   }, 0);
 
