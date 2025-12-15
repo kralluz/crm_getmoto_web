@@ -463,7 +463,7 @@ export function ServiceList() {
         icon={<PlusOutlined />}
         tooltip={t('services.newOrder')}
         onClick={handleCreate}
-        mobileOnly={false}
+        mobileOnly
       />
     </div>
   );

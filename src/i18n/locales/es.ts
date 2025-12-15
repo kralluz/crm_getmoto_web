@@ -30,6 +30,8 @@ export default {
     active: 'Activo',
     inactive: 'Inactivo',
     status: 'Estado',
+    clickToActivate: 'Clic para activar',
+    clickToDeactivate: 'Clic para desactivar',
     successUpdate: '¡{{item}} actualizado con éxito!',
     successCreate: '¡{{item}} creado con éxito!',
     errorUpdate: 'Error al actualizar {{item}}',
@@ -80,6 +82,7 @@ export default {
     changeTheme: 'Cambiar Tema',
     language: 'Idioma',
     languageChanged: 'Idioma cambiado exitosamente',
+    generatePdf: 'Generar PDF',
   },
 
   auth: {
@@ -330,6 +333,8 @@ export default {
     totalProducts: 'Total: {{total}} productos',
     deleteProduct: 'Eliminar Producto',
     deleteProductConfirm: '¿Está seguro de que desea eliminar el producto "{{name}}"?',
+    activate: 'Activar',
+    deactivate: 'Desactivar',
     searchProducts: 'Buscar por producto o categoría...',
     // Product Category
     categoryTitle: 'Categorías de Productos',
@@ -392,6 +397,7 @@ export default {
     availableServices: 'Gestionar servicios disponibles',
     pageHelp: 'Registre y gestione los servicios prestados por el taller (ej: Cambio de Aceite, Cambio de Neumáticos, Revisión). Cada servicio puede tener precio base, descripción y estado activo/inactivo. Estos servicios se utilizan en Órdenes de Servicio.',
     serviceOrdersPageHelp: 'Gestione todas las Órdenes de Servicio (OS). Haga seguimiento del estado de cada servicio, desde el presupuesto hasta la finalización. Cada OS registra servicios realizados, productos utilizados, valores y genera automáticamente entradas en el flujo de efectivo.',
+    newServiceOrder: 'Nueva Orden de Servicio',
     customer: 'Cliente',
     motorcycle: 'Motocicleta',
     mechanic: 'Mecánico',
@@ -485,6 +491,7 @@ export default {
     thankYou: '¡Gracias por su preferencia!',
     pdfGenerationError: 'Error al generar informe',
     generateInvoice: 'Generar Factura',
+    downloadCancelledOrder: 'Descargar Orden Cancelada',
     finalizationDatePlaceholder: 'Seleccione la fecha de finalización',
     // Actions
     next: 'Siguiente',
@@ -576,6 +583,9 @@ export default {
     productsSoldLabel: 'Productos Vendidos',
     servicesRealizedLabel: 'Servicios Realizados',
     financialMovements: 'Movimientos Financieros',
+    vehiclesWithThisService: 'Vehículos que tuvieron este servicio',
+    serviceCount: 'Cantidad de Servicios',
+    lastService: 'Último Servicio',
     optionalServices: 'Servicios opcionales',
     optionalServicesDescription: 'Puede agregar servicios aquí o saltar para agregar productos. Una orden de servicio debe tener al menos un producto O un servicio.',
     noServicesAvailable: 'No hay servicios disponibles',
@@ -650,6 +660,10 @@ export default {
     legendDepleted: 'AGOTADO: Inventario completamente agotado',
     legendCritical: 'CRÍTICO: Inventario en o por debajo del mínimo',
     legendAttention: 'ATENCIÓN: Inventario hasta 150% del mínimo (punto de reorden)',
+    // Stock Movement Modal
+    selectProduct: 'Seleccionar Producto',
+    searchProduct: 'Buscar producto...',
+    newPurchaseOrder: 'Nueva Orden de Compra',
   },
 
   cashflow: {
@@ -719,6 +733,14 @@ export default {
 
   expenses: {
     title: 'Gastos',
+    type: 'Tipo',
+    types: {
+      expense: 'Gasto Operacional',
+      purchase_order: 'Orden de Compra',
+      payroll: 'Nómina',
+      employee_advance: 'Anticipo',
+      other: 'Otro',
+    },
     subtitle: 'Gestionar gastos operacionales',
     pageHelp: 'Esta página muestra SOLO gastos operacionales (salario, alquiler, servicios públicos, etc.). Cuando crea un gasto operacional, también genera una transacción en Movimientos Financieros. Nota: Las compras de inventario NO se listan aquí, solo aparecen en Movimientos Financieros.',
     newExpense: 'Nuevo Movimiento',
@@ -887,6 +909,11 @@ export default {
     userCreateError: 'Error al crear usuario',
     userUpdateError: 'Error al actualizar usuario',
     passwordChangeError: 'Error al cambiar contraseña',
+    userActivatedSuccess: '¡Usuario activado con éxito!',
+    userDeactivatedSuccess: '¡Usuario desactivado con éxito!',
+    statusChangeError: 'Error al cambiar el estado del usuario',
+    emailAlreadyExists: 'Este email ya está registrado en el sistema',
+    emailDuplicateError: 'Ya existe un usuario con este email. Por favor, utilice otro email.',
     fullName: 'Nombre completo',
     password: 'Contraseña',
     newPassword: 'Nueva Contraseña',
@@ -925,6 +952,7 @@ export default {
     newUserTitle: 'Nuevo Usuario',
     namePlaceholder: 'Ej: Juan Pérez',
     emailPlaceholder: 'ejemplo@email.com',
+    emailExample: 'ejemplo@email.com',
     initialPasswordPlaceholder: 'Mínimo 6 caracteres',
     initialConfirmPasswordPlaceholder: 'Confirme la contraseña',
     selectRolePlaceholder: 'Seleccione el cargo',
@@ -998,6 +1026,12 @@ export default {
     cancelledSuccess: '¡Orden de compra cancelada exitosamente!',
     cancelError: 'Error al cancelar orden de compra',
     alreadyCancelled: 'Esta orden de compra ya ha sido cancelada',
+    confirmCancellation: 'Confirmar Cancelación',
+    cancellationWarning: 'Advertencia: Esta acción no se puede deshacer',
+    cancellationExplanation: 'Al cancelar esta orden de compra, los productos se eliminarán automáticamente del inventario y el monto se revertirá en el flujo de caja. Asegúrese de que haya suficiente inventario antes de confirmar.',
+    cancellationReasonRequired: 'El motivo de cancelación es obligatorio',
+    cancellationReasonMinLength: 'El motivo debe tener al menos 10 caracteres',
+    cancellationReasonPlaceholder: 'Ingrese el motivo de cancelación de la orden de compra...',
   },
 
   expense: {
@@ -1110,6 +1144,8 @@ export default {
     paymentCreatedSuccess: 'Pago creado con éxito',
     selectDaysFirst: 'Por favor seleccione al menos un día para pagar',
     paySelected: 'Pagar {{count}} día(s) seleccionado(s)',
+    totalUnpaidHours: 'Total de Horas No Pagadas',
+    totalUnpaidAmount: 'Total No Pagado',
   },
 
   calendar: {
@@ -1169,6 +1205,7 @@ export default {
     updateError: 'Error al actualizar registro',
     deleteSuccess: 'Registro eliminado con éxito',
     deleteError: 'Error al eliminar registro',
+    entryCreatedSuccess: 'Entrada de tiempo registrada con éxito',
 
     // Confirmations
     confirmDelete: '¿Está seguro de que desea eliminar este registro?',
@@ -1204,6 +1241,74 @@ export default {
     filterByEmployee: 'Filtrar por empleado',
     startDate: 'Fecha Inicial',
     endDate: 'Fecha Final',
+  },
+
+  employees: {
+    title: 'Empleados',
+    subtitle: 'Gestionar empleados del taller',
+    pageHelp: 'Gestione todos los empleados del taller. Registre información como nombre, cargo, tarifa por hora, fecha de inicio y contacto. Vincule registros de tiempo y pagos a cada empleado. Active o desactive empleados según sea necesario.',
+    newEmployee: 'Nuevo Empleado',
+    editEmployee: 'Editar Empleado',
+    employeeDetails: 'Detalles del Empleado',
+    list: '{{count}} empleado(s)',
+    noEmployees: 'No se encontraron empleados',
+    searchPlaceholder: 'Buscar por nombre, cargo o correo electrónico...',
+    filterByStatus: 'Filtrar por Estado',
+    showStatus: 'Mostrar',
+    activeOnly: 'Solo Activos',
+    allEmployees: 'Todos los Empleados',
+    employee: 'Empleado',
+
+    // Campos
+    firstName: 'Nombre',
+    lastName: 'Apellido',
+    email: 'Correo Electrónico',
+    phone: 'Teléfono',
+    nationalInsurance: 'Número NI',
+    jobTitle: 'Cargo',
+    hourlyRate: 'Tarifa por Hora (£)',
+    contractType: 'Tipo de Contrato',
+    weeklyHours: 'Horas Semanales',
+    startDate: 'Fecha de Inicio',
+    endDate: 'Fecha de Fin',
+    address: 'Dirección',
+    employeeId: 'ID del Empleado',
+
+    // Tipos de contrato
+    hourly: 'Por Hora',
+    salary: 'Salario',
+
+    // Acciones
+    disable: 'Desactivar',
+    enable: 'Activar',
+    disableEmployee: 'Desactivar Empleado',
+    enableEmployee: 'Activar Empleado',
+
+    // Mensajes
+    createSuccess: 'Empleado creado con éxito',
+    createError: 'Error al crear empleado',
+    updateSuccess: 'Empleado actualizado con éxito',
+    updateError: 'Error al actualizar empleado',
+    disableSuccess: 'Empleado desactivado con éxito',
+    disableError: 'Error al desactivar empleado',
+    enableSuccess: 'Empleado activado con éxito',
+    enableError: 'Error al activar empleado',
+    employeeActivatedSuccess: '¡Empleado activado con éxito!',
+    employeeDeactivatedSuccess: '¡Empleado desactivado con éxito!',
+    statusChangeError: 'Error al cambiar el estado del empleado',
+
+    // Confirmaciones
+    confirmDisable: '¿Está seguro de que desea desactivar este empleado? Ya no podrá recibir pagos.',
+    confirmEnable: '¿Está seguro de que desea activar este empleado?',
+
+    // Validaciones
+    requiredFirstName: 'Por favor ingrese el nombre',
+    requiredLastName: 'Por favor ingrese el apellido',
+    requiredEmail: 'Por favor ingrese el correo electrónico',
+    invalidEmail: 'Por favor ingrese un correo electrónico válido',
+    requiredJobTitle: 'Por favor ingrese el cargo',
+    requiredHourlyRate: 'Por favor ingrese la tarifa por hora',
+    requiredStartDate: 'Por favor seleccione la fecha de inicio',
   },
 
   errors: {

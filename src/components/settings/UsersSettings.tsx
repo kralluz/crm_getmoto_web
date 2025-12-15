@@ -16,17 +16,16 @@ import {
 } from 'antd';
 import {
   PlusOutlined,
-  EditOutlined,
   KeyOutlined,
-  ExclamationCircleOutlined
+  FilterOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useChangePassword } from '../../hooks/useUsers';
-import type { User, UserRole, CreateUserInput, UpdateUserInput } from '../../types/user';
+import { useUsers, useCreateUser, useChangePassword, useToggleUserStatus } from '../../hooks/useUsers';
+import type { User, UserRole, CreateUserInput } from '../../types/user';
 import { formatDate } from '../../utils/format.util';
 import { useTranslation } from 'react-i18next';
 import { NotificationService } from '../../services/notification.service';
-import { DeleteConfirmButton } from '../common/DeleteConfirmButton';
 import { useThemeStore } from '../../store/theme-store';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -37,9 +36,10 @@ export function UsersSettings() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [pageSize, setPageSize] = useState(10);
+  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
 
@@ -49,11 +49,10 @@ export function UsersSettings() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { data: users = [], isLoading } = useUsers();
+  const { data: users = [], isLoading } = useUsers({ active: activeFilter });
   const { mutate: createUser, isPending: isCreating } = useCreateUser();
-  const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
-  const { mutate: deleteUser } = useDeleteUser();
   const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();
+  const { mutate: toggleStatus, isPending: isTogglingStatus } = useToggleUserStatus();
 
   const getRoleColor = (role: UserRole): string => {
     const colors: Record<UserRole, string> = {
@@ -75,39 +74,26 @@ export function UsersSettings() {
 
   const handleConfirmCreate = () => {
     setIsConfirmModalOpen(false);
-    setEditingUser(null);
     form.resetFields();
     setIsModalOpen(true);
   };
 
-  const handleEdit = (user: User) => {
-    setEditingUser(user);
-    form.setFieldsValue({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      active: user.active,
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (userId: string) => {
-    try {
-      deleteUser(userId, {
+  const handleToggleStatus = (userId: string, currentStatus: boolean) => {
+    toggleStatus(
+      { id: userId, active: !currentStatus },
+      {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['users'] });
-          NotificationService.success(t('users.userDeletedSuccess'));
+          NotificationService.success(
+            !currentStatus ? t('users.userActivatedSuccess') : t('users.userDeactivatedSuccess')
+          );
         },
         onError: (error: any) => {
-          console.error('Delete user error:', error);
-          const errorMessage = error?.response?.data?.message || error?.message || t('users.userDeleteError');
-          NotificationService.error(errorMessage);
+          NotificationService.error(
+            error?.response?.data?.message || t('users.statusChangeError')
+          );
         },
-      });
-    } catch (error: any) {
-      console.error('Delete user catch error:', error);
-      NotificationService.error(error?.response?.data?.message || t('users.userDeleteError'));
-    }
+      }
+    );
   };
 
   const handleChangePassword = (userId: string) => {
@@ -140,89 +126,41 @@ export function UsersSettings() {
 
   const handleSubmit = () => {
     form.validateFields().then((values) => {
-      if (editingUser) {
-        // Atualizar
-        const updateData: UpdateUserInput = {
-          name: values.name,
-          email: values.email,
-          role: values.role,
-          active: values.active,
-        };
+      const createData: CreateUserInput = {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role,
+      };
 
-        updateUser(
-          { id: editingUser.id, data: updateData },
-          {
-            onSuccess: () => {
-              queryClient.invalidateQueries({ queryKey: ['users'] });
-              NotificationService.success(t('users.userUpdatedSuccess'));
-              setIsModalOpen(false);
-              form.resetFields();
-              setEditingUser(null);
-            },
-            onError: (error: any) => {
-              NotificationService.error(error?.response?.data?.message || t('users.userUpdateError'));
-            },
+      createUser(createData, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['users'] });
+          NotificationService.success(t('users.userCreatedSuccess'));
+          setIsModalOpen(false);
+          form.resetFields();
+        },
+        onError: (error: any) => {
+          console.error('Create user error:', error);
+          const errorMessage = error?.response?.data?.message || error?.message;
+
+          // Verificar se é erro de email duplicado
+          if (errorMessage?.toLowerCase().includes('email') &&
+              (errorMessage?.toLowerCase().includes('já') ||
+               errorMessage?.toLowerCase().includes('already') ||
+               errorMessage?.toLowerCase().includes('duplicate') ||
+               errorMessage?.toLowerCase().includes('exists') ||
+               errorMessage?.toLowerCase().includes('existe'))) {
+            NotificationService.error(t('users.emailDuplicateError'));
+          } else {
+            NotificationService.error(errorMessage || t('users.userCreateError'));
           }
-        );
-      } else {
-        // Criar
-        const createData: CreateUserInput = {
-          name: values.name,
-          email: values.email,
-          password: values.password,
-          role: values.role,
-        };
-
-        createUser(createData, {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['users'] });
-            NotificationService.success(t('users.userCreatedSuccess'));
-            setIsModalOpen(false);
-            form.resetFields();
-          },
-          onError: (error: any) => {
-            NotificationService.error(error?.response?.data?.message || t('users.userCreateError'));
-          },
-        });
-      }
+        },
+      });
     });
   };
 
   const columns: ColumnsType<User> = [
-    {
-      title: t('users.actions'),
-      key: 'actions',
-      width: 140,
-      align: 'center',
-      fixed: 'left',
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title={t('users.edit')}>
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-            />
-          </Tooltip>
-          <Tooltip title={t('users.changePassword')}>
-            <Button
-              type="text"
-              size="small"
-              icon={<KeyOutlined />}
-              onClick={() => handleChangePassword(record.id)}
-            />
-          </Tooltip>
-          <DeleteConfirmButton
-            onConfirm={() => handleDelete(record.id)}
-            title={t('users.deleteUser')}
-            description={t('users.deleteUserConfirm', { name: record.name })}
-            buttonSize="small"
-            iconOnly
-          />
-        </Space>
-      ),
-    },
     {
       title: t('users.name'),
       dataIndex: 'name',
@@ -249,12 +187,18 @@ export function UsersSettings() {
       title: t('users.status'),
       dataIndex: 'active',
       key: 'active',
-      width: 100,
+      width: 180,
       align: 'center',
-      render: (active: boolean) => (
-        <Tag color={active ? 'success' : 'default'}>
-          {active ? t('users.active') : t('users.inactive')}
-        </Tag>
+      render: (active: boolean, record) => (
+        <Tooltip title={active ? t('common.clickToDeactivate') : t('common.clickToActivate')}>
+          <Switch
+            checked={active}
+            onChange={() => handleToggleStatus(record.id, active)}
+            loading={isTogglingStatus}
+            checkedChildren={t('users.active')}
+            unCheckedChildren={t('users.inactive')}
+          />
+        </Tooltip>
       ),
     },
     {
@@ -266,12 +210,30 @@ export function UsersSettings() {
       render: (date: string) => formatDate(date),
       sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     },
+    {
+      title: t('users.actions'),
+      key: 'actions',
+      width: 100,
+      align: 'center',
+      render: (_, record) => (
+        <Tooltip title={t('users.changePassword')}>
+          <Button
+            type="link"
+            size="small"
+            icon={<KeyOutlined />}
+            onClick={() => handleChangePassword(record.id)}
+          >
+            {t('users.changePassword')}
+          </Button>
+        </Tooltip>
+      ),
+    },
   ];
 
   return (
     <>
       <Card>
-        <Space style={{ marginBottom: 16 }}>
+        <Space direction="horizontal" size="middle" style={{ width: '100%', flexWrap: 'wrap', marginBottom: 16 }}>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -279,6 +241,27 @@ export function UsersSettings() {
           >
             {t('users.newUser')}
           </Button>
+
+          <Select
+            placeholder={t('common.status')}
+            value={activeFilter}
+            onChange={setActiveFilter}
+            style={{ width: 150 }}
+            options={[
+              { value: undefined, label: t('products.all') },
+              { value: true, label: t('products.actives') },
+              { value: false, label: t('products.inactives') },
+            ]}
+          />
+
+          {activeFilter !== true && (
+            <Button
+              icon={<FilterOutlined />}
+              onClick={() => setActiveFilter(true)}
+            >
+              {t('common.clearFilters')}
+            </Button>
+          )}
         </Space>
 
         {isMobile ? (
@@ -288,22 +271,9 @@ export function UsersSettings() {
                 <Card
                   size="small"
                   actions={[
-                    <Tooltip title={t('users.edit')} key="edit">
-                      <EditOutlined onClick={() => handleEdit(user)} />
-                    </Tooltip>,
                     <Tooltip title={t('users.changePassword')} key="password">
                       <KeyOutlined onClick={() => handleChangePassword(user.id)} />
                     </Tooltip>,
-                    <div key="delete" style={{ display: 'inline-block' }}>
-                      <DeleteConfirmButton
-                        onConfirm={() => handleDelete(user.id)}
-                        title={t('users.deleteUser')}
-                        description={t('users.deleteUserConfirm', { name: user.name })}
-                        buttonSize="small"
-                        buttonType="link"
-                        iconOnly
-                      />
-                    </div>,
                   ]}
                 >
                   <div style={{ marginBottom: 8 }}>
@@ -316,9 +286,14 @@ export function UsersSettings() {
                     <Tag color={getRoleColor(user.role)}>
                       {getRoleLabel(user.role)}
                     </Tag>
-                    <Tag color={user.active ? 'success' : 'default'}>
-                      {user.active ? t('users.active') : t('users.inactive')}
-                    </Tag>
+                    <Switch
+                      checked={user.active}
+                      onChange={() => handleToggleStatus(user.id, user.active)}
+                      loading={isTogglingStatus}
+                      checkedChildren={t('users.active')}
+                      unCheckedChildren={t('users.inactive')}
+                      size="small"
+                    />
                   </Space>
                   <div style={{ marginTop: 8, fontSize: 11, color: '#8c8c8c' }}>
                     {t('users.createdAt')}: {formatDate(user.createdAt)}
@@ -334,8 +309,10 @@ export function UsersSettings() {
             loading={isLoading}
             rowKey="id"
             pagination={{
-              pageSize: 10,
+              pageSize: pageSize,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (_, size) => setPageSize(size),
               showTotal: (total) => t('users.totalUsers', { total }),
             }}
             scroll={{ x: 800 }}
@@ -344,19 +321,18 @@ export function UsersSettings() {
         )}
       </Card>
 
-      {/* Modal de Criar/Editar */}
+      {/* Modal de Criar Usuário */}
       <Modal
-        title={editingUser ? t('users.editUser') : t('users.newUser')}
+        title={t('users.newUser')}
         open={isModalOpen}
         onOk={handleSubmit}
         onCancel={() => {
           setIsModalOpen(false);
           form.resetFields();
-          setEditingUser(null);
         }}
-        okText={editingUser ? t('users.update') : t('users.create')}
+        okText={t('users.create')}
         cancelText={t('users.cancel')}
-        confirmLoading={isCreating || isUpdating}
+        confirmLoading={isCreating}
         width={600}
       >
         {isModalOpen && (
@@ -387,18 +363,16 @@ export function UsersSettings() {
             <Input placeholder={t('users.emailExample')} />
           </Form.Item>
 
-          {!editingUser && (
-            <Form.Item
-              label={t('users.password')}
-              name="password"
-              rules={[
-                { required: true, message: t('users.passwordRequired') },
-                { min: 6, message: t('users.passwordMinLength') }
-              ]}
-            >
-              <Input.Password placeholder={t('users.initialPassword')} />
-            </Form.Item>
-          )}
+          <Form.Item
+            label={t('users.password')}
+            name="password"
+            rules={[
+              { required: true, message: t('users.passwordRequired') },
+              { min: 6, message: t('users.passwordMinLength') }
+            ]}
+          >
+            <Input.Password placeholder={t('users.initialPassword')} />
+          </Form.Item>
 
           <Form.Item
             label={t('users.role')}
@@ -412,16 +386,6 @@ export function UsersSettings() {
               <Select.Option value="ATTENDANT">{t('users.roles.ATTENDANT')}</Select.Option>
             </Select>
           </Form.Item>
-
-          {editingUser && (
-            <Form.Item
-              label={t('users.status')}
-              name="active"
-              valuePropName="checked"
-            >
-              <Switch checkedChildren={t('users.active')} unCheckedChildren={t('users.inactive')} />
-            </Form.Item>
-          )}
         </Form>
         )}
       </Modal>

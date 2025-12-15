@@ -31,8 +31,8 @@ interface AuthState {
  */
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
-      // Estado inicial - usuário não autenticado
+    (set, get) => ({
+      // Estado inicial - tenta carregar do localStorage
       user: null,
       token: null,
       refreshToken: null,
@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthState>()(
 
       setToken: (token) => {
         localStorage.setItem('auth_token', token);
-        set({ token });
+        set({ token, isAuthenticated: !!token });
       },
 
       setRefreshToken: (refreshToken) => {
@@ -82,8 +82,19 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        // Log para debug
+        if (typeof window !== 'undefined') {
+          try {
+            const { AuthDebug } = require('../utils/auth-debug');
+            AuthDebug.trackLogout('auth-store.logout');
+          } catch (e) {
+            console.log('[AUTH] Logout called from auth-store');
+          }
+        }
+        
         localStorage.removeItem('auth_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('auth-storage'); // Limpa também o persist do zustand
         set({
           user: null,
           token: null,
@@ -107,6 +118,18 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         // Não persiste isLoading
       }),
+      // Quando hidratar do localStorage, também sincronizar com localStorage direto
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Sincronizar tokens do estado persistido com localStorage
+          if (state.token) {
+            localStorage.setItem('auth_token', state.token);
+          }
+          if (state.refreshToken) {
+            localStorage.setItem('refresh_token', state.refreshToken);
+          }
+        }
+      },
     }
   )
 );

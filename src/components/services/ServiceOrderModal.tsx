@@ -16,6 +16,7 @@ import { useVehicle, useUpdateVehicle } from '../../hooks/useMotorcycles';
 // Removed large inline step JSX; now contained in ServiceOrderSteps component
 import { ServiceOrderSteps } from './ServiceOrderSteps';
 import type { CreateServiceOrderData, UpdateServiceOrderData } from '../../types/service-order';
+import { useFormat } from '../../hooks/useFormat';
 
 // Typography, Input and related components now only used inside ServiceOrderSteps
 
@@ -45,6 +46,7 @@ export function ServiceOrderModal({
   onClose,
 }: ServiceOrderModalProps) {
   const { t } = useTranslation();
+  const { formatCurrency } = useFormat();
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
   const [products, setProducts] = useState<ProductItem[]>([]);
@@ -246,15 +248,20 @@ export function ServiceOrderModal({
   // Calcular valor do desconto
   const discountValue = useMemo(() => {
     if (!applyDiscount) return 0;
+    let calculatedDiscount = 0;
     if (discountType === 'percent') {
-      return subtotal * (discountPercent / 100);
+      calculatedDiscount = subtotal * (discountPercent / 100);
+    } else {
+      calculatedDiscount = discountAmount;
     }
-    return discountAmount;
+    // VALIDAÇÃO: Desconto nunca pode ser maior que o subtotal
+    return Math.min(calculatedDiscount, subtotal);
   }, [applyDiscount, subtotal, discountType, discountPercent, discountAmount]);
 
   // Calcular total geral (com desconto)
   const grandTotal = useMemo(() => {
-    return subtotal - discountValue;
+    // Garantir que o total nunca seja negativo
+    return Math.max(0, subtotal - discountValue);
   }, [subtotal, discountValue]);
 
   // Verificar se há produtos com estoque insuficiente ou esgotado
@@ -279,6 +286,33 @@ export function ServiceOrderModal({
       console.log('📦 Products state:', products);
       console.log('🔧 Services state:', services);
       console.log('💰 Discount - apply:', applyDiscount, 'type:', discountType, 'percent:', discountPercent, 'amount:', discountAmount);
+
+      // VALIDAÇÃO CRÍTICA: Desconto não pode exceder o subtotal
+      if (applyDiscount) {
+        let calculatedDiscount = 0;
+        if (discountType === 'percent') {
+          if (discountPercent > 100) {
+            NotificationService.error('Desconto em percentual não pode ser maior que 100%');
+            return;
+          }
+          calculatedDiscount = subtotal * (discountPercent / 100);
+        } else {
+          calculatedDiscount = discountAmount;
+        }
+        
+        if (calculatedDiscount > subtotal) {
+          NotificationService.error(
+            'Desconto Inválido',
+            `O desconto não pode ser maior que o valor total da ordem (${formatCurrency(subtotal)})`
+          );
+          return;
+        }
+        
+        if (calculatedDiscount < 0) {
+          NotificationService.error('O desconto não pode ser negativo');
+          return;
+        }
+      }
 
       // Filtrar produtos e serviços válidos
       const validProducts = products

@@ -27,8 +27,11 @@ export function useCreateEmployee() {
 
   return useMutation({
     mutationFn: (data: CreateEmployeeData) => employeeApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    onSuccess: async () => {
+      // Invalidar todas as queries de employees
+      await queryClient.invalidateQueries({ queryKey: ['employees'] });
+      // Refetch imediato para garantir que a lista seja atualizada
+      await queryClient.refetchQueries({ queryKey: ['employees'] });
       success('Employee created successfully');
     },
     onError: (error: any) => {
@@ -45,9 +48,12 @@ export function useUpdateEmployee() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string | number; data: UpdateEmployeeData }) =>
       employeeApi.update(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      queryClient.invalidateQueries({ queryKey: ['employees', variables.id] });
+    onSuccess: async (_, variables) => {
+      // Invalidar todas as queries de employees
+      await queryClient.invalidateQueries({ queryKey: ['employees'] });
+      await queryClient.invalidateQueries({ queryKey: ['employees', variables.id] });
+      // Refetch imediato
+      await queryClient.refetchQueries({ queryKey: ['employees'] });
       success('Employee updated successfully');
     },
     onError: (error: any) => {
@@ -63,8 +69,10 @@ export function useDisableEmployee() {
 
   return useMutation({
     mutationFn: (id: string | number) => employeeApi.disable(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    onSuccess: async () => {
+      // Invalidar e refetch imediato
+      await queryClient.invalidateQueries({ queryKey: ['employees'] });
+      await queryClient.refetchQueries({ queryKey: ['employees'] });
       success('Employee disabled successfully');
     },
     onError: (error: any) => {
@@ -80,12 +88,27 @@ export function useEnableEmployee() {
 
   return useMutation({
     mutationFn: (id: string | number) => employeeApi.enable(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    onSuccess: async () => {
+      // Invalidar e refetch imediato
+      await queryClient.invalidateQueries({ queryKey: ['employees'] });
+      await queryClient.refetchQueries({ queryKey: ['employees'] });
       success('Employee enabled successfully');
     },
     onError: (error: any) => {
       errorNotif(error?.response?.data?.error || 'Failed to enable employee');
+    },
+  });
+}
+
+// Hook para alternar status de funcionário
+export function useToggleEmployeeStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
+      is_active ? employeeApi.enable(id) : employeeApi.disable(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 }

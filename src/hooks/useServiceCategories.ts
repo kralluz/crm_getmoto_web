@@ -83,3 +83,22 @@ export function useDeleteServiceCategory() {
     },
   });
 }
+
+export function useToggleServiceCategoryStatus() {
+  const queryClient = useQueryClient();
+  const { success, error: showError } = useNotification();
+
+  return useMutation({
+    mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
+      serviceCategoryApi.update(id, { is_active }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['service-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['service-category', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['service-category-stats', variables.id] });
+      success(variables.is_active ? 'Serviço ativado com sucesso!' : 'Serviço desativado com sucesso!');
+    },
+    onError: (error: any) => {
+      showError(error?.response?.data?.error || 'Erro ao alterar status do serviço');
+    },
+  });
+}

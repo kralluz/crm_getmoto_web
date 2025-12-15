@@ -638,7 +638,10 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                             min={0}
                             max={100}
                             value={discountPercent}
-                            onChange={(value) => setDiscountPercent(value || 0)}
+                            onChange={(value) => {
+                              const validValue = Math.min(100, Math.max(0, value || 0));
+                              setDiscountPercent(validValue);
+                            }}
                             addonAfter="%"
                             style={{ width: '100%' }}
                             placeholder="0"
@@ -648,17 +651,34 @@ export function ServiceOrderSteps(props: ServiceOrderStepsProps) {
                               if (parsed > 100) return 100;
                               return parsed;
                             }}
+                            status={discountPercent > 100 ? 'error' : undefined}
                           />
                         ) : (
                           <CurrencyInput
                             value={discountAmount}
-                            onChange={(value) => setDiscountAmount(value || 0)}
+                            onChange={(value) => {
+                              // Limitar ao subtotal
+                              const validValue = Math.min(subtotal, Math.max(0, value || 0));
+                              setDiscountAmount(validValue);
+                            }}
                             style={{ width: '100%' }}
                             placeholder="£ 0.00"
+                            status={discountAmount > subtotal ? 'error' : undefined}
                           />
                         )}
                       </Space>
                     </Card>
+                  )}
+                  
+                  {/* Alerta se desconto for muito alto */}
+                  {applyDiscount && discountValue > 0 && discountValue >= subtotal && (
+                    <Alert
+                      message="Atenção: Desconto Máximo Atingido"
+                      description="O desconto não pode ser maior que o valor total da ordem de serviço."
+                      type="error"
+                      showIcon
+                      style={{ marginTop: 8 }}
+                    />
                   )}
                 </Space>
               </Form.Item>

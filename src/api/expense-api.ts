@@ -1,6 +1,7 @@
 import { customAxiosInstance } from './axios-instance';
 import type {
   Expense,
+  UnifiedOutflow,
   CreateExpenseData,
   UpdateExpenseData,
   CancelExpenseData,
@@ -17,7 +18,21 @@ export const expenseApi = {
     return response;
   },
 
-  // Listar despesas
+  // Listar TODAS as saídas (despesas + ordens de compra + outros)
+  getAllOutflows: async (params?: {
+    category?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => {
+    const response = await customAxiosInstance<UnifiedOutflow[]>({
+      url: '/api/expenses/outflows',
+      method: 'GET',
+      params,
+    });
+    return response;
+  },
+
+  // Listar despesas (legacy - apenas despesas operacionais)
   getAll: async (params?: {
     category?: string;
     startDate?: string;

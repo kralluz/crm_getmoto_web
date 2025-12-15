@@ -2,6 +2,7 @@ import { Calendar, Badge, Typography, Tag, theme, DatePicker } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import type { TimeEntry } from '../../types/time-entry';
 import type { PaidPeriod } from '../../types/payroll-payment';
 
@@ -11,11 +12,28 @@ interface PayrollCalendarProps {
   employeeId?: number;
   timeEntries: TimeEntry[];
   paidPeriods: PaidPeriod[];
+  selectedMonth?: number;
+  selectedYear?: number;
 }
 
-export function PayrollCalendar({ employeeId, timeEntries, paidPeriods }: PayrollCalendarProps) {
+export function PayrollCalendar({ employeeId, timeEntries, paidPeriods, selectedMonth, selectedYear }: PayrollCalendarProps) {
   const { t } = useTranslation();
   const { token } = theme.useToken();
+  
+  // Controlar o mês/ano exibido no calendário
+  const [calendarValue, setCalendarValue] = useState<Dayjs>(() => {
+    if (selectedMonth !== undefined && selectedYear !== undefined) {
+      return dayjs().year(selectedYear).month(selectedMonth);
+    }
+    return dayjs();
+  });
+
+  // Atualizar o calendário quando os filtros mudarem
+  useEffect(() => {
+    if (selectedMonth !== undefined && selectedYear !== undefined) {
+      setCalendarValue(dayjs().year(selectedYear).month(selectedMonth));
+    }
+  }, [selectedMonth, selectedYear]);
 
   // Função para calcular horas trabalhadas de uma entrada
   const calculateHours = (entry: TimeEntry): number => {
@@ -217,6 +235,8 @@ export function PayrollCalendar({ employeeId, timeEntries, paidPeriods }: Payrol
       width: '100%',
     }}>
       <Calendar
+        value={calendarValue}
+        onChange={setCalendarValue}
         dateCellRender={dateCellRender}
         headerRender={headerRender}
         fullscreen={false}

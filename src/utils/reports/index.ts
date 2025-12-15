@@ -3,6 +3,7 @@
  */
 
 export { generateServiceOrderReport } from './service-order.report';
+export { generateCancelledServiceOrderReport } from './cancelled-service-order.report';
 export { generateCashFlowReport } from './cashflow.report';
 export { generateLowStockReport } from './low-stock.report';
 export { generatePayslipPDF } from './payslip.report';

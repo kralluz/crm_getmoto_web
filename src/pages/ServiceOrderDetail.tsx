@@ -28,7 +28,7 @@ import {
   ExclamationCircleOutlined,
   EditOutlined
 } from '@ant-design/icons';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServiceOrder, useCancelServiceOrder, useUpdateServiceOrderNotes, useUpdateServiceOrderDescription } from '../hooks/useServices';
 import { useAuthStore } from '../store/auth-store';
@@ -36,7 +36,7 @@ import { NotificationService } from '../services/notification.service';
 import type { ServiceProduct, ServiceRealized, CashFlow } from '../types/service-order';
 import type { ColumnsType } from 'antd/es/table';
 import { useState, useEffect } from 'react';
-import { generateServiceOrderReport } from '../utils/reports';
+import { generateServiceOrderReport, generateCancelledServiceOrderReport } from '../utils/reports';
 import { formatCurrency, formatDateTime, parseDecimal } from '../utils/format.util';
 import { EditTextModal } from '../components/common/EditTextModal';
 
@@ -46,7 +46,6 @@ export function ServiceOrderDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const serviceOrderId = id ? parseInt(id) : 0;
 
   const { data: serviceOrder, isLoading, error } = useServiceOrder(serviceOrderId);
@@ -59,7 +58,6 @@ export function ServiceOrderDetail() {
   const [isEditNotesModalOpen, setIsEditNotesModalOpen] = useState(false);
   const [isEditDescriptionModalOpen, setIsEditDescriptionModalOpen] = useState(false);
   const [cancelForm] = Form.useForm();
-  const [cameFromSearch, setCameFromSearch] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Detectar mudanças no tamanho da tela
@@ -69,18 +67,18 @@ export function ServiceOrderDetail() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Detectar se veio da página de busca ou de detalhes do veículo
-  useEffect(() => {
-    const fromSearch = location.state?.fromSearch;
-    setCameFromSearch(fromSearch);
-  }, [location]);
-
   const handleGeneratePdf = async () => {
     if (!serviceOrder) return;
 
     setIsPdfLoading(true);
     try {
-      await generateServiceOrderReport(serviceOrder);
+      // Se a ordem está cancelada, gera PDF de cancelamento
+      if (serviceOrder.status === 'cancelled') {
+        await generateCancelledServiceOrderReport(serviceOrder);
+      } else {
+        // Caso contrário, gera invoice normal
+        await generateServiceOrderReport(serviceOrder);
+      }
     } catch (err) {
       console.error('Erro ao gerar PDF:', err);
     } finally {
@@ -89,16 +87,7 @@ export function ServiceOrderDetail() {
   };
 
   const handleBack = () => {
-    const fromVehicleDetail = location.state?.fromVehicleDetail;
-    const vehicleId = location.state?.vehicleId;
-    
-    if (fromVehicleDetail && vehicleId) {
-      navigate(`/veiculos/${vehicleId}`); // Volta para a página de detalhes do veículo
-    } else if (cameFromSearch) {
-      navigate(-1); // Volta para a página de busca
-    } else {
-      navigate('/servicos'); // Volta para a lista de serviços
-    }
+    navigate(-1); // Volta para a página anterior
   };
 
   const handleCancelOrder = () => {
@@ -448,15 +437,28 @@ export function ServiceOrderDetail() {
               {!isMobile && t('services.cancelOrder')}
             </Button>
           )}
-          <Button
-            icon={<FilePdfOutlined />}
-            onClick={handleGeneratePdf}
-            loading={isPdfLoading}
-            size="middle"
-            title={t('services.generateInvoice')}
-          >
-            {!isMobile && t('services.generateInvoice')}
-          </Button>
+          {serviceOrder.status !== 'cancelled' ? (
+            <Button
+              icon={<FilePdfOutlined />}
+              onClick={handleGeneratePdf}
+              loading={isPdfLoading}
+              size="middle"
+              title={t('services.generateInvoice')}
+            >
+              {!isMobile && t('services.generateInvoice')}
+            </Button>
+          ) : (
+            <Button
+              icon={<FilePdfOutlined />}
+              onClick={handleGeneratePdf}
+              loading={isPdfLoading}
+              size="middle"
+              danger
+              title={t('services.downloadCancelledOrder')}
+            >
+              {!isMobile && t('services.downloadCancelledOrder')}
+            </Button>
+          )}
         </Space>
       </div>
 

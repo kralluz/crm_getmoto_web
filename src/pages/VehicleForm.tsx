@@ -150,10 +150,6 @@ export function VehicleForm() {
                 name="brand"
                 rules={isEditing ? [] : [
                   {
-                    required: true,
-                    message: t('vehicles.brandRequired'),
-                  },
-                  {
                     validator: (_, value) => {
                       if (!value || value.trim().length === 0) {
                         return Promise.reject(new Error(t('vehicles.brandRequired')));
@@ -182,10 +178,6 @@ export function VehicleForm() {
                 label={t('vehicles.model')}
                 name="model"
                 rules={isEditing ? [] : [
-                  {
-                    required: true,
-                    message: t('vehicles.modelRequired'),
-                  },
                   {
                     validator: (_, value) => {
                       if (!value || value.trim().length === 0) {
@@ -245,10 +237,6 @@ export function VehicleForm() {
                 name="year"
                 rules={isEditing ? [] : [
                   {
-                    required: true,
-                    message: t('vehicles.yearRequired'),
-                  },
-                  {
                     validator: (_, value) => {
                       if (value === null || value === undefined) {
                         return Promise.reject(new Error(t('vehicles.yearRequired')));
@@ -267,15 +255,9 @@ export function VehicleForm() {
                 <InputNumber
                   placeholder={t('vehicles.yearPlaceholder')}
                   style={{ width: '100%' }}
-                  min={1900}
-                  max={new Date().getFullYear() + 1}
                   disabled={isEditing}
-                  parser={(value) => {
-                    const parsed = Number(value);
-                    const maxYear = new Date().getFullYear() + 1;
-                    if (isNaN(parsed) || parsed < 1900) return 1900;
-                    if (parsed > maxYear) return maxYear;
-                    return parsed;
+                  onChange={() => {
+                    form.validateFields(['year']);
                   }}
                 />
               </Form.Item>
@@ -286,10 +268,6 @@ export function VehicleForm() {
                 label={t('vehicles.mile')}
                 name="mile"
                 rules={[
-                  {
-                    required: true,
-                    message: t('vehicles.mileRequired'),
-                  },
                   {
                     validator: (_, value) => {
                       if (value === null || value === undefined) {
@@ -309,6 +287,9 @@ export function VehicleForm() {
                   style={{ width: '100%' }}
                   status={form.getFieldError('mile').length > 0 ? 'error' : undefined}
                   keyboard={true}
+                  onChange={() => {
+                    form.validateFields(['mile']);
+                  }}
                   onBlur={() => {
                     form.validateFields(['mile']);
                   }}
@@ -338,6 +319,12 @@ export function VehicleForm() {
                 htmlType="submit"
                 icon={<SaveOutlined />}
                 loading={isCreating || isUpdating}
+                disabled={
+                  isCreating || 
+                  isUpdating || 
+                  form.getFieldsError().some(({ errors }) => errors.length > 0)
+                }
+                danger={form.getFieldsError().some(({ errors }) => errors.length > 0)}
               >
                 {isEditing ? t('common.update') : t('common.register')}
               </Button>

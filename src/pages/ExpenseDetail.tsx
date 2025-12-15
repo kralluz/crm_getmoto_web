@@ -80,7 +80,7 @@ export function ExpenseDetail() {
   }
 
   const handleBack = () => {
-    navigate('/despesas');
+    navigate(-1); // Volta para a página anterior
   };
 
   const handleEditDescription = () => {

@@ -1,4 +1,4 @@
-import { Table, Button, Space, Card, Typography, AutoComplete, Tag, Modal, Input, Select, Tabs, Tooltip } from 'antd';
+import { Table, Button, Space, Card, Typography, AutoComplete, Tag, Modal, Input, Select, Tabs, Tooltip, theme } from 'antd';
 import { PlusOutlined, StopOutlined, EyeOutlined, UserOutlined, CalendarOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { usePayrollPayments, useCancelPayrollPayment, usePaidPeriods } from '../hooks/usePayrollPayments';
@@ -12,12 +12,14 @@ import type { PayrollPayment } from '../types/payroll-payment';
 import { useTranslation } from 'react-i18next';
 import { formatHours } from '../utils/format-hours';
 import { PayrollCalendar } from '../components/payroll/PayrollCalendar';
+import { PageHeader } from '../components/common/PageHeader';
 
 const { Title, Text } = Typography;
 
 export function PayrollPaymentList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { token } = theme.useToken();
   const [employeeId, setEmployeeId] = useState<number | undefined>();
   const [employeeName, setEmployeeName] = useState<string>('');
   const [filterMonth, setFilterMonth] = useState<number | undefined>();
@@ -39,6 +41,37 @@ export function PayrollPaymentList() {
   );
 
   const cancelPayment = useCancelPayrollPayment();
+
+  // Filtrar pagamentos de acordo com mês/ano
+  const filteredPayments = useMemo(() => {
+    return payments.filter(payment => {
+      // Se houver filtro de mês, verificar se o pagamento está naquele mês
+      if (filterMonth !== undefined) {
+        const paymentDate = dayjs(payment.payment_date);
+        if (paymentDate.month() !== filterMonth || paymentDate.year() !== filterYear) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [payments, filterMonth, filterYear]);
+
+  // Calcular funcionários únicos com base nos dados filtrados
+  const filteredEmployeeIds = useMemo(() => {
+    const employeeIdsSet = new Set<number>();
+    
+    // Adicionar funcionários que têm time entries no período filtrado
+    allTimeEntries.forEach(entry => {
+      employeeIdsSet.add(entry.employee_id);
+    });
+    
+    // Adicionar funcionários que têm pagamentos no período filtrado
+    filteredPayments.forEach(payment => {
+      employeeIdsSet.add(payment.employee_id);
+    });
+    
+    return Array.from(employeeIdsSet);
+  }, [allTimeEntries, filteredPayments]);
 
   // Opções do autocomplete
   const employeeOptions = useMemo(() => {
@@ -87,7 +120,7 @@ export function PayrollPaymentList() {
           <p style={{ marginBottom: 16, fontWeight: 500 }}>
             {employeeName}
           </p>
-          <p style={{ color: '#ff4d4f', marginBottom: 16 }}>
+          <p style={{ color: token.colorError, marginBottom: 16 }}>
             ⚠️ {t('payroll.cancelWarning')}
           </p>
           <div>
@@ -140,7 +173,7 @@ export function PayrollPaymentList() {
         <Space direction="vertical" size="small" style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <UserOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
+              <UserOutlined style={{ color: token.colorPrimary, fontSize: '14px' }} />
               <div>
                 <Text strong style={{ fontSize: '14px', display: 'block' }}>
                   {stat.employee.first_name} {stat.employee.last_name}
@@ -150,7 +183,7 @@ export function PayrollPaymentList() {
                 </Text>
               </div>
             </div>
-            <Text strong style={{ fontSize: '16px', color: '#52c41a' }}>
+            <Text strong style={{ fontSize: '16px', color: token.colorSuccess }}>
               {formatUKCurrency(stat.totalPaid)}
             </Text>
           </div>
@@ -183,7 +216,7 @@ export function PayrollPaymentList() {
         <Space direction="vertical" size="small" style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <UserOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
+              <UserOutlined style={{ color: token.colorPrimary, fontSize: '14px' }} />
               <Text strong style={{ fontSize: '14px' }}>{employeeName}</Text>
             </div>
             <Tag color={payment.is_cancelled ? 'red' : 'green'}>
@@ -193,7 +226,7 @@ export function PayrollPaymentList() {
 
           <div style={{ marginTop: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: 4 }}>
-              <CalendarOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
+              <CalendarOutlined style={{ color: token.colorTextSecondary, fontSize: '12px' }} />
               <Text type="secondary" style={{ fontSize: '11px' }}>
                 {t('payroll.paymentDate')}:
               </Text>
@@ -201,7 +234,7 @@ export function PayrollPaymentList() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: 4 }}>
-              <CalendarOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
+              <CalendarOutlined style={{ color: token.colorTextSecondary, fontSize: '12px' }} />
               <Text type="secondary" style={{ fontSize: '11px' }}>
                 {t('payroll.period')}:
               </Text>
@@ -214,7 +247,7 @@ export function PayrollPaymentList() {
               <Tag color="blue">
                 {formatHours(payment.regular_hours + payment.overtime_hours)} hrs
               </Tag>
-              <Text strong style={{ fontSize: '16px', color: '#52c41a' }}>
+              <Text strong style={{ fontSize: '16px', color: token.colorSuccess }}>
                 {formatUKCurrency(payment.net_amount_pence)}
               </Text>
               {payment.deductions_pence > 0 && (
@@ -226,7 +259,7 @@ export function PayrollPaymentList() {
           </div>
 
           {payment.cancellation_reason && (
-            <div style={{ fontSize: '12px', color: '#ff4d4f', marginTop: 4, padding: '8px', background: '#fff1f0', borderRadius: '4px' }}>
+            <div style={{ fontSize: '12px', color: token.colorError, marginTop: 4, padding: '8px', background: token.colorErrorBg, borderRadius: token.borderRadius }}>
               <strong>{t('payroll.cancellationReason')}:</strong> {payment.cancellation_reason}
             </div>
           )}
@@ -284,7 +317,7 @@ export function PayrollPaymentList() {
         <div>
           <strong style={{ color: '#52c41a', fontSize: '16px' }}>{formatUKCurrency(amount)}</strong>
           {record.deductions_pence > 0 && (
-            <div style={{ fontSize: '12px', color: '#999' }}>
+            <div style={{ fontSize: '12px', color: token.colorTextSecondary }}>
               ({t('payroll.deducted')}: {formatUKCurrency(record.deductions_pence)})
             </div>
           )}
@@ -321,10 +354,15 @@ export function PayrollPaymentList() {
 
   // Calcular estatísticas por funcionário
   const employeeStats = useMemo(() => {
-    return employees.map(emp => {
+    // Se um funcionário específico foi selecionado, filtrar apenas ele
+    const filteredEmployees = employeeId 
+      ? employees.filter(emp => emp.employee_id === employeeId)
+      : employees;
+
+    return filteredEmployees.map(emp => {
       const empId = emp.employee_id;
       const empTimeEntries = allTimeEntries.filter(entry => entry.employee_id === empId);
-      const empPayments = payments.filter(p => p.employee_id === empId && !p.is_cancelled);
+      const empPayments = filteredPayments.filter(p => p.employee_id === empId && !p.is_cancelled);
 
       // Calcular dias trabalhados
       const workDays = new Set(empTimeEntries.map(e => dayjs(e.clock_in).format('YYYY-MM-DD'))).size;
@@ -348,7 +386,7 @@ export function PayrollPaymentList() {
         paymentsCount: empPayments.length,
       };
     });
-  }, [employees, allTimeEntries, payments]);
+  }, [employees, allTimeEntries, filteredPayments, employeeId]);
 
   // Opções para o select de mês
   const monthOptions = [
@@ -374,20 +412,21 @@ export function PayrollPaymentList() {
   }));
 
   return (
-    <div style={{ padding: '16px' }} className="payroll-container">
+    <div className="payroll-container">
+      <PageHeader
+        title={t('payroll.title')}
+        subtitle={t('payroll.subtitle')}
+        helpText={t('payroll.pageHelp')}
+      />
+
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Title level={3} style={{ margin: 0 }}>
-            {t('payroll.title')}
-          </Title>
-
-          {/* Layout para quando não há funcionário selecionado */}
-          {!employeeId && (
+          {/* Layout para quando HÁ funcionário selecionado */}
+          {employeeId && (
             <>
-              {/* Desktop: Calendário à esquerda, conteúdo à direita */}
-              <div className="desktop-only-grid" style={{ 
+              <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'auto 1fr',
+                gridTemplateColumns: 'auto minmax(0, 1fr)',
                 gap: '16px',
                 alignItems: 'start'
               }}>
@@ -396,13 +435,212 @@ export function PayrollPaymentList() {
                   employeeId={employeeId}
                   timeEntries={allTimeEntries}
                   paidPeriods={paidPeriods}
+                  selectedMonth={filterMonth}
+                  selectedYear={filterYear}
+                />
+
+                {/* Conteúdo à direita */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                  minWidth: 0
+                }}>
+                  {/* Estatísticas + Filtros */}
+                  <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    alignItems: 'flex-start'
+                  }}>
+                    {/* Estatísticas */}
+                    <div style={{ 
+                      flex: '1 1 300px',
+                      minWidth: '250px',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: '8px',
+                      padding: '12px',
+                      background: token.colorBgLayout,
+                      borderRadius: token.borderRadius,
+                      border: `1px solid ${token.colorBorder}`
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UserOutlined style={{ color: token.colorPrimary, fontSize: '16px' }} />
+                        <div>
+                          <Text type="secondary" style={{ fontSize: '11px', display: 'block', lineHeight: '1.2' }}>
+                            {t('payroll.totalEmployees')}
+                          </Text>
+                          <Text strong style={{ fontSize: '18px' }}>
+                            {filteredEmployeeIds.length}
+                          </Text>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <ClockCircleOutlined style={{ color: token.colorSuccess, fontSize: '16px' }} />
+                        <div>
+                          <Text type="secondary" style={{ fontSize: '11px', display: 'block', lineHeight: '1.2' }}>
+                            {t('payroll.totalTimeEntries')}
+                          </Text>
+                          <Text strong style={{ fontSize: '18px' }}>
+                            {allTimeEntries.length}
+                          </Text>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <DollarOutlined style={{ color: token.colorWarning, fontSize: '16px' }} />
+                        <div>
+                          <Text type="secondary" style={{ fontSize: '11px', display: 'block', lineHeight: '1.2' }}>
+                            {t('payroll.totalPayments')}
+                          </Text>
+                          <Text strong style={{ fontSize: '18px' }}>
+                            {filteredPayments.filter(p => !p.is_cancelled).length}
+                          </Text>
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CalendarOutlined style={{ color: token.colorInfo, fontSize: '16px' }} />
+                        <div>
+                          <Text type="secondary" style={{ fontSize: '11px', display: 'block', lineHeight: '1.2' }}>
+                            {t('payroll.totalPaid')}
+                          </Text>
+                          <Text strong style={{ fontSize: '16px', color: token.colorSuccess }}>
+                            {formatUKCurrency(
+                              filteredPayments
+                                .filter(p => !p.is_cancelled)
+                                .reduce((sum, p) => sum + p.net_amount_pence, 0)
+                            )}
+                          </Text>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Filtros */}
+                    <div style={{
+                      flex: '1 1 250px',
+                      minWidth: '220px',
+                      padding: '12px',
+                      background: token.colorBgContainer,
+                      borderRadius: token.borderRadius,
+                      border: `1px solid ${token.colorBorder}`
+                    }}>
+                      <Text strong style={{ fontSize: '13px', display: 'block', marginBottom: '12px' }}>
+                        {t('common.filter')}
+                      </Text>
+                      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                        <AutoComplete
+                          value={employeeName}
+                          options={filteredOptions}
+                          onSelect={handleEmployeeSelect}
+                          onSearch={handleEmployeeSearch}
+                          placeholder={t('timeEntries.filterByEmployee')}
+                          style={{ width: '100%' }}
+                          size="small"
+                          allowClear
+                          onClear={() => {
+                            setEmployeeId(undefined);
+                            setEmployeeName('');
+                          }}
+                        />
+                        <Space.Compact style={{ width: '100%' }} size="small">
+                          <Select
+                            placeholder="Selecione o mês"
+                            value={filterMonth}
+                            onChange={setFilterMonth}
+                            options={monthOptions}
+                            style={{ width: '60%' }}
+                            size="small"
+                            allowClear
+                          />
+                          <Select
+                            value={filterYear}
+                            onChange={setFilterYear}
+                            options={yearOptions}
+                            style={{ width: '40%' }}
+                            size="small"
+                          />
+                        </Space.Compact>
+                        {(employeeId || filterMonth !== undefined) && (
+                          <Button
+                            size="small"
+                            block
+                            onClick={() => {
+                              setEmployeeId(undefined);
+                              setEmployeeName('');
+                              setFilterMonth(undefined);
+                            }}
+                          >
+                            {t('common.clearFilters')}
+                          </Button>
+                        )}
+                      </Space>
+                    </div>
+                  </div>
+
+                  {/* Histórico de Pagamentos */}
+                  <div style={{ width: '100%' }}>
+                    <Title level={5} style={{ marginBottom: '12px' }}>
+                      {t('payroll.paymentsHistory')}
+                    </Title>
+                    {filteredPayments.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                        <Text type="secondary">{t('payroll.noPayments')}</Text>
+                      </div>
+                    ) : (
+                      <Table
+                        size="small"
+                        style={{ width: '100%' }}
+                        columns={columns}
+                        dataSource={filteredPayments}
+                        rowKey="payment_id"
+                        loading={isLoading}
+                        pagination={{
+                          current: currentPage,
+                          pageSize: pageSize,
+                          showSizeChanger: true,
+                          pageSizeOptions: ['5', '10', '20', '50'],
+                          onChange: (page, size) => {
+                            setCurrentPage(page);
+                            setPageSize(size);
+                          },
+                        }}
+                        scroll={{ x: 800 }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Layout para quando não há funcionário selecionado */}
+          {!employeeId && (
+            <>
+              {/* Desktop: Calendário à esquerda, conteúdo à direita */}
+              <div className="desktop-only-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'auto minmax(0, 1fr)',
+                gap: '16px',
+                alignItems: 'start'
+              }}>
+                {/* Calendário à esquerda */}
+                <PayrollCalendar
+                  employeeId={employeeId}
+                  timeEntries={allTimeEntries}
+                  paidPeriods={paidPeriods}
+                  selectedMonth={filterMonth}
+                  selectedYear={filterYear}
                 />
 
                 {/* Coluna direita: Estatísticas + Filtros + Histórico de Pagamentos */}
-                <div style={{ 
-                  display: 'flex', 
+                <div style={{
+                  display: 'flex',
                   flexDirection: 'column',
-                  gap: '16px'
+                  gap: '16px',
+                  minWidth: 0
                 }}>
                   {/* Estatísticas + Filtros lado a lado quando houver espaço */}
                   <div style={{ 
@@ -419,9 +657,9 @@ export function PayrollPaymentList() {
                     gridTemplateColumns: 'repeat(2, 1fr)',
                     gap: '8px',
                     padding: '12px',
-                    background: '#fafafa',
-                    borderRadius: '8px',
-                    border: '1px solid #d9d9d9'
+                    background: token.colorBgLayout,
+                    borderRadius: token.borderRadius,
+                    border: `1px solid ${token.colorBorder}`
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <UserOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
@@ -430,7 +668,7 @@ export function PayrollPaymentList() {
                           {t('payroll.totalEmployees')}
                         </Text>
                         <Text strong style={{ fontSize: '18px' }}>
-                          {employees.length}
+                          {filteredEmployeeIds.length}
                         </Text>
                       </div>
                     </div>
@@ -454,7 +692,7 @@ export function PayrollPaymentList() {
                           {t('payroll.totalPayments')}
                         </Text>
                         <Text strong style={{ fontSize: '18px' }}>
-                          {payments.filter(p => !p.is_cancelled).length}
+                          {filteredPayments.filter(p => !p.is_cancelled).length}
                         </Text>
                       </div>
                     </div>
@@ -467,7 +705,7 @@ export function PayrollPaymentList() {
                         </Text>
                         <Text strong style={{ fontSize: '16px', color: '#52c41a' }}>
                           {formatUKCurrency(
-                            payments
+                            filteredPayments
                               .filter(p => !p.is_cancelled)
                               .reduce((sum, p) => sum + p.net_amount_pence, 0)
                           )}
@@ -481,9 +719,9 @@ export function PayrollPaymentList() {
                     flex: '1 1 250px',
                     minWidth: '220px',
                     padding: '12px',
-                    background: '#fff',
-                    borderRadius: '8px',
-                    border: '1px solid #d9d9d9'
+                    background: token.colorBgContainer,
+                    borderRadius: token.borderRadius,
+                    border: `1px solid ${token.colorBorder}`
                   }}>
                     <Text strong style={{ fontSize: '13px', display: 'block', marginBottom: '12px' }}>
                       {t('common.filter')}
@@ -543,54 +781,55 @@ export function PayrollPaymentList() {
                     <Title level={5} style={{ marginBottom: '12px' }}>
                       {t('payroll.paymentsHistory')}
                     </Title>
-                    {payments.length === 0 ? (
+                    {filteredPayments.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '40px 0' }}>
                         <Text type="secondary">{t('payroll.noPayments')}</Text>
                       </div>
                     ) : (
-                      <Table
-                        size="small"
-                        style={{ width: '100%' }}
-                        columns={columns}
-                        dataSource={payments}
-                        rowKey="payment_id"
-                        loading={isLoading}
-                        pagination={{
-                          current: currentPage,
-                          pageSize: pageSize,
-                          showSizeChanger: true,
-                          pageSizeOptions: ['5', '10', '20', '50'],
-                          onChange: (page, size) => {
-                            setCurrentPage(page);
-                            setPageSize(size);
-                          },
-                        }}
-                        summary={(data) => {
-                          const paidPayments = data.filter((item) => !item.is_cancelled);
-                          const totalNet = paidPayments.reduce((sum, item) => sum + item.net_amount_pence, 0);
-                          const totalGross = paidPayments.reduce((sum, item) => sum + item.gross_amount_pence, 0);
+                        <Table
+                          size="small"
+                          style={{ width: '100%' }}
+                          columns={columns}
+                          dataSource={filteredPayments}
+                          rowKey="payment_id"
+                          loading={isLoading}
+                          pagination={{
+                            current: currentPage,
+                            pageSize: pageSize,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['5', '10', '20', '50'],
+                            onChange: (page, size) => {
+                              setCurrentPage(page);
+                              setPageSize(size);
+                            },
+                          }}
+                          scroll={{ x: 800 }}
+                          summary={(data) => {
+                            const paidPayments = data.filter((item) => !item.is_cancelled);
+                            const totalNet = paidPayments.reduce((sum, item) => sum + item.net_amount_pence, 0);
+                            const totalGross = paidPayments.reduce((sum, item) => sum + item.gross_amount_pence, 0);
 
-                          return (
-                            <>
-                              {paidPayments.length > 0 && (
-                                <Table.Summary.Row>
-                                  <Table.Summary.Cell index={0} colSpan={4}>
-                                    <strong>{t('payroll.totalPaid')} ({t('payroll.paymentsCount', { count: paidPayments.length })})</strong>
-                                  </Table.Summary.Cell>
-                                  <Table.Summary.Cell index={4}>
-                                    <strong>{formatUKCurrency(totalGross)}</strong>
-                                  </Table.Summary.Cell>
-                                  <Table.Summary.Cell index={5} />
-                                  <Table.Summary.Cell index={6}>
-                                    <strong style={{ color: '#52c41a' }}>{formatUKCurrency(totalNet)}</strong>
-                                  </Table.Summary.Cell>
-                                  <Table.Summary.Cell index={7} colSpan={2} />
-                                </Table.Summary.Row>
-                              )}
-                            </>
-                          );
-                        }}
-                      />
+                            return (
+                              <>
+                                {paidPayments.length > 0 && (
+                                  <Table.Summary.Row>
+                                    <Table.Summary.Cell index={0} colSpan={4}>
+                                      <strong>{t('payroll.totalPaid')} ({t('payroll.paymentsCount', { count: paidPayments.length })})</strong>
+                                    </Table.Summary.Cell>
+                                    <Table.Summary.Cell index={4}>
+                                      <strong>{formatUKCurrency(totalGross)}</strong>
+                                    </Table.Summary.Cell>
+                                    <Table.Summary.Cell index={5} />
+                                    <Table.Summary.Cell index={6}>
+                                      <strong style={{ color: '#52c41a' }}>{formatUKCurrency(totalNet)}</strong>
+                                    </Table.Summary.Cell>
+                                    <Table.Summary.Cell index={7} colSpan={2} />
+                                  </Table.Summary.Row>
+                                )}
+                              </>
+                            );
+                          }}
+                        />
                     )}
                   </div>
                 </div>
@@ -604,9 +843,9 @@ export function PayrollPaymentList() {
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: '8px',
                   padding: '12px',
-                  background: '#fafafa',
-                  borderRadius: '8px',
-                  border: '1px solid #d9d9d9',
+                  background: token.colorBgLayout,
+                  borderRadius: token.borderRadius,
+                  border: `1px solid ${token.colorBorder}`,
                   marginBottom: '16px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -616,7 +855,7 @@ export function PayrollPaymentList() {
                         {t('payroll.totalEmployees')}
                       </Text>
                       <Text strong style={{ fontSize: '18px' }}>
-                        {employees.length}
+                        {filteredEmployeeIds.length}
                       </Text>
                     </div>
                   </div>
@@ -640,7 +879,7 @@ export function PayrollPaymentList() {
                         {t('payroll.totalPayments')}
                       </Text>
                       <Text strong style={{ fontSize: '18px' }}>
-                        {payments.filter(p => !p.is_cancelled).length}
+                        {filteredPayments.filter(p => !p.is_cancelled).length}
                       </Text>
                     </div>
                   </div>
@@ -653,7 +892,7 @@ export function PayrollPaymentList() {
                       </Text>
                       <Text strong style={{ fontSize: '16px', color: '#52c41a' }}>
                         {formatUKCurrency(
-                          payments
+                          filteredPayments
                             .filter(p => !p.is_cancelled)
                             .reduce((sum, p) => sum + p.net_amount_pence, 0)
                         )}
@@ -668,15 +907,17 @@ export function PayrollPaymentList() {
                     employeeId={employeeId}
                     timeEntries={allTimeEntries}
                     paidPeriods={paidPeriods}
+                    selectedMonth={filterMonth}
+                    selectedYear={filterYear}
                   />
                 </div>
 
                 {/* 3. Filtros depois */}
                 <div style={{
                   padding: '12px',
-                  background: '#fff',
-                  borderRadius: '8px',
-                  border: '1px solid #d9d9d9',
+                  background: token.colorBgContainer,
+                  borderRadius: token.borderRadius,
+                  border: `1px solid ${token.colorBorder}`,
                   marginBottom: '16px'
                 }}>
                   <Text strong style={{ fontSize: '13px', display: 'block', marginBottom: '12px' }}>
@@ -749,6 +990,7 @@ export function PayrollPaymentList() {
                     dataSource={employeeStats}
                     rowKey={(record) => record.employee.employee_id}
                     pagination={false}
+                    scroll={{ x: 700 }}
                     columns={[
                       {
                         title: t('payroll.employee'),
@@ -829,13 +1071,13 @@ export function PayrollPaymentList() {
                       label: t('payroll.paymentsHistory'),
                       children: (
                         <>
-                          {payments.length === 0 ? (
+                          {filteredPayments.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '40px 0' }}>
                               <Text type="secondary">{t('payroll.noPayments')}</Text>
                             </div>
                           ) : (
                             <div>
-                              {payments.map(renderPaymentCard)}
+                              {filteredPayments.map(renderPaymentCard)}
                             </div>
                           )}
                         </>
@@ -863,7 +1105,11 @@ export function PayrollPaymentList() {
             .mobile-only {
               display: none;
             }
-            
+
+            .payroll-container * {
+              box-sizing: border-box;
+            }
+
             @media (max-width: 1199px) {
               .desktop-only, .desktop-only-grid {
                 display: none !important;

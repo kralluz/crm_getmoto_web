@@ -125,7 +125,7 @@ export function ProductCategoryDetail() {
         <Row gutter={16}>
           <Col span={8}>
             <Statistic
-              title={t('products.totalProducts')}
+              title={t('products.totalProductsInCategory')}
               value={category.stats?.total_products || 0}
               valueStyle={{ color: '#3f8600' }}
             />

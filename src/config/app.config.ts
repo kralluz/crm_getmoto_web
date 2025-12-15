@@ -26,9 +26,9 @@ const getRequiredEnvVar = (key: string): string => {
 export const apiConfig = {
   baseUrl: getRequiredEnvVar('VITE_API_BASE_URL'),
   timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
-  // Reduzir número de retries para evitar spam
-  retryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 1,
-  retryDelay: Number(import.meta.env.VITE_API_RETRY_DELAY) || 1000,
+  // Retry desabilitado - não retentar em caso de erro
+  retryAttempts: 0,
+  retryDelay: 0,
   concurrentLimit: Number(import.meta.env.VITE_API_CONCURRENT_LIMIT) || 5,
 } as const;
 

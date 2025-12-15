@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Table, Card, Input, Tag, Space, Select, Button, DatePicker, Dropdown, Row, Col, Tooltip } from 'antd';
-import { SearchOutlined, PlusOutlined, FilterOutlined, DownOutlined, EyeOutlined, CalendarOutlined, TagOutlined } from '@ant-design/icons';
+import { SearchOutlined, PlusOutlined, FilterOutlined, DownOutlined, EyeOutlined, CalendarOutlined, TagOutlined, ShoppingCartOutlined, DollarOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { useExpenses } from '../hooks/useExpenses';
-import type { Expense } from '../types/expense';
+import { useAllOutflows } from '../hooks/useExpenses';
+import type { UnifiedOutflow } from '../types/expense';
 import { PageHeader } from '../components/common/PageHeader';
 import { ExpenseModal } from '../components/common/ExpenseModal';
 import { PurchaseOrderModal } from '../components/common/PurchaseOrderModal';
@@ -38,40 +38,62 @@ export function ExpensesList() {
   // Hook para ocultar cancelamentos
   const { hideCancelled, setHideCancelled } = useHideCancelled('expenses');
 
-  const { data: expenses, isLoading } = useExpenses({
+  // Buscar TODAS as saídas de dinheiro (unificado)
+  const { data: outflows, isLoading } = useAllOutflows({
     startDate: dateRange?.[0],
     endDate: dateRange?.[1],
     category: categoryFilter !== 'all' ? categoryFilter : undefined,
   });
 
-  // Função para verificar se despesa está cancelada
-  const isCancelledExpense = (expense: Expense) => {
-    return expense.cancelled_at !== null;
+  // Buscar TODAS as categorias disponíveis (sem filtros) para popular o dropdown
+  const { data: allOutflowsForCategories } = useAllOutflows({});
+
+  // Função para verificar se está cancelado ou é um estorno
+  const isCancelled = (outflow: UnifiedOutflow) => {
+    // Verifica se está marcado como cancelado
+    if (outflow.is_cancelled) return true;
+    
+    // Verifica se é um estorno (descrição começa com "ESTORNO")
+    if (outflow.description?.toUpperCase().startsWith('ESTORNO')) return true;
+    
+    // Verifica se é um desconto (descrição contém "Desconto aplicado")
+    if (outflow.description?.includes('Desconto aplicado')) return true;
+    
+    return false;
   };
 
-  const filteredExpenses = useMemo(() => {
-    if (!Array.isArray(expenses)) return [];
+  const filteredOutflows = useMemo(() => {
+    if (!Array.isArray(outflows)) return [];
 
-    return expenses.filter(expense => {
+    return outflows.filter(outflow => {
       const matchesSearch = searchText === '' ||
-        expense.description?.toLowerCase().includes(searchText.toLowerCase()) ||
-        expense.category?.toLowerCase().includes(searchText.toLowerCase());
+        outflow.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        outflow.category?.toLowerCase().includes(searchText.toLowerCase());
 
-      const matchesCancelled = !hideCancelled || !isCancelledExpense(expense);
+      const matchesCancelled = !hideCancelled || !isCancelled(outflow);
 
       return matchesSearch && matchesCancelled;
     });
-  }, [expenses, searchText, hideCancelled]);
+  }, [outflows, searchText, hideCancelled]);
 
-  // Extrair categorias únicas para o filtro
+  // Extrair categorias únicas para o filtro - SEMPRE de todos os registros
   const categories = useMemo(() => {
-    if (!Array.isArray(expenses)) return [];
-    const uniqueCategories = new Set(expenses.map(e => e.category));
-    return Array.from(uniqueCategories);
-  }, [expenses]);
+    if (!Array.isArray(allOutflowsForCategories)) return [];
+    const uniqueCategories = new Set(
+      allOutflowsForCategories
+        .map(o => o.category)
+        .filter(category => category != null && category !== '')
+    );
+    return Array.from(uniqueCategories).sort();
+  }, [allOutflowsForCategories]);
 
-  const handleView = (id: number) => {
-    navigate(`/despesas/${id}`);
+  const handleView = (outflow: UnifiedOutflow) => {
+    // Redirecionar baseado no tipo
+    if (outflow.type === 'expense' && outflow.reference_id) {
+      navigate(`/despesas/${outflow.reference_id}`);
+    } else if (outflow.type === 'purchase_order' && outflow.reference_id) {
+      navigate(`/compras/${outflow.reference_id}`);
+    }
   };
 
   const handleDateRangeChange = (dates: any) => {
@@ -107,19 +129,67 @@ export function ExpensesList() {
   ];
 
   const totals = useMemo(() => {
-    if (!Array.isArray(filteredExpenses)) return { total: 0, count: 0 };
+    // Calcula sobre TODOS os outflows (não sobre os filtrados)
+    // para que o total não seja afetado pelo filtro de ocultar cancelamentos
+    if (!Array.isArray(outflows)) return { total: 0, count: 0 };
 
-    const total = filteredExpenses
-      .filter(e => e.is_active)
-      .reduce((sum, e) => sum + Math.abs(e.amount), 0);
+    const total = outflows
+      .filter(o => !isCancelled(o)) // Exclui cancelados e estornos
+      .reduce((sum, o) => sum + Math.abs(o.amount), 0);
 
     return {
       total,
-      count: filteredExpenses.filter(e => e.is_active).length,
+      count: outflows.filter(o => !isCancelled(o)).length,
     };
-  }, [filteredExpenses]);
+  }, [outflows]);
 
-  const columns: ColumnsType<Expense> = [
+  // Função para obter ícone por tipo
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'purchase_order':
+        return <ShoppingCartOutlined />;
+      case 'payroll':
+        return <DollarOutlined />;
+      case 'employee_advance':
+        return <DollarOutlined />;
+      default:
+        return <TagOutlined />;
+    }
+  };
+
+  // Função para obter cor do tipo
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'expense':
+        return 'blue';
+      case 'purchase_order':
+        return 'purple';
+      case 'payroll':
+        return 'green';
+      case 'employee_advance':
+        return 'orange';
+      default:
+        return 'default';
+    }
+  };
+
+  // Função para obter label do tipo
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'expense':
+        return t('expenses.types.expense');
+      case 'purchase_order':
+        return t('expenses.types.purchase_order');
+      case 'payroll':
+        return t('expenses.types.payroll');
+      case 'employee_advance':
+        return t('expenses.types.employee_advance');
+      default:
+        return t('expenses.types.other');
+    }
+  };
+
+  const columns: ColumnsType<UnifiedOutflow> = [
     {
       title: t('cashflow.actions'),
       key: 'actions',
@@ -131,9 +201,20 @@ export function ExpensesList() {
           <Button
             type="link"
             icon={<EyeOutlined />}
-            onClick={() => handleView(record.expense_id)}
+            onClick={() => handleView(record)}
+            disabled={!record.reference_id}
           />
         </Tooltip>
+      ),
+    },
+    {
+      title: t('expenses.type'),
+      key: 'type',
+      width: 150,
+      render: (_, record) => (
+        <Tag icon={getTypeIcon(record.type)} color={getTypeColor(record.type)}>
+          {getTypeLabel(record.type)}
+        </Tag>
       ),
     },
     {
@@ -176,7 +257,7 @@ export function ExpensesList() {
       width: 120,
       align: 'center',
       render: (_, record) => {
-        if (record.cancelled_at) {
+        if (record.is_cancelled) {
           return <Tag color="red">{t('expenses.cancelled')}</Tag>;
         }
         return <Tag color="green">{t('expenses.active')}</Tag>;
@@ -290,20 +371,25 @@ export function ExpensesList() {
       <Card>
         {isMobile ? (
           <Row gutter={[16, 16]}>
-            {filteredExpenses.map((expense) => (
-              <Col xs={24} key={expense.expense_id}>
+            {filteredOutflows.map((outflow) => (
+              <Col xs={24} key={`${outflow.type}-${outflow.cash_flow_id}`}>
                 <Card
                   size="small"
                   actions={[
                     <Tooltip title={t('common.view')} key="view">
-                      <EyeOutlined onClick={() => handleView(expense.expense_id)} />
+                      <EyeOutlined 
+                        onClick={() => handleView(outflow)} 
+                        style={{ opacity: outflow.reference_id ? 1 : 0.3 }}
+                      />
                     </Tooltip>,
                   ]}
                 >
                   <Space direction="vertical" size="small" style={{ width: '100%' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Tag color="blue">{expense.category}</Tag>
-                      {expense.cancelled_at ? (
+                      <Tag icon={getTypeIcon(outflow.type)} color={getTypeColor(outflow.type)}>
+                        {getTypeLabel(outflow.type)}
+                      </Tag>
+                      {outflow.is_cancelled ? (
                         <Tag color="red">{t('expenses.cancelled')}</Tag>
                       ) : (
                         <Tag color="green">{t('expenses.active')}</Tag>
@@ -311,16 +397,16 @@ export function ExpensesList() {
                     </div>
                     
                     <div style={{ fontSize: 14, fontWeight: 500, marginTop: 4 }}>
-                      {expense.description}
+                      {outflow.description}
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
                       <span style={{ fontSize: 11, color: '#8c8c8c' }}>
                         <CalendarOutlined style={{ marginRight: 4 }} />
-                        {formatDate(expense.expense_date, 'short')}
+                        {formatDate(outflow.expense_date, 'short')}
                       </span>
                       <span style={{ color: '#ff4d4f', fontWeight: 600, fontSize: 16 }}>
-                        {formatCurrency(expense.amount)}
+                        {formatCurrency(outflow.amount)}
                       </span>
                     </div>
                   </Space>
@@ -331,9 +417,9 @@ export function ExpensesList() {
         ) : (
           <Table
             columns={columns}
-            dataSource={filteredExpenses}
+            dataSource={filteredOutflows}
             loading={isLoading}
-            rowKey="expense_id"
+            rowKey={(record) => `${record.type}-${record.cash_flow_id}`}
             pagination={{
               pageSize: pageSize,
               showSizeChanger: true,

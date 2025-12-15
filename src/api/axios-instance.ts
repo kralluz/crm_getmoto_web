@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { requestQueue } from './request-queue';
 import { ApiErrorHandler } from './error-handler';
-import { setupRetryInterceptor } from './retry-interceptor';
 import { API_CONFIG } from '../constants';
 import { StorageService } from '../services';
 import { apiLogger } from '../utils/logger';
@@ -22,16 +21,8 @@ const axiosInstance = axios.create({
 });
 
 // ============================================================================
-// RETRY INTERCEPTOR
+// RETRY DISABLED - No retry logic applied
 // ============================================================================
-
-/**
- * Configura retry automático com exponential backoff
- */
-setupRetryInterceptor(axiosInstance, {
-  maxRetries: API_CONFIG.RETRY_ATTEMPTS,
-  retryDelay: API_CONFIG.RETRY_DELAY,
-});
 
 // ============================================================================
 // INTERCEPTORS DE REQUEST
@@ -115,13 +106,36 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
     const apiError = ApiErrorHandler.handle(error);
 
-    // Evitar retry em rotas de autenticação
+    // Evitar retry em rotas de autenticação e se já tentou
     const isAuthRoute = originalRequest?.url?.includes('/auth/');
+    const hasRetried = originalRequest?._retry === true;
     
     // Tentativa de refresh token em caso de 401
-    if (apiError.status === 401 && !originalRequest._retry && !isAuthRoute) {
+    if (apiError.status === 401 && !hasRetried && !isAuthRoute) {
+      const refreshToken = localStorage.getItem('refresh_token');
+      
+      // Se não tem refresh token, deslogar imediatamente
+      if (!refreshToken) {
+        apiLogger.warn('No refresh token available - clearing auth and redirecting');
+        StorageService.clearAuthData();
+        requestQueue.clear();
+        
+        try {
+          const { useAuthStore } = await import('../store/auth-store');
+          useAuthStore.getState().logout();
+        } catch (err) {
+          console.error('Error clearing auth store:', err);
+        }
+
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        
+        return Promise.reject(apiError);
+      }
+
+      // Se já está refreshing, aguarda o novo token
       if (isRefreshing) {
-        // Se já está refreshing, aguarda o novo token
         return new Promise((resolve, reject) => {
           subscribeTokenRefresh((newToken: string) => {
             if (newToken) {
@@ -134,65 +148,98 @@ axiosInstance.interceptors.response.use(
         });
       }
 
+      // Marca que está fazendo refresh e a requisição já foi tentada
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-
-        if (refreshToken) {
-          // Chama endpoint de refresh
-          const response = await axiosInstance.post('/api/auth/refresh', {
-            refreshToken,
-          });
-
-          const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
-
-          // Atualiza tokens no storage e na store
-          StorageService.setAuthToken(newAccessToken);
-          if (newRefreshToken) {
-            localStorage.setItem('refresh_token', newRefreshToken);
-          }
-          
-          // Atualiza a store Zustand para manter sincronizado
-          try {
-            const { useAuthStore } = await import('../store/auth-store');
-            useAuthStore.getState().setToken(newAccessToken);
-            if (newRefreshToken) {
-              useAuthStore.getState().setRefreshToken(newRefreshToken);
-            }
-          } catch (error) {
-            console.error('Error updating auth store:', error);
-          }
-
-          // Atualiza header da requisição original
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-          // Notifica todas as requisições aguardando
-          onTokenRefreshed(newAccessToken);
-          isRefreshing = false;
-
-          // Retenta a requisição original
-          return axiosInstance(originalRequest);
-        } else {
-          // Sem refresh token, limpar tudo
-          throw new Error('No refresh token available');
+        apiLogger.info('Attempting token refresh...');
+        
+        // Log para debug
+        try {
+          const { AuthDebug } = await import('../utils/auth-debug');
+          AuthDebug.log('Starting token refresh', { hasRefreshToken: !!refreshToken });
+        } catch (e) {
+          // Ignora erro de import
         }
+        
+        // Chama endpoint de refresh sem interceptor para evitar loop
+        const response = await axios.post(
+          `${API_CONFIG.BASE_URL}/api/auth/refresh`,
+          { refreshToken },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
+
+        if (!newAccessToken) {
+          throw new Error('No access token received from refresh');
+        }
+
+        apiLogger.info('Token refresh successful');
+
+        // Atualiza tokens no storage
+        StorageService.setAuthToken(newAccessToken);
+        if (newRefreshToken) {
+          localStorage.setItem('refresh_token', newRefreshToken);
+        }
+        
+        // Atualiza a store Zustand para manter sincronizado
+        try {
+          const { useAuthStore } = await import('../store/auth-store');
+          const state = useAuthStore.getState();
+          state.setToken(newAccessToken);
+          if (newRefreshToken) {
+            state.setRefreshToken(newRefreshToken);
+          }
+        } catch (storeError) {
+          console.error('Error updating auth store:', storeError);
+        }
+
+        // Atualiza header da requisição original
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
+
+        // Notifica todas as requisições aguardando
+        onTokenRefreshed(newAccessToken);
+        isRefreshing = false;
+
+        // Retenta a requisição original
+        return axiosInstance(originalRequest);
       } catch (refreshError) {
         // Se refresh falhar, limpa dados e redireciona para login
+        apiLogger.error('Token refresh failed:', refreshError);
+        
+        // Log para debug
+        try {
+          const { AuthDebug } = await import('../utils/auth-debug');
+          AuthDebug.trackTokenRefresh(false, refreshError);
+          AuthDebug.trackLogout('refresh-token-failed');
+        } catch (e) {
+          // Ignora erro de import
+        }
+        
         isRefreshing = false;
         refreshSubscribers = [];
 
-        apiLogger.warn('Token refresh failed - clearing auth data');
         StorageService.clearAuthData();
         localStorage.removeItem('refresh_token');
         requestQueue.clear();
 
-        // Notifica subscribers com null para falhar as requisições pendentes
+        // Limpar store Zustand
+        try {
+          const { useAuthStore } = await import('../store/auth-store');
+          useAuthStore.getState().logout();
+        } catch (err) {
+          console.error('Error clearing auth store:', err);
+        }
+
+        // Notifica subscribers com empty para falhar as requisições pendentes
         onTokenRefreshed('');
 
         if (!window.location.pathname.includes('/login')) {
-          apiLogger.info('Redirecting to login page');
+          apiLogger.info('Redirecting to login page after refresh failure');
           window.location.href = '/login';
         }
 
@@ -213,12 +260,19 @@ axiosInstance.interceptors.response.use(
       ApiErrorHandler.showNotification(apiError);
     }
 
-    // Tratamento especial para 401 (não autorizado) sem refresh token ou em rotas de auth
-    if (ApiErrorHandler.isCritical(apiError) && !error.config?._retry && (isAuthRouteForNotification || !localStorage.getItem('refresh_token'))) {
-      apiLogger.warn('Unauthorized request - clearing auth data');
+    // Tratamento especial para 401 em rotas de auth ou sem refresh token
+    if (apiError.status === 401 && (isAuthRouteForNotification || hasRetried)) {
+      apiLogger.warn('Unauthorized request on auth route or after retry - clearing auth data');
       StorageService.clearAuthData();
       localStorage.removeItem('refresh_token');
       requestQueue.clear();
+
+      try {
+        const { useAuthStore } = await import('../store/auth-store');
+        useAuthStore.getState().logout();
+      } catch (err) {
+        console.error('Error clearing auth store:', err);
+      }
 
       if (!window.location.pathname.includes('/login')) {
         apiLogger.info('Redirecting to login page');

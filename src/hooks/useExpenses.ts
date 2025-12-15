@@ -6,6 +6,19 @@ import type {
   CancelExpenseData,
 } from '../types/expense';
 
+// Hook para buscar TODAS as saídas (despesas + ordens de compra + outros)
+export function useAllOutflows(params?: {
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  return useQuery({
+    queryKey: ['outflows', params],
+    queryFn: () => expenseApi.getAllOutflows(params),
+  });
+}
+
+// Hook para buscar apenas despesas operacionais (legacy)
 export function useExpenses(params?: {
   category?: string;
   startDate?: string;
@@ -32,6 +45,7 @@ export function useCreateExpense() {
     mutationFn: (data: CreateExpenseData) => expenseApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['outflows'] });
       // Invalidar TODAS as queries do cashflow (recursivo)
       queryClient.invalidateQueries({ 
         queryKey: ['cashflow'], 
@@ -55,6 +69,7 @@ export function useUpdateExpense() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense', id] });
+      queryClient.invalidateQueries({ queryKey: ['outflows'] });
       // Invalidar TODAS as queries do cashflow (recursivo)
       queryClient.invalidateQueries({ 
         queryKey: ['cashflow'], 
@@ -70,6 +85,7 @@ export function useDeleteExpense() {
   return useMutation({
     mutationFn: (id: number | string) => expenseApi.delete(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['outflows'] });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       // Invalidar TODAS as queries do cashflow (recursivo)
       queryClient.invalidateQueries({ 
@@ -92,6 +108,7 @@ export function useCancelExpense() {
       data: CancelExpenseData;
     }) => expenseApi.cancel(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['outflows'] });
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       // Invalidar TODAS as queries do cashflow (recursivo)
       queryClient.invalidateQueries({ 
@@ -113,6 +130,7 @@ export function useUpdateExpenseDescription() {
       expenseApi.updateDescription(id, description),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['outflows'] });
       queryClient.invalidateQueries({ queryKey: ['expense', id] });
     },
   });

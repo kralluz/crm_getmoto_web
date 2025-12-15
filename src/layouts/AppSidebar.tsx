@@ -17,6 +17,7 @@ import {
   DollarCircleOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 const { Sider } = Layout;
 const { useToken } = theme;
@@ -40,6 +41,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const { t } = useTranslation();
   const { token } = useToken();
+  const navigate = useNavigate();
   const [openKeys, setOpenKeys] = useState<string[]>(['dashboard-submenu', 'cadastros-submenu', 'servicos-submenu', 'despesas-submenu', 'produtos-submenu', 'employees-submenu']);
 
   // Detectar se está em tema dark
@@ -164,26 +166,18 @@ export function AppSidebar({
 
   return (
     <>
-      {/* CSS para desabilitar TODOS os tooltips e popovers do menu */}
+      {/* CSS para desabilitar apenas tooltips do menu lateral */}
       <style>
         {`
-          /* Desabilita tooltips do menu collapsed - abordagem agressiva */
-          .ant-menu-inline-collapsed-tooltip,
-          .ant-tooltip[role="tooltip"],
-          div[class*="ant-tooltip"],
-          div[class*="ant-menu-submenu-popup"] {
+          /* Desabilita apenas tooltips do menu collapsed */
+          .ant-menu-inline-collapsed-tooltip {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
           }
 
-          /* Esconde TODOS os tooltips globalmente */
-          body > .ant-tooltip {
-            display: none !important;
-          }
-
-          /* Esconde popovers de submenu */
+          /* Esconde popovers de submenu do menu lateral */
           .ant-menu-submenu-popup {
             display: none !important;
           }
@@ -215,7 +209,9 @@ export function AppSidebar({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          cursor: 'pointer',
         }}
+        onClick={() => navigate('/dashboard')}
       >
         {collapsed ? (
           <HomeOutlined style={{ fontSize: 24, color: '#1890ff' }} />
@@ -223,10 +219,14 @@ export function AppSidebar({
           <img
             src={isDarkMode ? "/logo-getmoto-removebg.png" : "/logo-getmoto-transparent.png"}
             alt="GetMoto LTD."
-            style={{
-              width: '100%',
-              maxWidth: '100px',
-              height: 'auto',
+            style={isDarkMode ? {
+              width: 'auto',
+              height: '95px',
+              objectFit: 'contain',
+            } : {
+              width: 'auto',
+              height: '120px',
+              objectFit: 'contain',
             }}
           />
         )}

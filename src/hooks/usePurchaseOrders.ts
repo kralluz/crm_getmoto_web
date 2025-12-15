@@ -32,6 +32,7 @@ export function useCreatePurchaseOrder() {
       purchaseOrderApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['outflows'] }); // Atualizar lista de despesas
       // Invalidar TODAS as queries do cashflow (recursivo)
       queryClient.invalidateQueries({ 
         queryKey: ['cashflow'], 
@@ -97,11 +98,13 @@ export function useCancelPurchaseOrder() {
       id: number | string;
       data: CancelPurchaseOrderData;
     }) => purchaseOrderApi.cancel(id, data),
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-order', id] }); // Atualiza a ordem específica
+      queryClient.invalidateQueries({ queryKey: ['outflows'] }); // Atualizar lista de despesas
       // Invalidar TODAS as queries do cashflow (recursivo)
-      queryClient.invalidateQueries({ 
-        queryKey: ['cashflow'], 
+      queryClient.invalidateQueries({
+        queryKey: ['cashflow'],
         refetchType: 'all' // Força refetch ativo e inativo
       });
       queryClient.invalidateQueries({ queryKey: ['products'] });

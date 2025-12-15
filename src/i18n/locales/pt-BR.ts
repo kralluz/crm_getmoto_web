@@ -30,6 +30,8 @@ export default {
     active: 'Ativo',
     inactive: 'Inativo',
     status: 'Status',
+    clickToActivate: 'Clique para ativar',
+    clickToDeactivate: 'Clique para desativar',
     successUpdate: '{{item}} atualizado com sucesso!',
     successCreate: '{{item}} criado com sucesso!',
     successDelete: '{{item}} deletado com sucesso!',
@@ -81,6 +83,7 @@ export default {
     changeTheme: 'Alterar Tema',
     language: 'Idioma',
     languageChanged: 'Idioma alterado com sucesso',
+    generatePdf: 'Gerar PDF',
   },
 
   auth: {
@@ -335,6 +338,8 @@ export default {
     totalProducts: 'Total: {{total}} produtos',
     deleteProduct: 'Deletar Produto',
     deleteProductConfirm: 'Tem certeza que deseja deletar o produto "{{name}}"?',
+    activate: 'Ativar',
+    deactivate: 'Desativar',
     searchProducts: 'Buscar por produto ou categoria...',
     // Product Category
     categoryTitle: 'Categorias de Produtos',
@@ -397,6 +402,7 @@ export default {
     availableServices: 'Gerencie os serviços disponíveis',
     pageHelp: 'Cadastre e gerencie os serviços prestados pela oficina (ex: Troca de Óleo, Troca de Pneu, Revisão). Cada serviço pode ter preço base, descrição e status ativo/inativo. Estes serviços são usados nas Ordens de Serviço.',
     serviceOrdersPageHelp: 'Gerencie todas as Ordens de Serviço (OS). Acompanhe o status de cada serviço, desde o orçamento até a conclusão. Cada OS registra serviços realizados, produtos utilizados, valores e gera automaticamente entradas no fluxo de caixa.',
+    newServiceOrder: 'Nova Ordem de Serviço',
     customer: 'Cliente',
     motorcycle: 'Moto',
     mechanic: 'Mecânico',
@@ -495,6 +501,7 @@ export default {
     generatePdf: 'Gerar PDF',
     thankYou: 'Obrigado pela preferência!',
     generateInvoice: 'Gerar Nota Fiscal',
+    downloadCancelledOrder: 'Baixar OS Cancelada',
     finalizationDatePlaceholder: 'Selecione a data de finalização',
     // Actions
     next: 'Próximo',
@@ -586,6 +593,9 @@ export default {
     productsSoldLabel: 'Produtos Vendidos',
     servicesRealizedLabel: 'Serviços Realizados',
     financialMovements: 'Movimentações Financeiras',
+    vehiclesWithThisService: 'Veículos que tiveram este serviço',
+    serviceCount: 'Qtd. de Serviços',
+    lastService: 'Último Serviço',
     optionalServices: 'Serviços opcionais',
     optionalServicesDescription: 'Você pode adicionar serviços aqui ou pular para adicionar produtos. Uma ordem de serviço deve ter pelo menos um produto OU um serviço.',
     noServicesAvailable: 'Nenhum serviço disponível',
@@ -663,7 +673,7 @@ export default {
   expenses: {
     title: 'Despesas',
     subtitle: 'Gerencie as despesas operacionais',
-    pageHelp: 'Esta página mostra APENAS despesas operacionais (salário, aluguel, contas, etc.). Quando você cria uma despesa operacional, ela também gera uma transação em Movimentações Financeiras. Nota: Compras de estoque NÃO são listadas aqui, elas aparecem apenas em Movimentações Financeiras.',
+    pageHelp: 'Esta página mostra TODAS as saídas de dinheiro: despesas operacionais, ordens de compra, folha de pagamento, etc. Quando você cria qualquer saída, ela também gera uma transação em Movimentações Financeiras.',
     newExpense: 'Nova Movimentação',
     editExpense: 'Editar Despesa',
     deleteExpense: 'Deletar Despesa',
@@ -674,6 +684,7 @@ export default {
     startDate: 'Data Inicial',
     endDate: 'Data Final',
     date: 'Data',
+    type: 'Tipo',
     category: 'Categoria',
     description: 'Descrição',
     amount: 'Valor',
@@ -689,6 +700,14 @@ export default {
     expenseCancelled: 'Despesa Cancelada',
     cancelledAt: 'Cancelada em',
     cancellationReason: 'Motivo do cancelamento',
+    // Types
+    types: {
+      expense: 'Despesa Operacional',
+      purchase_order: 'Ordem de Compra',
+      payroll: 'Folha de Pagamento',
+      employee_advance: 'Adiantamento',
+      other: 'Outro',
+    },
     // Categories
     categories: {
       salary: 'Salário',
@@ -697,6 +716,7 @@ export default {
       maintenance: 'Manutenção',
       taxes: 'Impostos',
       supplies: 'Suprimentos',
+      purchase: 'Compra de Estoque',
       other: 'Outro',
     },
   },
@@ -768,6 +788,9 @@ export default {
     legendCritical: 'CRÍTICO: Estoque abaixo ou igual ao mínimo',
     legendAttention: 'ATENÇÃO: Estoque até 150% do mínimo (ponto de reposição)',
     // Stock Movement Modal
+    selectProduct: 'Selecione o Produto',
+    searchProduct: 'Buscar produto...',
+    newPurchaseOrder: 'Nova Ordem de Compra',
   },
 
   vehicles: {
@@ -900,6 +923,11 @@ export default {
     userCreateError: 'Erro ao criar usuário',
     userUpdateError: 'Erro ao atualizar usuário',
     passwordChangeError: 'Erro ao alterar senha',
+    userActivatedSuccess: 'Usuário ativado com sucesso!',
+    userDeactivatedSuccess: 'Usuário desativado com sucesso!',
+    statusChangeError: 'Erro ao alterar status do usuário',
+    emailAlreadyExists: 'Este email já está cadastrado no sistema',
+    emailDuplicateError: 'Já existe um usuário com este email. Por favor, utilize outro email.',
     fullName: 'Nome completo',
     password: 'Senha',
     newPassword: 'Nova Senha',
@@ -938,6 +966,7 @@ export default {
     newUserTitle: 'Novo Usuário',
     namePlaceholder: 'Ex: João Silva',
     emailPlaceholder: 'exemplo@email.com',
+    emailExample: 'exemplo@email.com',
     initialPasswordPlaceholder: 'Mínimo 6 caracteres',
     initialConfirmPasswordPlaceholder: 'Confirme a senha',
     selectRolePlaceholder: 'Selecione o cargo',
@@ -1011,6 +1040,12 @@ export default {
     cancelledSuccess: 'Ordem de compra cancelada com sucesso!',
     cancelError: 'Erro ao cancelar ordem de compra',
     alreadyCancelled: 'Esta ordem de compra já foi cancelada',
+    confirmCancellation: 'Confirmar Cancelamento',
+    cancellationWarning: 'Atenção: Esta ação não pode ser desfeita',
+    cancellationExplanation: 'Ao cancelar esta ordem de compra, os produtos serão removidos do estoque automaticamente e o valor será estornado no fluxo de caixa. Certifique-se de que há estoque suficiente antes de confirmar.',
+    cancellationReasonRequired: 'O motivo do cancelamento é obrigatório',
+    cancellationReasonMinLength: 'O motivo deve ter no mínimo 10 caracteres',
+    cancellationReasonPlaceholder: 'Informe o motivo do cancelamento da ordem de compra...',
   },
 
   expense: {
@@ -1152,6 +1187,8 @@ export default {
   // Módulo de Funcionários
   employees: {
     title: 'Funcionários',
+    subtitle: 'Gerencie os funcionários da oficina',
+    pageHelp: 'Gerencie todos os funcionários da oficina. Cadastre informações como nome, cargo, taxa horária, data de início e contato. Vincule registros de ponto e pagamentos a cada funcionário. Ative ou desative funcionários conforme necessário.',
     newEmployee: 'Novo Funcionário',
     editEmployee: 'Editar Funcionário',
     employeeDetails: 'Detalhes do Funcionário',
@@ -1198,6 +1235,9 @@ export default {
     disableError: 'Erro ao desabilitar funcionário',
     enableSuccess: 'Funcionário habilitado com sucesso',
     enableError: 'Erro ao habilitar funcionário',
+    employeeActivatedSuccess: 'Funcionário ativado com sucesso!',
+    employeeDeactivatedSuccess: 'Funcionário desativado com sucesso!',
+    statusChangeError: 'Erro ao alterar status do funcionário',
 
     // Confirmations
     confirmDisable: 'Tem certeza que deseja desabilitar este funcionário? Ele não poderá mais receber pagamentos.',
@@ -1230,6 +1270,8 @@ export default {
   // Registros de Ponto
   timeEntries: {
     title: 'Registros de Ponto',
+    subtitle: 'Controle de horas trabalhadas',
+    pageHelp: 'Registre e acompanhe as horas trabalhadas pelos funcionários. Marque entradas e saídas, calcule horas normais e extras automaticamente. Estes registros são usados para calcular a folha de pagamento.',
     newEntry: 'Novo Registro',
     editEntry: 'Editar Registro',
     clockIn: 'Registrar Entrada',
@@ -1258,6 +1300,7 @@ export default {
     updateError: 'Erro ao atualizar registro',
     deleteSuccess: 'Registro deletado com sucesso',
     deleteError: 'Erro ao deletar registro',
+    entryCreatedSuccess: 'Entrada de tempo registrada com sucesso',
 
     // Confirmations
     confirmDelete: 'Tem certeza que deseja deletar este registro?',
@@ -1298,6 +1341,8 @@ export default {
   // Folha de Pagamento
   payroll: {
     title: 'Folha de Pagamento',
+    subtitle: 'Gestão de pagamentos e salários',
+    pageHelp: 'Gerencie pagamentos dos funcionários. Visualize períodos trabalhados, horas totais, deduções fiscais e valores líquidos. Acompanhe histórico completo de pagamentos por funcionário e gere relatórios de folha de pagamento.',
     newPayment: 'Novo Pagamento',
     list: 'Pagamentos',
     noPayments: 'Nenhum pagamento encontrado',
@@ -1388,6 +1433,8 @@ export default {
     paymentCreatedSuccess: 'Pagamento criado com sucesso',
     selectDaysFirst: 'Selecione pelo menos um dia para pagar',
     paySelected: 'Pagar {{count}} dia(s) selecionado(s)',
+    totalUnpaidHours: 'Total de Horas Não Pagas',
+    totalUnpaidAmount: 'Total Não Pago',
 
     // Sections
     employeeInformation: 'Informações do Funcionário',

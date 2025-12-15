@@ -50,7 +50,11 @@ export function PageHeader({
                 {title}
               </Title>
               {helpText && (
-                <Tooltip title={helpText} placement="right" overlayStyle={{ maxWidth: '400px' }}>
+                <Tooltip
+                  title={helpText}
+                  placement="right"
+                  styles={{ root: { maxWidth: '400px' } }}
+                >
                   <QuestionCircleOutlined
                     style={{
                       fontSize: '18px',

@@ -1,23 +1,25 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Table, Card, Input, Tag, Typography, Space, Button, Tooltip, Modal, Select } from 'antd';
-import { SearchOutlined, PlusOutlined, EditOutlined, CheckCircleOutlined, StopOutlined, UserOutlined, MailOutlined, CalendarOutlined, DollarOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Tag, Typography, Space, Button, Tooltip, Modal, Select, Switch } from 'antd';
+import { SearchOutlined, PlusOutlined, EditOutlined, UserOutlined, MailOutlined, CalendarOutlined, DollarOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { useEmployees, useDisableEmployee, useEnableEmployee } from '../hooks/useEmployees';
+import { useEmployees, useToggleEmployeeStatus } from '../hooks/useEmployees';
 import { FloatingActionButton } from '../components/common/FloatingActionButton';
+import { PageHeader } from '../components/common/PageHeader';
 import type { Employee } from '../types/employee';
 import { formatUKCurrency } from '../types/employee';
 import { formatDate } from '../utils/format.util';
+import { NotificationService } from '../services/notification.service';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Search } = Input;
 
 export function EmployeeList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
-  const [showInactive, setShowInactive] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(true);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -30,32 +32,25 @@ export function EmployeeList() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { data: employees = [], isLoading } = useEmployees(showInactive ? undefined : true);
-  const { mutate: disableEmployee, isPending: isDisabling } = useDisableEmployee();
-  const { mutate: enableEmployee, isPending: isEnabling } = useEnableEmployee();
+  const { data: employees = [], isLoading } = useEmployees(activeFilter);
+  const { mutate: toggleStatus, isPending: isTogglingStatus } = useToggleEmployeeStatus();
 
-  const handleDisable = (id: number) => {
-    Modal.confirm({
-      title: t('employees.disableEmployee'),
-      content: t('employees.confirmDisable'),
-      okText: t('employees.disable'),
-      okType: 'danger',
-      onOk: () => {
-        disableEmployee(id);
-      },
-    });
-  };
-
-  const handleEnable = (id: number) => {
-    Modal.confirm({
-      title: t('employees.enableEmployee'),
-      content: t('employees.confirmEnable'),
-      okText: t('employees.enable'),
-      okType: 'primary',
-      onOk: () => {
-        enableEmployee(id);
-      },
-    });
+  const handleToggleStatus = (employeeId: number, currentStatus: boolean) => {
+    toggleStatus(
+      { id: employeeId, is_active: !currentStatus },
+      {
+        onSuccess: () => {
+          NotificationService.success(
+            !currentStatus ? t('employees.employeeActivatedSuccess') : t('employees.employeeDeactivatedSuccess')
+          );
+        },
+        onError: (error: any) => {
+          NotificationService.error(
+            error?.response?.data?.message || t('employees.statusChangeError')
+          );
+        },
+      }
+    );
   };
 
   const handleViewDetails = (employee: Employee) => {
@@ -103,9 +98,16 @@ export function EmployeeList() {
               {employee.first_name} {employee.last_name}
             </Text>
           </div>
-          <Tag color={employee.is_active ? 'green' : 'red'}>
-            {employee.is_active ? t('common.active') : t('common.inactive')}
-          </Tag>
+          <Tooltip title={employee.is_active ? t('common.clickToDeactivate') : t('common.clickToActivate')}>
+            <Switch
+              checked={employee.is_active}
+              onChange={() => handleToggleStatus(employee.employee_id, employee.is_active)}
+              loading={isTogglingStatus}
+              checkedChildren={t('common.active')}
+              unCheckedChildren={t('common.inactive')}
+              size="small"
+            />
+          </Tooltip>
         </div>
 
         <Space direction="vertical" size="small" style={{ width: '100%' }}>
@@ -212,18 +214,19 @@ export function EmployeeList() {
     {
       title: t('common.status'),
       key: 'is_active',
-      width: 120,
+      width: 180,
       align: 'center' as const,
       render: (_, record) => (
-        <Tag color={record.is_active ? 'green' : 'red'}>
-          {record.is_active ? t('common.active') : t('common.inactive')}
-        </Tag>
+        <Tooltip title={record.is_active ? t('common.clickToDeactivate') : t('common.clickToActivate')}>
+          <Switch
+            checked={record.is_active}
+            onChange={() => handleToggleStatus(record.employee_id, record.is_active)}
+            loading={isTogglingStatus}
+            checkedChildren={t('common.active')}
+            unCheckedChildren={t('common.inactive')}
+          />
+        </Tooltip>
       ),
-      filters: [
-        { text: t('common.active'), value: true },
-        { text: t('common.inactive'), value: false },
-      ],
-      onFilter: (value, record) => record.is_active === value,
     },
     {
       title: t('employees.startDate'),
@@ -236,28 +239,26 @@ export function EmployeeList() {
   ];
 
   return (
-    <div style={{ padding: '16px' }}>
+    <div>
+      <PageHeader
+        title={t('employees.title')}
+        subtitle={t('employees.subtitle')}
+        helpText={t('employees.pageHelp')}
+        extra={
+          !isMobile && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/employees/new')}
+            >
+              <span style={{ display: 'inline' }}>{t('employees.newEmployee')}</span>
+            </Button>
+          )
+        }
+      />
+
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
-            <Title level={3} style={{ margin: 0 }}>{t('employees.title')}</Title>
-            {!isMobile && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate('/employees/new')}
-              >
-                <span style={{ display: 'inline' }}>{t('employees.newEmployee')}</span>
-              </Button>
-            )}
-          </div>
-
           <Space 
             size="middle" 
             style={{ width: '100%' }}
@@ -272,13 +273,14 @@ export function EmployeeList() {
               style={{ width: '100%' }}
             />
             <Select
-              placeholder={t('employees.showStatus')}
+              placeholder={t('common.status')}
+              value={activeFilter}
+              onChange={setActiveFilter}
               style={{ width: '100%', minWidth: '200px' }}
-              value={showInactive ? 'all' : 'active'}
-              onChange={(value) => setShowInactive(value === 'all')}
               options={[
-                { label: t('employees.activeOnly'), value: 'active' },
-                { label: t('employees.allEmployees'), value: 'all' },
+                { value: undefined, label: t('products.all') },
+                { value: true, label: t('products.actives') },
+                { value: false, label: t('products.inactives') },
               ]}
             />
           </Space>
@@ -356,9 +358,16 @@ export function EmployeeList() {
         {selectedEmployee && (
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
-              <Tag color={selectedEmployee.is_active ? 'green' : 'red'} style={{ marginBottom: '16px' }}>
-                {selectedEmployee.is_active ? t('common.active') : t('common.inactive')}
-              </Tag>
+              <Text type="secondary" strong style={{ marginRight: 8 }}>{t('common.status')}:</Text>
+              <Tooltip title={selectedEmployee.is_active ? t('common.clickToDeactivate') : t('common.clickToActivate')}>
+                <Switch
+                  checked={selectedEmployee.is_active}
+                  onChange={() => handleToggleStatus(selectedEmployee.employee_id, selectedEmployee.is_active)}
+                  loading={isTogglingStatus}
+                  checkedChildren={t('common.active')}
+                  unCheckedChildren={t('common.inactive')}
+                />
+              </Tooltip>
             </div>
 
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -412,42 +421,16 @@ export function EmployeeList() {
             </Space>
 
             <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '16px', marginTop: '8px' }}>
-              <Space size="middle">
-                <Button
-                  type="primary"
-                  icon={<EditOutlined />}
-                  onClick={() => {
-                    handleCloseModal();
-                    navigate(`/employees/${selectedEmployee.employee_id}/edit`);
-                  }}
-                >
-                  {t('common.edit')}
-                </Button>
-                {selectedEmployee.is_active ? (
-                  <Button
-                    danger
-                    icon={<StopOutlined />}
-                    onClick={() => {
-                      handleCloseModal();
-                      handleDisable(selectedEmployee.employee_id);
-                    }}
-                    loading={isDisabling}
-                  >
-                    {t('employees.disable')}
-                  </Button>
-                ) : (
-                  <Button
-                    icon={<CheckCircleOutlined />}
-                    onClick={() => {
-                      handleCloseModal();
-                      handleEnable(selectedEmployee.employee_id);
-                    }}
-                    loading={isEnabling}
-                  >
-                    {t('employees.enable')}
-                  </Button>
-                )}
-              </Space>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => {
+                  handleCloseModal();
+                  navigate(`/employees/${selectedEmployee.employee_id}/edit`);
+                }}
+              >
+                {t('common.edit')}
+              </Button>
             </div>
           </Space>
         )}

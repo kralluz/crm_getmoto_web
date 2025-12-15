@@ -1,8 +1,8 @@
-import { Card, Typography, Button, Space, Table, Checkbox, Tag, App, message } from 'antd';
-import { ArrowLeftOutlined, DollarOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Card, Typography, Button, Space, Table, Checkbox, Tag, App, message, Modal, Form, DatePicker, InputNumber, Input, Row, Col, theme, Statistic } from 'antd';
+import { ArrowLeftOutlined, DollarOutlined, CheckCircleOutlined, ClockCircleOutlined, PlusOutlined, FieldTimeOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEmployee } from '../hooks/useEmployees';
-import { useTimeEntries } from '../hooks/useTimeEntries';
+import { useTimeEntries, useCreateTimeEntry } from '../hooks/useTimeEntries';
 import { usePaidPeriods, useCreatePayrollPayment } from '../hooks/usePayrollPayments';
 import { useState, useMemo } from 'react';
 import { formatUKCurrency } from '../types/employee';
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { PayrollCalendar } from '../components/payroll/PayrollCalendar';
 import type { TimeEntry } from '../types/time-entry';
 import type { CreatePayrollPaymentData } from '../types/payroll-payment';
+import type { CreateTimeEntryData } from '../types/time-entry';
 
 const { Title, Text } = Typography;
 
@@ -21,10 +22,14 @@ interface GroupedTimeEntry extends TimeEntry {
 
 export function EmployeePayrollDetail() {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   const { modal } = App.useApp();
   const navigate = useNavigate();
   const { employeeId } = useParams<{ employeeId: string }>();
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [isTimeEntryModalOpen, setIsTimeEntryModalOpen] = useState(false);
+  const [registerByTime, setRegisterByTime] = useState(true);
+  const [form] = Form.useForm();
 
   const { data: employee } = useEmployee(employeeId ? Number(employeeId) : undefined);
   const { data: timeEntries = [] } = useTimeEntries(
@@ -32,6 +37,7 @@ export function EmployeePayrollDetail() {
   );
   const { data: paidPeriods = [] } = usePaidPeriods(employeeId ? Number(employeeId) : undefined);
   const createPayment = useCreatePayrollPayment();
+  const createTimeEntry = useCreateTimeEntry();
 
   // Calcular horas de uma entrada
   const calculateHours = (entry: TimeEntry): number => {
@@ -88,6 +94,65 @@ export function EmployeePayrollDetail() {
 
   // Dias não pagos
   const unpaidDays = groupedByDay.filter(day => !day.isPaid);
+
+  // Total de horas não pagas
+  const totalUnpaidHours = unpaidDays.reduce((sum, day) => sum + day.totalHours, 0);
+
+  // Abrir modal de nova entrada
+  const handleOpenTimeEntryModal = () => {
+    form.resetFields();
+    form.setFieldsValue({
+      employee_id: Number(employeeId),
+      clock_in: dayjs(),
+      work_date: dayjs(),
+    });
+    setIsTimeEntryModalOpen(true);
+  };
+
+  // Submeter nova entrada de tempo
+  const handleTimeEntrySubmit = async (values: any) => {
+    try {
+      let data: CreateTimeEntryData;
+
+      if (registerByTime) {
+        // Mode 1: Register by time (clock_in + clock_out)
+        if (values.clock_out && values.clock_out.isBefore(values.clock_in)) {
+          form.setFields([
+            {
+              name: 'clock_out',
+              errors: [t('timeEntries.validation.clockOutBeforeClockIn')],
+            },
+          ]);
+          return;
+        }
+
+        data = {
+          employee_id: Number(employeeId),
+          clock_in: values.clock_in.toISOString(),
+          clock_out: values.clock_out ? values.clock_out.toISOString() : null,
+          notes: values.notes || null,
+        };
+      } else {
+        // Mode 2: Register by hours (date + total_hours)
+        const dateOnly = values.work_date.startOf('day');
+        
+        data = {
+          employee_id: Number(employeeId),
+          clock_in: dateOnly.toISOString(),
+          total_hours: values.total_hours,
+          notes: values.notes || null,
+        };
+      }
+
+      await createTimeEntry.mutateAsync(data);
+      message.success(t('timeEntries.entryCreatedSuccess'));
+      setIsTimeEntryModalOpen(false);
+      form.resetFields();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error || error?.message || t('common.error');
+      message.error(errorMessage);
+    }
+  };
 
   // Selecionar todos os dias não pagos
   const handleSelectAll = (checked: boolean) => {
@@ -266,19 +331,60 @@ export function EmployeePayrollDetail() {
               </Title>
               <Text type="secondary">{employee.job_title}</Text>
             </div>
-            {selectedDays.length > 0 && (
+            
+            <Space>
               <Button
-                type="primary"
-                size="large"
-                icon={<DollarOutlined />}
-                onClick={handlePaySelected}
-                style={{ flex: '0 0 auto' }}
+                type="default"
+                icon={<PlusOutlined />}
+                onClick={handleOpenTimeEntryModal}
               >
-                <span className="desktop-only-text">{t('payroll.paySelected', { count: selectedDays.length })}</span>
-                <span className="mobile-only-text">{t('payroll.pay')} ({selectedDays.length})</span>
+                {t('timeEntries.newEntry')}
               </Button>
-            )}
+              {selectedDays.length > 0 && (
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<DollarOutlined />}
+                  onClick={handlePaySelected}
+                  style={{ flex: '0 0 auto' }}
+                >
+                  <span className="desktop-only-text">{t('payroll.paySelected', { count: selectedDays.length })}</span>
+                  <span className="mobile-only-text">{t('payroll.pay')} ({selectedDays.length})</span>
+                </Button>
+              )}
+            </Space>
           </div>
+
+          {/* Card de estatísticas */}
+          <Card style={{ background: token.colorBgLayout }}>
+            <Row gutter={16}>
+              <Col xs={24} sm={8}>
+                <Statistic
+                  title={t('payroll.hourlyRate')}
+                  value={(employee.hourly_rate_pence || 0) / 100}
+                  precision={2}
+                  prefix="£"
+                />
+              </Col>
+              <Col xs={24} sm={8}>
+                <Statistic
+                  title={t('payroll.totalUnpaidHours')}
+                  value={totalUnpaidHours}
+                  precision={1}
+                  suffix="hrs"
+                />
+              </Col>
+              <Col xs={24} sm={8}>
+                <Statistic
+                  title={t('payroll.totalUnpaidAmount')}
+                  value={(employee.hourly_rate_pence || 0) * totalUnpaidHours / 100}
+                  precision={2}
+                  prefix="£"
+                  valueStyle={{ color: token.colorSuccess }}
+                />
+              </Col>
+            </Row>
+          </Card>
 
           {/* Desktop: Calendário à esquerda, Tabela à direita */}
           <div className="desktop-only-layout" style={{ 
@@ -394,6 +500,258 @@ export function EmployeePayrollDetail() {
           `}</style>
         </Space>
       </Card>
+
+      {/* Modal de nova entrada de tempo */}
+      <Modal
+        title={t('timeEntries.newEntry')}
+        open={isTimeEntryModalOpen}
+        onCancel={() => {
+          setIsTimeEntryModalOpen(false);
+          form.resetFields();
+        }}
+        footer={null}
+        width={600}
+      >
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '16px 0',
+          marginBottom: '16px',
+          borderBottom: `1px solid ${token.colorBorder}`
+        }}>
+          <span style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: token.colorTextSecondary
+          }}>
+            {t('timeEntries.registrationMode')}:
+          </span>
+
+          <div
+            onClick={() => {
+              setRegisterByTime(true);
+              form.resetFields(['clock_in', 'clock_out', 'work_date', 'total_hours']);
+              form.setFieldsValue({
+                employee_id: Number(employeeId),
+                clock_in: dayjs(),
+              });
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              background: registerByTime ? token.colorPrimary : 'transparent',
+              color: registerByTime ? token.colorTextLightSolid : token.colorText,
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              fontWeight: registerByTime ? 600 : 400,
+            }}
+          >
+            <ClockCircleOutlined />
+            <span>{t('timeEntries.byTime')}</span>
+          </div>
+
+          <div
+            onClick={() => {
+              setRegisterByTime(false);
+              form.resetFields(['clock_in', 'clock_out', 'work_date', 'total_hours']);
+              form.setFieldsValue({
+                employee_id: Number(employeeId),
+                work_date: dayjs(),
+              });
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              background: !registerByTime ? token.colorSuccess : 'transparent',
+              color: !registerByTime ? token.colorTextLightSolid : token.colorText,
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              fontWeight: !registerByTime ? 600 : 400,
+            }}
+          >
+            <FieldTimeOutlined />
+            <span>{t('timeEntries.byHours')}</span>
+          </div>
+        </div>
+
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleTimeEntrySubmit}
+          initialValues={{
+            employee_id: Number(employeeId),
+            clock_in: dayjs(),
+            work_date: dayjs(),
+          }}
+        >
+          {registerByTime ? (
+            // Mode 1: Register by Time
+            <>
+              <Form.Item
+                label={t('timeEntries.clockInTime')}
+                name="clock_in"
+                rules={[{ required: true, message: t('timeEntries.requiredClockIn') }]}
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="DD/MM/YYYY HH:mm"
+                  style={{ width: '100%' }}
+                  disabledDate={(current) => {
+                    // Bloquear datas futuras
+                    if (current.isAfter(dayjs(), 'day')) return true;
+
+                    if (!employee) return false;
+
+                    const startDate = dayjs(employee.start_date).startOf('day');
+                    if (current.isBefore(startDate, 'day')) return true;
+
+                    if (employee.end_date) {
+                      const endDate = dayjs(employee.end_date).endOf('day');
+                      if (current.isAfter(endDate, 'day')) return true;
+                    }
+
+                    return false;
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={t('timeEntries.clockOutTime')}
+                name="clock_out"
+                dependencies={['clock_in']}
+                rules={[
+                  {
+                    validator: async (_, value) => {
+                      if (!value) return Promise.resolve();
+                      const clockIn = form.getFieldValue('clock_in');
+                      if (clockIn && value.isBefore(clockIn)) {
+                        return Promise.reject(new Error(t('timeEntries.validation.clockOutBeforeClockIn')));
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+              >
+                <DatePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="DD/MM/YYYY HH:mm"
+                  style={{ width: '100%' }}
+                  placeholder={t('timeEntries.clockOutOptional')}
+                  disabledDate={(current) => {
+                    // Bloquear datas futuras
+                    if (current.isAfter(dayjs(), 'day')) return true;
+
+                    if (!employee) return false;
+
+                    const startDate = dayjs(employee.start_date).startOf('day');
+                    if (current.isBefore(startDate, 'day')) return true;
+
+                    if (employee.end_date) {
+                      const endDate = dayjs(employee.end_date).endOf('day');
+                      if (current.isAfter(endDate, 'day')) return true;
+                    }
+
+                    return false;
+                  }}
+                />
+              </Form.Item>
+            </>
+          ) : (
+            // Mode 2: Register by Hours
+            <>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label={t('timeEntries.workDate')}
+                    name="work_date"
+                    rules={[{ required: true, message: t('timeEntries.requiredWorkDate') }]}
+                  >
+                    <DatePicker
+                      format="DD/MM/YYYY"
+                      style={{ width: '100%' }}
+                      disabledDate={(current) => {
+                        // Bloquear datas futuras
+                        if (current.isAfter(dayjs(), 'day')) return true;
+
+                        if (!employee) return false;
+
+                        const startDate = dayjs(employee.start_date).startOf('day');
+                        if (current.isBefore(startDate, 'day')) return true;
+
+                        if (employee.end_date) {
+                          const endDate = dayjs(employee.end_date).endOf('day');
+                          if (current.isAfter(endDate, 'day')) return true;
+                        }
+
+                        return false;
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label={t('timeEntries.totalHoursWorked')}
+                    name="total_hours"
+                    rules={[
+                      { required: true, message: t('timeEntries.requiredTotalHours') },
+                      { type: 'number', min: 1, max: 24, message: t('timeEntries.validation.hoursRange') },
+                      {
+                        validator: (_, value) => {
+                          if (!value) return Promise.resolve();
+                          if (!Number.isInteger(value)) {
+                            return Promise.reject(new Error(t('timeEntries.validation.mustBeWholeHour')));
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
+                  >
+                    <InputNumber
+                      min={1}
+                      max={24}
+                      step={1}
+                      precision={0}
+                      style={{ width: '100%' }}
+                      placeholder="8"
+                      addonAfter="hrs"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </>
+          )}
+
+          <Form.Item label={t('common.notes')} name="notes">
+            <Input.TextArea rows={4} placeholder={t('timeEntries.notesPlaceholder')} />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => {
+                setIsTimeEntryModalOpen(false);
+                form.resetFields();
+              }}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={createTimeEntry.isPending}
+              >
+                {t('common.save')}
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

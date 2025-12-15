@@ -62,3 +62,15 @@ export function useChangePassword() {
     },
   });
 }
+
+export function useToggleUserStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      userApi.update(id, { active }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}

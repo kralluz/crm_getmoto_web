@@ -20,6 +20,25 @@ export interface ServiceCategoryWithRelations extends ServiceCategory {
     service_order_id: number;
     service_qtd: any;
     created_at: string;
+    service_order?: {
+      service_order_id: number;
+      customer_name: string;
+      status: string;
+      description?: string;
+      service_date: string;
+      motorcycle?: {
+        motorcycle_id: number;
+        license_plate: string;
+        model: string;
+        brand: string;
+        year: number;
+        client?: {
+          client_id: number;
+          client_name: string;
+          phone: string;
+        };
+      };
+    };
   }>;
 }
 

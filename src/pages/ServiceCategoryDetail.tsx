@@ -10,8 +10,11 @@ import {
   Row,
   Col,
   Spin,
+  Typography,
 } from 'antd';
-import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, EyeOutlined } from '@ant-design/icons';
+
+const { Text } = Typography;
 import { useTranslation } from 'react-i18next';
 import { useServiceCategoryWithStats } from '../hooks/useServiceCategories';
 import { FormatService } from '../services/format.service';
@@ -66,44 +69,79 @@ export function ServiceCategoryDetail() {
 
   const realizedColumns: ColumnsType<any> = [
     {
-      title: t('services.serviceId'),
+      title: 'ID',
       dataIndex: 'services_realized_id',
       key: 'services_realized_id',
-      width: 100,
+      width: 80,
+    },
+    {
+      title: t('services.serviceName'),
+      key: 'service_name',
+      render: () => category?.service_name || '-',
+      width: 200,
+    },
+    {
+      title: t('table.vehicle'),
+      key: 'vehicle',
+      render: (record: any) => {
+        const motorcycle = record.service_order?.motorcycle;
+        if (!motorcycle) return '-';
+        return `${motorcycle.brand} ${motorcycle.model} (${motorcycle.license_plate})`;
+      },
+      width: 200,
+    },
+    {
+      title: t('table.client'),
+      key: 'client',
+      render: (record: any) => {
+        const client = record.service_order?.motorcycle?.client;
+        return client?.client_name || record.service_order?.customer_name || '-';
+      },
+      width: 180,
     },
     {
       title: t('table.quantity'),
       dataIndex: 'service_qtd',
       key: 'service_qtd',
-      width: 120,
+      width: 100,
       align: 'center',
     },
     {
       title: t('table.date'),
-      dataIndex: 'service_os_date',
-      key: 'service_os_date',
-      render: (date: string) => FormatService.date(date, 'short'),
+      key: 'date',
+      render: (record: any) => {
+        const date = record.service_order?.service_date || record.created_at;
+        return FormatService.date(date, 'short');
+      },
+      width: 120,
+    },
+    {
+      title: t('table.actions'),
+      key: 'actions',
+      width: 100,
+      align: 'center',
+      render: (record: any) => (
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => navigate(`/servicos/${record.service_order_id}`)}
+        >
+          {t('common.view')}
+        </Button>
+      ),
     },
   ];
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card>
-        <Space style={{ marginBottom: 16 }}>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate('/categorias-servicos')}
-          >
-            {t('common.back')}
-          </Button>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/categorias-servicos/${id}/editar`)}
-          >
-            {t('common.edit')}
-          </Button>
-        </Space>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/categorias-servicos')}
+          style={{ marginBottom: 16 }}
+        >
+          {t('common.back')}
+        </Button>
 
         <Descriptions title={t('services.serviceInfo')} bordered>
           <Descriptions.Item label="ID">
@@ -168,9 +206,108 @@ export function ServiceCategoryDetail() {
             dataSource={category.services_realized}
             rowKey="services_realized_id"
             pagination={false}
+            scroll={{ x: 'max-content' }}
           />
         </Card>
       )}
+
+      {/* Lista de Veículos que tiveram este serviço */}
+      {category.services_realized && category.services_realized.length > 0 && (() => {
+        // Extrair veículos únicos
+        const vehiclesMap = new Map();
+        category.services_realized.forEach(service => {
+          const motorcycle = service.service_order?.motorcycle;
+          if (motorcycle && !vehiclesMap.has(motorcycle.motorcycle_id)) {
+            vehiclesMap.set(motorcycle.motorcycle_id, {
+              motorcycle_id: motorcycle.motorcycle_id,
+              brand: motorcycle.brand,
+              model: motorcycle.model,
+              license_plate: motorcycle.license_plate,
+              year: motorcycle.year,
+              client: motorcycle.client,
+              service_count: 1,
+              last_service: service.service_order?.service_date || service.created_at,
+            });
+          } else if (motorcycle) {
+            const existing = vehiclesMap.get(motorcycle.motorcycle_id);
+            existing.service_count += 1;
+            const currentDate = new Date(service.service_order?.service_date || service.created_at);
+            const lastDate = new Date(existing.last_service);
+            if (currentDate > lastDate) {
+              existing.last_service = service.service_order?.service_date || service.created_at;
+            }
+          }
+        });
+
+        const vehiclesData = Array.from(vehiclesMap.values());
+
+        const vehiclesColumns: ColumnsType<any> = [
+          {
+            title: t('table.vehicle'),
+            key: 'vehicle',
+            render: (record: any) => (
+              <Space direction="vertical" size={0}>
+                <Text strong>{`${record.brand} ${record.model}`}</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>{record.license_plate}</Text>
+              </Space>
+            ),
+          },
+          {
+            title: t('table.client'),
+            key: 'client',
+            render: (record: any) => record.client?.client_name || '-',
+          },
+          {
+            title: t('vehicles.year'),
+            dataIndex: 'year',
+            key: 'year',
+            width: 100,
+          },
+          {
+            title: t('services.serviceCount'),
+            dataIndex: 'service_count',
+            key: 'service_count',
+            width: 120,
+            align: 'center',
+            render: (count: number) => (
+              <Tag color="blue">{count}x</Tag>
+            ),
+          },
+          {
+            title: t('services.lastService'),
+            key: 'last_service',
+            render: (record: any) => FormatService.date(record.last_service, 'short'),
+            width: 130,
+          },
+          {
+            title: t('table.actions'),
+            key: 'actions',
+            width: 100,
+            align: 'center',
+            render: (record: any) => (
+              <Button
+                type="link"
+                icon={<EyeOutlined />}
+                onClick={() => navigate(`/veiculos/${record.motorcycle_id}`)}
+              >
+                {t('common.view')}
+              </Button>
+            ),
+          },
+        ];
+
+        return (
+          <Card title={t('services.vehiclesWithThisService')}>
+            <Table
+              columns={vehiclesColumns}
+              dataSource={vehiclesData}
+              rowKey="motorcycle_id"
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 'max-content' }}
+            />
+          </Card>
+        );
+      })()}
 
       {(!category.service_order || category.service_order.length === 0) &&
        (!category.services_realized || category.services_realized.length === 0) && (

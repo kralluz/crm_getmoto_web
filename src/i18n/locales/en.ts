@@ -30,6 +30,8 @@ export default {
     active: 'Active',
     inactive: 'Inactive',
     status: 'Status',
+    clickToActivate: 'Click to activate',
+    clickToDeactivate: 'Click to deactivate',
     successUpdate: '{{item}} updated successfully!',
     successCreate: '{{item}} created successfully!',
     successDelete: '{{item}} deleted successfully!',
@@ -81,6 +83,7 @@ export default {
     changeTheme: 'Change Theme',
     language: 'Language',
     languageChanged: 'Language changed successfully',
+    generatePdf: 'Generate PDF',
   },
 
   auth: {
@@ -335,6 +338,8 @@ export default {
     totalProducts: 'Total: {{total}} products',
     deleteProduct: 'Delete Product',
     deleteProductConfirm: 'Are you sure you want to delete the product "{{name}}"?',
+    activate: 'Activate',
+    deactivate: 'Deactivate',
     searchProducts: 'Search by product or category...',
     // Product Category
     categoryTitle: 'Product Categories',
@@ -397,6 +402,7 @@ export default {
     availableServices: 'Manage available services',
     pageHelp: 'Register and manage services offered by the workshop (e.g.: Oil Change, Tire Change, Inspection). Each service can have base price, description and active/inactive status. These services are used in Service Orders.',
     serviceOrdersPageHelp: 'Manage all Service Orders (SO). Track the status of each service, from quote to completion. Each SO records services performed, products used, values and automatically generates cash flow entries.',
+    newServiceOrder: 'New Service Order',
     customer: 'Customer',
     motorcycle: 'Motorcycle',
     mechanic: 'Mechanic',
@@ -495,6 +501,7 @@ export default {
     thankYou: 'Thank you for your business!',
     pdfGenerationError: 'Error generating report',
     generateInvoice: 'Generate Invoice',
+    downloadCancelledOrder: 'Download Cancelled Order',
     finalizationDatePlaceholder: 'Select finalization date',
     // Actions
     next: 'Next',
@@ -586,6 +593,9 @@ export default {
     productsSoldLabel: 'Products Sold',
     servicesRealizedLabel: 'Services Performed',
     financialMovements: 'Financial Movements',
+    vehiclesWithThisService: 'Vehicles that had this service',
+    serviceCount: 'Service Count',
+    lastService: 'Last Service',
     optionalServices: 'Optional services',
     optionalServicesDescription: 'You can add services here or skip to add products. A service order must have at least one product OR one service.',
     noServicesAvailable: 'No services available',
@@ -660,6 +670,10 @@ export default {
     legendDepleted: 'DEPLETED: Stock completely exhausted',
     legendCritical: 'CRITICAL: Stock at or below minimum',
     legendAttention: 'ATTENTION: Stock up to 150% of minimum (reorder point)',
+    // Stock Movement Modal
+    selectProduct: 'Select Product',
+    searchProduct: 'Search product...',
+    newPurchaseOrder: 'New Purchase Order',
   },
 
   cashflow: {
@@ -729,6 +743,14 @@ export default {
 
   expenses: {
     title: 'Expenses',
+    type: 'Type',
+    types: {
+      expense: 'Operational Expense',
+      purchase_order: 'Purchase Order',
+      payroll: 'Payroll',
+      employee_advance: 'Advance',
+      other: 'Other',
+    },
     subtitle: 'Manage operational expenses',
     pageHelp: 'This page shows ONLY operational expenses (salary, rent, utilities, etc.). When you create an operational expense, it also generates a transaction in Financial Movements. Note: Stock purchases are NOT listed here, they appear only in Financial Movements.',
     newExpense: 'New Transaction',
@@ -898,6 +920,11 @@ export default {
     userCreateError: 'Error creating user',
     userUpdateError: 'Error updating user',
     passwordChangeError: 'Error changing password',
+    userActivatedSuccess: 'User activated successfully!',
+    userDeactivatedSuccess: 'User deactivated successfully!',
+    statusChangeError: 'Error changing user status',
+    emailAlreadyExists: 'This email is already registered in the system',
+    emailDuplicateError: 'A user with this email already exists. Please use a different email.',
     fullName: 'Full name',
     password: 'Password',
     newPassword: 'New Password',
@@ -936,6 +963,7 @@ export default {
     newUserTitle: 'New User',
     namePlaceholder: 'E.g.: John Doe',
     emailPlaceholder: 'example@email.com',
+    emailExample: 'example@email.com',
     initialPasswordPlaceholder: 'Minimum 6 characters',
     initialConfirmPasswordPlaceholder: 'Confirm the password',
     selectRolePlaceholder: 'Select the role',
@@ -1009,6 +1037,12 @@ export default {
     cancelledSuccess: 'Purchase order cancelled successfully!',
     cancelError: 'Error cancelling purchase order',
     alreadyCancelled: 'This purchase order has already been cancelled',
+    confirmCancellation: 'Confirm Cancellation',
+    cancellationWarning: 'Warning: This action cannot be undone',
+    cancellationExplanation: 'By cancelling this purchase order, products will be automatically removed from stock and the amount will be reversed in the cash flow. Make sure there is sufficient stock before confirming.',
+    cancellationReasonRequired: 'Cancellation reason is required',
+    cancellationReasonMinLength: 'Reason must be at least 10 characters',
+    cancellationReasonPlaceholder: 'Enter the reason for cancelling the purchase order...',
   },
 
   expense: {
@@ -1091,6 +1125,8 @@ export default {
   // Employee Management
   employees: {
     title: 'Employees',
+    subtitle: 'Manage workshop employees',
+    pageHelp: 'Manage all workshop employees. Register information such as name, job title, hourly rate, start date and contact. Link time entries and payments to each employee. Activate or deactivate employees as needed.',
     newEmployee: 'New Employee',
     employeeDetails: 'Employee Details',
     list: 'Employee List',
@@ -1130,6 +1166,9 @@ export default {
     updateSuccess: 'Employee updated successfully',
     deleteSuccess: 'Employee deleted successfully',
     statusUpdateSuccess: 'Status updated successfully',
+    employeeActivatedSuccess: 'Employee activated successfully!',
+    employeeDeactivatedSuccess: 'Employee deactivated successfully!',
+    statusChangeError: 'Error changing employee status',
 
     // Confirmations
     confirmDelete: 'Are you sure you want to delete this employee?',
@@ -1159,6 +1198,8 @@ export default {
   // Time Entries
   timeEntries: {
     title: 'Time Entries',
+    subtitle: 'Worked hours control',
+    pageHelp: 'Record and track hours worked by employees. Register clock-in and clock-out times, automatically calculate regular and overtime hours. These records are used to calculate payroll.',
     newEntry: 'New Entry',
     editEntry: 'Edit Entry',
     clockIn: 'Clock In',
@@ -1187,6 +1228,7 @@ export default {
     updateError: 'Error updating entry',
     deleteSuccess: 'Entry deleted successfully',
     deleteError: 'Error deleting entry',
+    entryCreatedSuccess: 'Time entry recorded successfully',
 
     // Confirmations
     confirmDelete: 'Are you sure you want to delete this entry?',
@@ -1227,6 +1269,8 @@ export default {
   // Payroll
   payroll: {
     title: 'Payroll',
+    subtitle: 'Payments and salary management',
+    pageHelp: 'Manage employee payments. View worked periods, total hours, tax deductions and net amounts. Track complete payment history per employee and generate payroll reports.',
     newPayment: 'New Payment',
     list: 'Payments',
     noPayments: 'No payments found',
@@ -1370,6 +1414,8 @@ export default {
     paymentCreatedSuccess: 'Payment created successfully',
     selectDaysFirst: 'Please select at least one day to pay',
     paySelected: 'Pay {{count}} selected day(s)',
+    totalUnpaidHours: 'Total Unpaid Hours',
+    totalUnpaidAmount: 'Total Unpaid Amount',
   },
 
   calendar: {

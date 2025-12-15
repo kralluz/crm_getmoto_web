@@ -13,6 +13,7 @@ import {
   Col,
   Statistic,
   message,
+  theme,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -21,7 +22,7 @@ import {
   FileTextOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useVehicle, useVehicleStats } from '../hooks/useMotorcycles';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/format.util';
@@ -32,11 +33,10 @@ import { useState, useEffect } from 'react';
 const { Title, Text } = Typography;
 
 export function VehicleDetail() {
+  const { token } = theme.useToken();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
-  const [cameFromSearch, setCameFromSearch] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const { data: vehicle, isLoading: vehicleLoading } = useVehicle(id ? parseInt(id) : undefined);
@@ -51,18 +51,8 @@ export function VehicleDetail() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Detectar se veio da página de busca
-  useEffect(() => {
-    const fromSearch = location.state?.fromSearch;
-    setCameFromSearch(fromSearch);
-  }, [location]);
-
   const handleBack = () => {
-    if (cameFromSearch) {
-      navigate(-1); // Volta para a página de busca
-    } else {
-      navigate('/veiculos'); // Volta para a lista de veículos
-    }
+    navigate(-1); // Volta para a página anterior
   };
 
   const handleEdit = () => {
@@ -288,11 +278,11 @@ export function VehicleDetail() {
             column={{ xs: 1, sm: 1, md: 2 }}
             labelStyle={{ 
               fontWeight: 'bold', 
-              color: '#333',
-              backgroundColor: '#fafafa'
+              color: token.colorText,
+              backgroundColor: token.colorBgContainer
             }}
             contentStyle={{ 
-              color: '#333',
+              color: token.colorText,
               fontWeight: '500',
               textAlign: 'left'
             }}
@@ -387,7 +377,7 @@ export function VehicleDetail() {
               <Statistic
                 title={t('vehicles.totalOrders')}
                 value={statsData.stats.totalOrders}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: token.colorPrimary }}
               />
             </Card>
           </Col>
@@ -396,7 +386,7 @@ export function VehicleDetail() {
               <Statistic
                 title={t('vehicles.completedOrders')}
                 value={statsData.stats.completedOrders}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: token.colorSuccess }}
               />
             </Card>
           </Col>
@@ -405,7 +395,7 @@ export function VehicleDetail() {
               <Statistic
                 title={t('vehicles.totalSpent')}
                 value={formatCurrency(statsData.stats.totalSpent)}
-                valueStyle={{ color: '#cf1322' }}
+                valueStyle={{ color: token.colorError }}
               />
             </Card>
           </Col>
@@ -414,7 +404,7 @@ export function VehicleDetail() {
               <Statistic
                 title={t('vehicles.averagePerOrder')}
                 value={formatCurrency(statsData.stats.averagePerOrder)}
-                valueStyle={{ color: '#faad14' }}
+                valueStyle={{ color: token.colorWarning }}
               />
             </Card>
           </Col>

@@ -60,7 +60,7 @@ export function MovimentacaoDetail() {
   if (!transaction) {
     return (
       <div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard')}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
           {t('common.back')}
         </Button>
         <Card style={{ marginTop: 16 }}>
@@ -71,7 +71,7 @@ export function MovimentacaoDetail() {
   }
 
   const handleBack = () => {
-    navigate('/dashboard');
+    navigate(-1); // Volta para a página anterior
   };
 
   const isIncome = transaction.direction === 'entrada';

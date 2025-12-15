@@ -12,7 +12,7 @@ export function ClientDetail() {
   const { t } = useTranslation();
 
   const handleBack = () => {
-    navigate('/clientes');
+    navigate(-1); // Volta para a página anterior
   };
 
   // Mock data - substituir por chamada real à API

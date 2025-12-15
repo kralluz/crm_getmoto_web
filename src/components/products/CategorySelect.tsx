@@ -19,6 +19,13 @@ export function CategorySelect({ value, onChange, ...props }: CategorySelectProp
   const [isAddingNew, setIsAddingNew] = useState(false);
   const inputRef = useRef<InputRef>(null);
 
+  // Ordenar categorias por data de criação (mais recente primeiro)
+  const sortedCategories = [...categories].sort((a, b) => {
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
+  });
+
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return;
 
@@ -61,7 +68,7 @@ export function CategorySelect({ value, onChange, ...props }: CategorySelectProp
       filterOption={(input, option) =>
         (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
       }
-      options={categories.map(cat => ({
+      options={sortedCategories.map(cat => ({
         value: cat.product_category_id,
         label: cat.product_category_name,
       }))}
@@ -70,40 +77,64 @@ export function CategorySelect({ value, onChange, ...props }: CategorySelectProp
           {menu}
           <Divider style={{ margin: '8px 0' }} />
           {isAddingNew ? (
-            <Space direction="vertical" style={{ padding: '8px', width: '100%' }}>
-              <Input
-                ref={inputRef}
-                placeholder={t('products.newCategoryName') || 'Nome da categoria'}
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                onKeyDown={handleKeyDown}
-                maxLength={100}
-                autoFocus
-                disabled={isCreating}
-              />
-              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                <Button
-                  onClick={() => {
-                    setIsAddingNew(false);
-                    setNewCategoryName('');
-                  }}
+            <div
+              style={{
+                padding: '12px 16px',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            >
+              <Space 
+                direction="vertical" 
+                style={{ 
+                  width: '100%',
+                  gap: '12px'
+                }}
+              >
+                <Input
+                  ref={inputRef}
+                  placeholder={t('products.newCategoryName') || 'Nome da categoria'}
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  maxLength={100}
+                  autoFocus
                   disabled={isCreating}
+                  size="middle"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+                <Space 
+                  style={{ 
+                    width: '100%', 
+                    justifyContent: 'flex-end',
+                    gap: '8px'
+                  }}
                 >
-                  {t('common.cancel') || 'Cancelar'}
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleAddCategory}
-                  loading={isCreating}
-                  disabled={!newCategoryName.trim()}
-                >
-                  {t('common.add') || 'Adicionar'}
-                </Button>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setIsAddingNew(false);
+                      setNewCategoryName('');
+                    }}
+                    disabled={isCreating}
+                  >
+                    {t('common.cancel') || 'Cancelar'}
+                  </Button>
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={handleAddCategory}
+                    loading={isCreating}
+                    disabled={!newCategoryName.trim()}
+                  >
+                    {t('common.add') || 'Adicionar'}
+                  </Button>
+                </Space>
               </Space>
-            </Space>
+            </div>
           ) : (
-            <div style={{ padding: '0 8px 4px' }}>
+            <div style={{ padding: '8px 12px' }}>
               <Button
                 type="text"
                 icon={<PlusOutlined />}
@@ -111,7 +142,13 @@ export function CategorySelect({ value, onChange, ...props }: CategorySelectProp
                   setIsAddingNew(true);
                   setTimeout(() => inputRef.current?.focus(), 100);
                 }}
-                style={{ width: '100%' }}
+                style={{ 
+                  width: '100%',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start'
+                }}
               >
                 {t('products.addNewCategory') || 'Adicionar nova categoria'}
               </Button>

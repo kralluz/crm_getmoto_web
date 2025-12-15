@@ -18,6 +18,7 @@ import { NotificationService } from '../../services/notification.service';
 import { useCreatePurchaseOrder } from '../../hooks/usePurchaseOrders';
 import { useProducts, useUpdateProduct } from '../../hooks/useProducts';
 import { CurrencyInput } from './CurrencyInput';
+import { useFormat } from '../../hooks/useFormat';
 import type { PurchaseOrderProduct } from '../../types/purchase-order';
 
 const { TextArea } = Input;
@@ -48,6 +49,7 @@ export function PurchaseOrderModal({
   const { mutate: updateProduct } = useUpdateProduct();
   const { data: availableProducts } = useProducts();
   const { t } = useTranslation();
+  const { formatCurrency } = useFormat();
 
   const productOptions =
     availableProducts?.map((p) => ({
@@ -230,7 +232,7 @@ export function PurchaseOrderModal({
       width: '15%',
       render: (_: any, record: ProductRow) => (
         <span>
-          R$ {(record.quantity * record.unit_price).toFixed(2)}
+          {formatCurrency(record.quantity * record.unit_price)}
         </span>
       ),
     },
@@ -328,8 +330,7 @@ export function PurchaseOrderModal({
 
             <div style={{ textAlign: 'right', marginTop: 16 }}>
               <strong>
-                {t('purchaseOrder.totalAmount')}: R${' '}
-                {calculateTotal().toFixed(2)}
+                {t('purchaseOrder.totalAmount')}: {formatCurrency(calculateTotal())}
               </strong>
             </div>
           </Space>

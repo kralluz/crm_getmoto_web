@@ -188,12 +188,6 @@ export function TimeEntryNew() {
 
                       return false;
                     }}
-                    onChange={(value) => {
-                      if (value) {
-                        // Zerar minutos e segundos
-                        form.setFieldValue('clock_in', value.startOf('hour'));
-                      }
-                    }}
                   />
                 </Form.Item>
 
@@ -234,12 +228,6 @@ export function TimeEntryNew() {
                       }
 
                       return false;
-                    }}
-                    onChange={(value) => {
-                      if (value) {
-                        // Zerar minutos e segundos
-                        form.setFieldValue('clock_out', value.startOf('hour'));
-                      }
                     }}
                   />
                 </Form.Item>

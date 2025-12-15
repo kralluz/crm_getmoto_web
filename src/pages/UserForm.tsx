@@ -2,7 +2,10 @@ import { useEffect } from 'react';
 import { Form, Input, Select, Button, Card, Typography, Space, Switch, message } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { UserRole } from '../types/user';
+import { userApi } from '../api/user-api';
+import type { ApiError } from '../api/error-handler';
 
 const { Title } = Typography;
 
@@ -18,6 +21,7 @@ export function UserForm() {
   const [form] = Form.useForm<UserFormData>();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const isEditing = !!id;
 
   // Mock: Carregar dados do usuário se estiver editando
@@ -36,18 +40,55 @@ export function UserForm() {
 
   const handleSubmit = async (values: UserFormData) => {
     try {
-      // TODO: Implementar chamada à API
-      console.log('Form values:', values);
-
       if (isEditing) {
-        message.success('Usuário atualizado com sucesso!');
+        // TODO: Implementar chamada de update
+        await userApi.update(id!, {
+          name: values.name,
+          email: values.email,
+          role: values.role,
+          active: values.active,
+        });
+        message.success(t('users.userUpdatedSuccess'));
       } else {
-        message.success('Usuário criado com sucesso!');
+        await userApi.create({
+          name: values.name,
+          email: values.email,
+          password: values.password!,
+          role: values.role,
+        });
+        message.success(t('users.userCreatedSuccess'));
       }
 
       navigate('/usuarios');
     } catch (error) {
-      message.error('Erro ao salvar usuário. Tente novamente.');
+      const apiError = error as ApiError;
+
+      // Verificar se é erro de email duplicado
+      // A API pode retornar status 409 (Conflict) ou 400 (Bad Request)
+      // e uma mensagem específica sobre email duplicado
+      if (apiError.status === 409 || apiError.status === 400) {
+        const errorMessage = apiError.message?.toLowerCase() || '';
+
+        // Verificar se a mensagem contém palavras-chave de email duplicado
+        if (
+          errorMessage.includes('email') &&
+          (errorMessage.includes('já') ||
+           errorMessage.includes('already') ||
+           errorMessage.includes('duplicate') ||
+           errorMessage.includes('exists') ||
+           errorMessage.includes('existe'))
+        ) {
+          message.error(t('users.emailDuplicateError'));
+          return;
+        }
+      }
+
+      // Erro genérico
+      message.error(
+        isEditing
+          ? t('users.userUpdateError')
+          : t('users.userCreateError')
+      );
       console.error('Error saving user:', error);
     }
   };

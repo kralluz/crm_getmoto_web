@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert, Row, Col, Modal } from 'antd';
-import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined, SwapOutlined, InfoCircleOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Tag, Space, Select, Button, Tooltip, Alert, Row, Col, Modal, Switch } from 'antd';
+import { SearchOutlined, WarningOutlined, PlusOutlined, FilterOutlined, SwapOutlined, InfoCircleOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { useProducts, useDeleteProduct } from '../hooks/useProducts';
+import { useProducts, useUpdateProduct } from '../hooks/useProducts';
 import { ActionButtons } from '../components/common/ActionButtons';
 import { PageHeader } from '../components/common/PageHeader';
 import { FloatingActionButtonWithMenu } from '../components/common/FloatingActionButtonWithMenu';
@@ -39,7 +39,7 @@ export function ProductList() {
     active: activeFilter === 'all' ? undefined : activeFilter === 'active',
     lowStock: lowStockFilter === 'low' ? true : undefined
   });
-  const { mutate: deleteProduct } = useDeleteProduct();
+  const { mutate: updateProduct } = useUpdateProduct();
 
   // Extrair categorias únicas
   const categories = useMemo(() => {
@@ -74,8 +74,19 @@ export function ProductList() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    deleteProduct(id);
+  const handleToggleActive = async (product: Product) => {
+    updateProduct({
+      id: product.product_id,
+      data: {
+        product_name: product.product_name,
+        category_id: product.category_id,
+        buy_price: product.buy_price,
+        sell_price: product.sell_price,
+        quantity: product.quantity,
+        quantity_alert: product.quantity_alert,
+        is_active: !product.is_active,
+      }
+    });
   };
 
   const handleCreate = () => {
@@ -111,19 +122,35 @@ export function ProductList() {
     {
       title: t('products.actions'),
       key: 'actions',
-      width: 100,
+      width: 120,
       align: 'center',
       fixed: 'left',
       render: (_, record) => (
-        <ActionButtons
-          onView={() => handleView(record.product_id)}
-          onEdit={() => handleEdit(record.product_id)}
-          onDelete={() => handleDelete(record.product_id)}
-          showView
-          deleteTitle={t('products.deleteProduct')}
-          deleteDescription={t('products.deleteProductConfirm', { name: record.product_name })}
-          iconOnly
-        />
+        <Space>
+          <Tooltip title={t('products.view')}>
+            <Button
+              type="link"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => handleView(record.product_id)}
+            />
+          </Tooltip>
+          <Tooltip title={t('products.edit')}>
+            <Button
+              type="link"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record.product_id)}
+            />
+          </Tooltip>
+          <Tooltip title={record.is_active ? t('products.deactivate') : t('products.activate')}>
+            <Switch
+              size="small"
+              checked={record.is_active}
+              onChange={() => handleToggleActive(record)}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
     {
@@ -349,10 +376,11 @@ export function ProductList() {
                           }}
                         />
                       </Tooltip>,
-                      <Tooltip title={t('products.delete')} key="delete">
-                        <DeleteOutlined
-                          style={{ color: '#ff4d4f' }}
-                          onClick={() => handleDelete(product.product_id)}
+                      <Tooltip title={product.is_active ? t('products.deactivate') : t('products.activate')} key="toggle">
+                        <Switch
+                          size="small"
+                          checked={product.is_active}
+                          onChange={() => handleToggleActive(product)}
                         />
                       </Tooltip>,
                     ]}

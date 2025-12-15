@@ -10,8 +10,9 @@ import type { TimeEntry } from '../types/time-entry';
 import { useTranslation } from 'react-i18next';
 import { formatHours } from '../utils/format-hours';
 import { FloatingActionButton } from '../components/common/FloatingActionButton';
+import { PageHeader } from '../components/common/PageHeader';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 export function TimeEntryList() {
@@ -206,28 +207,26 @@ export function TimeEntryList() {
   ];
 
   return (
-    <div style={{ padding: '16px' }}>
+    <div>
+      <PageHeader
+        title={t('timeEntries.title')}
+        subtitle={t('timeEntries.subtitle')}
+        helpText={t('timeEntries.pageHelp')}
+        extra={
+          !isMobile && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/time-entries/new')}
+            >
+              <span style={{ display: 'inline' }}>{t('timeEntries.newEntry')}</span>
+            </Button>
+          )
+        }
+      />
+
       <Card>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
-            <Title level={3} style={{ margin: 0 }}>{t('timeEntries.title')}</Title>
-            {!isMobile && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate('/time-entries/new')}
-              >
-                <span style={{ display: 'inline' }}>{t('timeEntries.newEntry')}</span>
-              </Button>
-            )}
-          </div>
-
           <Space 
             size="middle" 
             style={{ width: '100%', flexWrap: 'wrap' }}

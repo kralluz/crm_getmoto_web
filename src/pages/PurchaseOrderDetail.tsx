@@ -17,14 +17,14 @@ import {
 import { ShoppingCartOutlined, EditOutlined, StopOutlined, ExclamationCircleOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { generatePurchaseOrderPDF } from '../utils/reports';
 import type { ColumnsType } from 'antd/es/table';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFormat } from '../hooks/useFormat';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
 import { PageHeader } from '../components/common/PageHeader';
 import { purchaseOrderApi } from '../api/purchase-order-api';
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useUpdatePurchaseOrderNotes, useCancelPurchaseOrder } from '../hooks/usePurchaseOrders';
 import { EditTextModal } from '../components/common/EditTextModal';
 import { useAuthStore } from '../store/auth-store';
@@ -46,9 +46,7 @@ export function PurchaseOrderDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { formatCurrency, formatDate, formatDateTime } = useFormat();
-  const [cameFromSearch, setCameFromSearch] = useState(false);
   const [isEditNotesModalOpen, setIsEditNotesModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -59,12 +57,6 @@ export function PurchaseOrderDetail() {
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelPurchaseOrder();
   const { user } = useAuthStore();
 
-  // Detectar se veio da página de busca
-  useEffect(() => {
-    const fromSearch = location.state?.fromSearch;
-    setCameFromSearch(fromSearch);
-  }, [location]);
-
   if (isLoading) {
     return <LoadingOverlay />;
   }
@@ -74,13 +66,7 @@ export function PurchaseOrderDetail() {
       <div>
         <PageHeader
           title={t('purchaseOrder.title')}
-          onBack={() => {
-            if (cameFromSearch) {
-              navigate(-1);
-            } else {
-              navigate('/dashboard');
-            }
-          }}
+          onBack={() => navigate(-1)}
         />
         <Card style={{ marginTop: 16 }}>
           <Alert message={t('purchaseOrder.notFound')} type="error" />
@@ -90,11 +76,7 @@ export function PurchaseOrderDetail() {
   }
 
   const handleBack = () => {
-    if (cameFromSearch) {
-      navigate(-1); // Volta para a página de busca
-    } else {
-      navigate('/dashboard'); // Volta para o dashboard
-    }
+    navigate(-1); // Volta para a página anterior
   };
 
   const handleEditNotes = () => {
@@ -219,7 +201,7 @@ export function PurchaseOrderDetail() {
             NotificationService.success(t('purchaseOrder.cancelledSuccess'));
             setIsCancelModalOpen(false);
             cancelForm.resetFields();
-            setTimeout(() => navigate('/dashboard'), 1000);
+            // A página será atualizada automaticamente pela invalidação do React Query
           },
           onError: (error: any) => {
             NotificationService.error(

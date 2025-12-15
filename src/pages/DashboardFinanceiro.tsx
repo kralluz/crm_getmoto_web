@@ -11,6 +11,7 @@ import { PeriodSelector } from '../components/dashboard/PeriodSelector';
 import { FinancialSummaryCards } from '../components/dashboard/FinancialSummaryCards';
 import { CashFlowChart } from '../components/dashboard/CashFlowChart';
 import { RecentTransactionsTable } from '../components/dashboard/RecentTransactionsTable';
+import { DashboardFloatingMenu } from '../components/dashboard/DashboardFloatingMenu';
 import { PageHeader } from '../components/common/PageHeader';
 import { useDashboardData } from '../hooks/useCashFlow';
 import { generateCashFlowReport } from '../utils/reports';
@@ -147,16 +148,31 @@ export function DashboardFinanceiro() {
     }
   };
 
+  // Calcular totais baseado em TODAS as transações (não nas filtradas)
+  // para que o total não seja afetado pelo filtro de ocultar cancelamentos
   const totals = useMemo(() => {
-    if (!Array.isArray(filteredTransactions)) {
+    if (!Array.isArray(transactions)) {
       return { income: 0, expense: 0, balance: 0 };
     }
 
-    const income = filteredTransactions
+    // Filtrar apenas por data se movementDateRange estiver definido
+    let transactionsForTotal = transactions;
+    if (movementDateRange) {
+      transactionsForTotal = transactions.filter(t => {
+        const transactionDate = dayjs(t.occurred_at);
+        return transactionDate.isSameOrAfter(dayjs(movementDateRange[0]), 'day') &&
+               transactionDate.isSameOrBefore(dayjs(movementDateRange[1]), 'day');
+      });
+    }
+
+    // Excluir apenas cancelamentos/estornos do cálculo
+    const activeTransactions = transactionsForTotal.filter(t => !isCancelled(t.note ?? null));
+
+    const income = activeTransactions
       .filter(t => t.direction === 'entrada')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const expense = filteredTransactions
+    const expense = activeTransactions
       .filter(t => t.direction === 'saida')
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
@@ -165,7 +181,7 @@ export function DashboardFinanceiro() {
       expense,
       balance: income - expense,
     };
-  }, [filteredTransactions]);
+  }, [transactions, movementDateRange]);
 
   const columns: ColumnsType<CashFlowTransaction> = [
     {
@@ -600,6 +616,9 @@ export function DashboardFinanceiro() {
           },
         ]}
       />
+      
+      {/* Floating Action Button Menu */}
+      <DashboardFloatingMenu />
     </div>
   );
 }

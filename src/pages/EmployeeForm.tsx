@@ -45,6 +45,8 @@ export function EmployeeForm() {
       } else {
         await createEmployee.mutateAsync(data);
       }
+      // Aguardar um pouco para garantir que a query foi invalidada
+      await new Promise(resolve => setTimeout(resolve, 100));
       navigate('/employees');
     } catch (error: any) {
       console.error('❌ Error saving employee:', error);
